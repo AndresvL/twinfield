@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-logging-1.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/httpclient-4.3-beta1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/httpcore-4.3.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/org-apache-commons-codec.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/signpost-commonshttp-1.2.1.1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/signpost-core-1.2.1.2.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/jstl-1.2.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/mysql-connector-java-5.0.8-bin.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/javax.ws.rs-api-2.0.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/java-json.jar"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="output" path="war/WEB-INF/classes"/>
+</classpath>
