@@ -31,6 +31,7 @@ public class SynchServlet extends HttpServlet {
 	private String[][] options = null;
 	private Search searchObject;
 	private String errorMessage = "";
+	private String redirect = System.getenv("CALLBACK");
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		errorMessage = "";
@@ -41,8 +42,11 @@ public class SynchServlet extends HttpServlet {
 		if (softwareToken != "") {
 			System.out.println("token " + softwareToken);
 			importMethode(sessionID, softwareToken);
-			// CHANGE FOR ONLINEHOSE
-			resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + softwareToken);
+			if(redirect != null){
+				resp.sendRedirect(redirect + "OAuth.do?token=" + softwareToken);
+			}else{
+				resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + softwareToken);
+			}
 		} else {
 			// Get all users from database to Sync their data all at once
 			try {

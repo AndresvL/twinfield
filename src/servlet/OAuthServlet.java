@@ -42,6 +42,7 @@ public class OAuthServlet extends HttpServlet {
 			} else {
 				String sessionID = SoapHandler.getSession(checkToken);
 				RequestDispatcher rd = null;
+				System.out.println("session in oauthservlet " + sessionID);
 				if (sessionID != null) {
 					@SuppressWarnings("unchecked")
 					ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,

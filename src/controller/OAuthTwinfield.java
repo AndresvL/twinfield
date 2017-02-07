@@ -25,6 +25,7 @@ public class OAuthTwinfield {
 	private static String callbackConfirmed = null;
 	private static Token token = null;
 	private TokenDAO tokenDao = new TokenDAO();
+	private String callback = System.getenv("CALLBACK");
 	
 	public Token getTempToken(String consumerKey, String consumerSecret, String softwareToken)
 			throws ClientProtocolException, IOException, SQLException {
@@ -39,8 +40,14 @@ public class OAuthTwinfield {
 			String uri = "https://login.twinfield.com/oauth/initiate.aspx";
 			// Change to WorkOrder host
 			// action is verify.do
-			//String callback = "http://koppeling-connect.44fs.preview.openshiftapps.com/connect/verify.do";
-			String callback = "http://localhost:8080/connect/verify.do";
+			
+			//check if callback is online or local
+			if(callback == null){
+				callback = "http://localhost:8080/connect/verify.do";
+			}
+			else{
+				callback += "verify.do";
+			}
 			CloseableHttpClient httpclient;
 			httpclient = HttpClients.createDefault();
 			HttpGet httpGet = new HttpGet(uri);

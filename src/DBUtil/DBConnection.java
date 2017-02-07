@@ -9,7 +9,12 @@ public class DBConnection {
 	private static String password, user, url, host, port, database;
 
 	public static Connection createDatabaseConnection() throws SQLException {
-		localCon();
+		//check if app runs locally or online
+		if(System.getenv("MYSQL_SERVICE_HOST") == null){
+			localCon();
+		}else{
+			onlineCon();
+		}
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			con = (Connection) DriverManager.getConnection(url, user, password);
@@ -26,7 +31,6 @@ public class DBConnection {
 	}
 
 	public static void onlineCon() {
-		// String url = "jdbc:mysql://172.31.8.201:3306/mydatabase";
 		host = System.getenv("MYSQL_SERVICE_HOST");
 		port = System.getenv("MYSQL_SERVICE_PORT");
 		user = System.getenv("MYSQL_USER");
