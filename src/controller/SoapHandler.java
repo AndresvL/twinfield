@@ -275,6 +275,7 @@ public class SoapHandler {
 		String dateEnd = projects.item(2).getTextContent();
 		// <customer>
 		String debtorNumber = projects.item(4).getTextContent();
+		System.out.println("debnr " + debtorNumber);
 		// active
 		int active = 0;
 		if (status.equals("active")) {

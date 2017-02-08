@@ -1,4 +1,4 @@
-package servlet;
+package servlet.twinfield;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -39,8 +39,7 @@ public class SynchServlet extends HttpServlet {
 		String softwareToken = req.getParameter("token");
 		String sessionID = (String) req.getSession().getAttribute("session");
 		// Sync data from current user
-		if (softwareToken != "") {
-			System.out.println("token " + softwareToken);
+		if (softwareToken != null) {
 			importMethode(sessionID, softwareToken);
 			if(redirect != null){
 				resp.sendRedirect(redirect + "OAuth.do?token=" + softwareToken);
@@ -265,7 +264,8 @@ public class SynchServlet extends HttpServlet {
 		}
 		String hourString = "<teqs>";
 		String string = null;
-		for (WorkOrder w : allData) {			
+		for (WorkOrder w : allData) {	
+			//if projectnr is empty create a invoice
 			if (w.getProjectNr().equals("")) {
 				Address factuur = null;
 				Address post = null;
@@ -273,11 +273,16 @@ public class SynchServlet extends HttpServlet {
 				factuur = ObjectDAO.getAddressID(token, "invoice", w.getCustomerDebtorNr());
 				if (post == null) {
 					post = factuur;
+				}if(factuur == null){
+					factuur = post;
 				}
+				System.out.println("debtornr "+ w.getCustomerDebtorNr());
+				System.out.println("employeenr "+ w.getEmployeeNr());
+
+//				+ "<performancedate>" + w.getWorkDate() + "</performancedate>"
 				invoiceType = "FACTUUR";
 				string = "<salesinvoice>" + "<header>" + "<office>" + office + "</office>" + "<invoicetype>"
-						+ invoiceType + "</invoicetype>" + "<invoicedate>" + w.getCreationDate() + "</invoicedate>"
-						+ "<performancedate>" + w.getWorkDate() + "</performancedate>" + "<customer>"
+						+ invoiceType + "</invoicetype>" + "<invoicedate>" + w.getCreationDate() + "</invoicedate>" + "<customer>"
 						+ w.getCustomerDebtorNr() + "</customer>" + "<status>" + w.getStatus() + "</status>"
 						+ "<paymentmethod>" + w.getPaymentMethod() + "</paymentmethod>" + "<invoiceaddressnumber>"
 						+ factuur.getAddressId() + "</invoiceaddressnumber>" + "<deliveraddressnumber>"
@@ -302,19 +307,19 @@ public class SynchServlet extends HttpServlet {
 			} else {
 				// Has to be deleted later
 				String code = "PERSONAL";
-				String projectNr = w.getProjectNr();
-				if (projectNr.startsWith("FP")) {
-					code = "DIRECT";
-				}
-				if (projectNr.startsWith("NF")) {
-					code = "INDIRECT";
-				}
-				if (projectNr.startsWith("IP1000")) {
-					code = "PERSONAL";
-				}
+//				String projectNr = w.getProjectNr();
+//				if (projectNr.startsWith("FP")) {
+//					code = "DIRECT";
+//				}
+//				if (projectNr.startsWith("NF")) {
+//					code = "INDIRECT";
+//				}
+//				if (projectNr.startsWith("IP1000")) {
+//					code = "PERSONAL";
+//				}
 				invoiceType = "UREN";
-
-				if (!w.getHourType().equals("")) {
+				System.out.println("employeenr " +w.getEmployeeNr());
+				if (!w.getHourType().equals("") && !w.getEmployeeNr().equals("")) {
 					tempUren.add(w);
 					hourString += "<teq>" + "<header>" + "<office>" + office + "</office>"
 					// Check this later

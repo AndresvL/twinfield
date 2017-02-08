@@ -103,6 +103,7 @@ public class RestHandler {
 						projectNr = object.getString("ProjectNr");
 						id = object.getString("id");
 						workorderNr	= object.getString("WorkorderNo");
+						//CHANGE 
 						if (projectNr.equals("")) {
 							workDate = object.getString("WorkDate");
 							customerEmailInvoice = object.getString("CustomerEmailInvoice");

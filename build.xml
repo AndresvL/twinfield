@@ -1,4 +1,4 @@
-<project name="Twin_connect" default="deploy" basedir=".">
+<project name="connect" default="deploy" basedir=".">
 	<property name="war_dir" location="war" />
 	<property name="deploy_dir" location="\Users\Andres\Documents\tomcat9\webapps" />
 	<target name="init" description="remove war-file">

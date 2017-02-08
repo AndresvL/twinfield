@@ -27,7 +27,7 @@ public class DBConnection {
 	public static void localCon() {
 		url = "jdbc:mysql://localhost/Twinfield";
 		user = "root";
-		password = "";
+		password = "root";
 	}
 
 	public static void onlineCon() {

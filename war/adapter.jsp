@@ -64,6 +64,18 @@
 			})
 		return true;
 	}
+	function synchMessage() {
+		if ($('#officelist').val() != null)
+			swal({
+				title : 'Please Wait!',
+				text : 'Synchronizing data',
+				imageUrl : 'loadingbar.gif',
+				imageWidth : 150,
+				imageHeight : 150,
+				animation : true
+			})
+		return true;
+	}
 </script>
 <style>
 #float {
@@ -105,7 +117,8 @@
 										</c:forEach>
 									</select> <br> <label>Select objects for import</label><br />Saved
 									imports:
-									<c:forEach items="${checkbox}" var="checkboxs">${checkboxs} </c:forEach>
+									
+									<b><c:forEach items="${checkbox}" var="checkboxs">${checkboxs}, </c:forEach></b>
 									<div class="checkbox">
 										<label><input type="checkbox" value="employees"
 											name="importType" id="employees">Employees</label>
@@ -126,6 +139,7 @@
 										<label><input type="checkbox" value="hourtypes"
 											name="importType">Hourtypes</label>
 									</div>
+									
 								</div>
 							</div>
 						</div>
@@ -181,7 +195,8 @@
 											<input type="hidden" 
 												value="${softwareToken}" name="token"/>
 											<input type="submit" class="btn btn-success btn-lg"
-												value="Synchronize"/>
+												value="Synchronize" onclick="return synchMessage();"/>
+												
 										</div>
 									</div>
 								</div>

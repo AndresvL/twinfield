@@ -1,4 +1,4 @@
-package servlet;
+package servlet.twinfield;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -13,9 +13,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import DAO.ObjectDAO;
 import DAO.TokenDAO;
-import controller.OAuthTwinfield;
 import controller.RestHandler;
 import controller.SoapHandler;
+import controller.twinfield.OAuthTwinfield;
 import object.Settings;
 import object.Token;
 

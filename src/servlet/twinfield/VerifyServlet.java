@@ -1,4 +1,4 @@
-package servlet;
+package servlet.twinfield;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,8 +9,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import controller.OAuthTwinfield;
 import controller.SoapHandler;
+import controller.twinfield.OAuthTwinfield;
 import object.Token;
 
 public class VerifyServlet extends HttpServlet {

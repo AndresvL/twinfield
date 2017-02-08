@@ -10,7 +10,7 @@
 
 	<servlet>
 		<servlet-name>oauth servlet</servlet-name>
-		<servlet-class>servlet.OAuthServlet</servlet-class>
+		<servlet-class>servlet.twinfield.OAuthServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>oauth servlet</servlet-name>
@@ -18,7 +18,7 @@
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>oauth_verify servlet</servlet-name>
-		<servlet-class>servlet.VerifyServlet</servlet-class>
+		<servlet-class>servlet.twinfield.VerifyServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>oauth_verify servlet</servlet-name>
@@ -36,7 +36,7 @@
 	
 	<servlet>
 		<servlet-name>sync servlet</servlet-name>
-		<servlet-class>servlet.SynchServlet</servlet-class>
+		<servlet-class>servlet.twinfield.SynchServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>sync servlet</servlet-name>
