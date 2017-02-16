@@ -1,20 +1,20 @@
-package DAO;
+package DAO.twinfield;
 
 import java.sql.*;
 import java.util.ArrayList;
 
 import DBUtil.DBConnection;
-import object.Token;
+import object.twinfield.Token;
 
 public class TokenDAO {
 	private static Statement statement;
 	private static ResultSet output;
 
-	public Token getAccessToken() throws SQLException {
+	public Token getAccessToken(String token) throws SQLException {
 		Token t = null;
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
-		output = statement.executeQuery("SELECT * FROM credentials");
+		output = statement.executeQuery("SELECT * FROM credentials WHERE softwareToken = \"" + token + "\"");
 		while (output.next()) {
 			String accessToken = output.getString("accessToken");
 			String accessSecret = output.getString("accessSecret");
@@ -63,7 +63,7 @@ public class TokenDAO {
 			Connection con = DBConnection.createDatabaseConnection();
 			statement = con.createStatement();
 			statement.execute(
-					"INSERT INTO credentials (softwareToken, accessToken, accessSecret, consumerToken, consumerSecret)"
+					"REPLACE INTO credentials (softwareToken, accessToken, accessSecret, consumerToken, consumerSecret)"
 							+ "VALUES ('" + t.getSoftwareToken() + "','" + t.getAccessToken() + "','"
 							+ t.getAccessSecret() + "','" + t.getConsumerToken() + "','" + t.getConsumerSecret()
 							+ "')");

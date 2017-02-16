@@ -206,7 +206,7 @@ public class RestHandler {
 			input = hourtypeInput(array);
 			break;
 		}
-
+		System.out.println("input " + input);
 		OutputStream os = conn.getOutputStream();
 		os.write(input.getBytes("UTF-8"));
 		os.flush();

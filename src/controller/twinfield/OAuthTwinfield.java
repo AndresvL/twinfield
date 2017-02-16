@@ -13,8 +13,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import DAO.TokenDAO;
-import object.Token;
+import DAO.twinfield.TokenDAO;
+import object.twinfield.Token;
 
 import java.util.Map.Entry;
 
@@ -31,7 +31,7 @@ public class OAuthTwinfield {
 			throws ClientProtocolException, IOException, SQLException {
 		
 		//Check if user has the accessToken stored in the database
-		Token accessToken = tokenDao.getAccessToken();
+		Token accessToken = tokenDao.getAccessToken(softwareToken);
 		if (accessToken == null) {
 			token = new Token();
 			token.setConsumerToken(consumerKey);

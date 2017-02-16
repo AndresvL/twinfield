@@ -11,13 +11,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import DAO.ObjectDAO;
-import DAO.TokenDAO;
+import DAO.twinfield.ObjectDAO;
+import DAO.twinfield.TokenDAO;
 import controller.RestHandler;
-import controller.SoapHandler;
 import controller.twinfield.OAuthTwinfield;
+import controller.twinfield.SoapHandler;
 import object.Settings;
-import object.Token;
+import object.twinfield.Token;
 
 public class OAuthServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -33,9 +33,9 @@ public class OAuthServlet extends HttpServlet {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		if (RestHandler.checkToken(softwareToken) == 200) {
+		if (RestHandler.checkToken(softwareToken) == 200 && checkToken != null) {
 			req.getSession().setAttribute("error", null);
-
+			//Check if accessToken exist in db
 			if (checkToken.getAccessToken() == null) {
 				resp.sendRedirect(
 						"https://login.twinfield.com/oauth/login.aspx?oauth_token=" + checkToken.getTempToken());
@@ -60,11 +60,12 @@ public class OAuthServlet extends HttpServlet {
 					}
 					Settings set = ObjectDAO.getSettings(softwareToken);
 					if(set != null){
-						req.getSession().setAttribute("checkbox", set.getImportObjects());
+						req.getSession().setAttribute("checkboxes", set.getImportObjects());
 						req.getSession().setAttribute("exportOffice", set.getExportOffice());
 						req.getSession().setAttribute("factuur", set.getFactuurType());
 						req.getSession().setAttribute("importOffice", set.getImportOffice());
 					}
+//				if session is null
 				} else {
 					rd = req.getRequestDispatcher("adapter.jsp");
 					req.getSession().setAttribute("session", null);

@@ -9,9 +9,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import controller.SoapHandler;
 import controller.twinfield.OAuthTwinfield;
-import object.Token;
+import controller.twinfield.SoapHandler;
+import object.twinfield.Token;
 
 public class VerifyServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;

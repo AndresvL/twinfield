@@ -9,13 +9,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import DAO.ObjectDAO;
-import DAO.TokenDAO;
+import DAO.twinfield.ObjectDAO;
+import DAO.twinfield.TokenDAO;
 import controller.RestHandler;
-import controller.SoapHandler;
+import controller.twinfield.SoapHandler;
 import object.Search;
 import object.Settings;
-import object.Token;
 import object.rest.Address;
 import object.rest.Employee;
 import object.rest.HourType;
@@ -23,6 +22,7 @@ import object.rest.Material;
 import object.rest.Project;
 import object.rest.Relation;
 import object.rest.WorkOrder;
+import object.twinfield.Token;
 
 public class SynchServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;

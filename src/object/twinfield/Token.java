@@ -1,4 +1,4 @@
-package object;
+package object.twinfield;
 
 public class Token {
 	protected String softwareToken;

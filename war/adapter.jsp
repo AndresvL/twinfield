@@ -12,7 +12,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 
-<title>Twinfield Connect</title>
+<title>Twinfield Connection</title>
 
 <!-- Bootstrap Core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -57,7 +57,7 @@
 			swal({
 				title : 'Please Wait!',
 				text : 'Saving settings',
-				imageUrl : 'loadingbar.gif',
+				imageUrl : './img/loadingbar.gif',
 				imageWidth : 150,
 				imageHeight : 150,
 				animation : true
@@ -69,7 +69,7 @@
 			swal({
 				title : 'Please Wait!',
 				text : 'Synchronizing data',
-				imageUrl : 'loadingbar.gif',
+				imageUrl : './img/loadingbar.gif',
 				imageWidth : 150,
 				imageHeight : 150,
 				animation : true
@@ -103,22 +103,21 @@
 					type="hidden" value="${error}" id="error" />
 				<form action="import.do">
 					<div class="panel panel-success">
-						<div class="panel-heading">Import settings</div>
+						<div class="panel-heading" title="test">Import settings</div>
 						<div class="panel-body">
 							<div class="row control-group">
 								<div class="form-group col-xs-12 floating-label controls">
-									<label>Office</label> <select name="offices"
-										class="form-control" id="officelist" required>
-										<option disabled selected value>-- Select an office
-											--</option>
+									<label>Office</label> 
+									<img src="./img/vraagteken.jpg" title="Choose an administration" height="13" width="13"/>
+									<select name="offices" class="form-control" id="officelist"	required>
+										<option disabled selected value>-- Select an office	--</option>
 										<c:forEach items="${offices}" var="office">
-											<option value="${office.code}"
-												${office.code == importOffice ? 'selected="selected"' : ''}>${office.name}</option>
+											<option value="${office.code}" ${office.code == importOffice ? 'selected="selected"' : ''}>
+												${office.name}</option>
 										</c:forEach>
-									</select> <br> <label>Select objects for import</label><br />Saved
-									imports:
-									
-									<b><c:forEach items="${checkbox}" var="checkboxs">${checkboxs}, </c:forEach></b>
+									</select><br><label>Select objects for import</label> <img src="./img/vraagteken.jpg" title="Select the objects you want to import from Twinfield into WorkOrderApp" height="13" width="13"/><br />
+									Saved imports: <b><c:forEach items="${checkboxes}"
+											var="checkboxs">${checkboxs}, </c:forEach></b>
 									<div class="checkbox">
 										<label><input type="checkbox" value="employees"
 											name="importType" id="employees">Employees</label>
@@ -139,7 +138,7 @@
 										<label><input type="checkbox" value="hourtypes"
 											name="importType">Hourtypes</label>
 									</div>
-									
+
 								</div>
 							</div>
 						</div>
@@ -150,10 +149,9 @@
 							<div class="row control-group">
 								<input type="hidden" value="${errorExport}" id="errorExport" />
 								<div class="form-group col-xs-12 floating-label controls">
-									<label>Office</label> <select name="exportOffices"
-										class="form-control" id="officeExportList" required>
-										<option disabled selected value>-- Select an office
-											--</option>
+									<label>Office</label> <img src="./img/vraagteken.jpg" title="Choose an administration" height="13" width="13"/>
+									<select name="exportOffices" class="form-control" id="officeExportList" required>
+										<option disabled selected value>-- Select an office	--</option>
 										<c:forEach items="${offices}" var="office">
 											<option value="${office.code}"
 												${office.code == exportOffice ? 'selected="selected"' : ''}>${office.name}</option>
@@ -161,8 +159,8 @@
 									</select>
 								</div>
 								<div class="form-group col-xs-12 floating-label controls">
-									<label>Werkbontype</label> <select name="factuurType"
-										class="form-control" id="factuurlist" required>
+									<label>Werkbontype</label> <img src="./img/vraagteken.jpg" title="Choose the status of the workorder you want to export" height="13" width="13"/>
+									<select name="factuurType" class="form-control" id="factuurlist" required>
 										<option disabled selected value>-- Select a
 											Werkbontype --</option>
 										<option value="Compleet"
@@ -192,11 +190,10 @@
 									<div id="success"></div>
 									<div class="row">
 										<div class="form-group col-xs-12">
-											<input type="hidden" 
-												value="${softwareToken}" name="token"/>
+											<input type="hidden" value="${softwareToken}" name="token" />
 											<input type="submit" class="btn btn-success btn-lg"
-												value="Synchronize" onclick="return synchMessage();"/>
-												
+												value="Synchronize" onclick="return synchMessage();" />
+
 										</div>
 									</div>
 								</div>

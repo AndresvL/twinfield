@@ -1,9 +1,10 @@
-package controller;
+package controller.twinfield;
 
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -16,16 +17,17 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import object.Search;
-import object.Token;
 import object.rest.Address;
 import object.rest.HourType;
 import object.rest.Material;
 import object.rest.Project;
 import object.rest.Relation;
+import object.twinfield.Token;
 
 public class SoapHandler {
 	private static String cluster;
-
+	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
+	
 	public static String getSession(Token token) {
 		String sessionID = null;
 		try {
@@ -107,9 +109,8 @@ public class SoapHandler {
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
 			System.out.println("requestString " + data);
-			System.out.println("responseString " + xmlString);
+			logger.info(xmlString);
 			soapConnection.close();
-
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
 
@@ -142,7 +143,6 @@ public class SoapHandler {
 			}
 		}
 		// Check if SOAP result is 0 or 1
-		
 		if (result != 0) {
 			switch (type) {
 			case "project":
@@ -196,9 +196,7 @@ public class SoapHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		return setArrayList(soapResponse);
-
 	}
 
 	private static void setFinderBody(SOAPEnvelope envelope, Search object) throws SOAPException {
@@ -269,8 +267,9 @@ public class SoapHandler {
 		// <validfrom>
 		String dateStart = projects.item(1).getTextContent();
 		if (dateStart.equals("")) {
-			dateStart = "2013-10-01";
+			dateStart = "2017-10-01";
 		}
+		System.out.println("start date " + dateStart);
 		// <validfrom>
 		String dateEnd = projects.item(2).getTextContent();
 		// <customer>

@@ -1,5 +1,8 @@
 package object.rest;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Project {
 	private String code, code_ext, debtorNumber, status, name, dateStart, dateEnd, description, authoriser;
@@ -16,8 +19,8 @@ public class Project {
 		this.debtorNumber = debtor_number;
 		this.status = status;
 		this.name = name;
-		this.dateStart = date_start;
-		this.dateEnd = date_end;
+		this.setDate_start(date_start);
+		this.setDate_end(date_end);
 		this.description = description;
 		this.progress = progress;
 		this.active = active;
@@ -58,16 +61,42 @@ public class Project {
 		this.name = name;
 	}
 	public String getDate_start() {
-		return dateStart;
+		if(dateStart == null){
+			return "2017-01-01";
+		}else{
+			return dateStart;
+		}
 	}
 	public void setDate_start(String date_start) {
-		this.dateStart = date_start;
+		if (date_start != null) {
+			try {
+				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMdd");
+				Date date = dt.parse(date_start);
+				SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd");
+				this.dateStart = dt1.format(date);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	public String getDate_end() {
-		return dateEnd;
+		if(dateEnd== null){
+			return "2017-01-02";
+		}else{
+			return dateEnd;
+		}
 	}
 	public void setDate_end(String date_end) {
-		this.dateEnd = date_end;
+		if (date_end != null) {
+			try {
+				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMdd");
+				Date date = dt.parse(date_end);
+				SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd");
+				this.dateEnd = dt1.format(date);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	public String getDescription() {
 		return description;
