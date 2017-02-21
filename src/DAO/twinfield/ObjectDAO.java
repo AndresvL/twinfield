@@ -18,12 +18,12 @@ import java.util.HashMap;
 import java.util.Map;
 import DBUtil.DBConnection;
 import object.Settings;
-import object.rest.Address;
-import object.rest.Employee;
-import object.rest.HourType;
-import object.rest.Material;
-import object.rest.Project;
-import object.rest.Relation;
+import object.workorder.Address;
+import object.workorder.Employee;
+import object.workorder.HourType;
+import object.workorder.Material;
+import object.workorder.Project;
+import object.workorder.Relation;
 
 public class ObjectDAO {
 	public static void saveEmployees(ArrayList<Employee> emp, String token) {

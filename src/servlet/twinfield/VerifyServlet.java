@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import controller.twinfield.OAuthTwinfield;
 import controller.twinfield.SoapHandler;
-import object.twinfield.Token;
+import object.Token;
 
 public class VerifyServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -20,7 +20,8 @@ public class VerifyServlet extends HttpServlet {
 		String temporaryToken = req.getParameter("oauth_token");
 		String temporaryVerifier = req.getParameter("oauth_verifier");
 		OAuthTwinfield oauth = new OAuthTwinfield();
-		Token token = oauth.getAccessToken(temporaryToken, temporaryVerifier);
+		String softwareName = (String) req.getSession().getAttribute("softwareName");
+		Token token = oauth.getAccessToken(temporaryToken, temporaryVerifier, softwareName);
 		String sessionID = SoapHandler.getSession(token);
 		RequestDispatcher rd = null;
 		@SuppressWarnings("unchecked")

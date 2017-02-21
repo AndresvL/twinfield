@@ -1,4 +1,4 @@
-package object.rest;
+package object.workorder;
 
 public class HourType {
 	private String code, name;

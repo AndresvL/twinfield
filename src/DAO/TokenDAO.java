@@ -1,10 +1,10 @@
-package DAO.twinfield;
+package DAO;
 
 import java.sql.*;
 import java.util.ArrayList;
 
 import DBUtil.DBConnection;
-import object.twinfield.Token;
+import object.Token;
 
 public class TokenDAO {
 	private static Statement statement;
@@ -21,7 +21,8 @@ public class TokenDAO {
 			String consumerToken = output.getString("consumerToken");
 			String consumerSecret = output.getString("consumerSecret");
 			String softwareToken = output.getString("softwareToken");
-			t = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken);
+			String softwareName = output.getString("softwareName");
+			t = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken, softwareName);
 			break;
 		}
 		con.close();
@@ -52,7 +53,8 @@ public class TokenDAO {
 			String accessSecret = output.getString("accessSecret");
 			String consumerToken = output.getString("consumerToken");
 			String consumerSecret = output.getString("consumerSecret");
-			token = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken);
+			String softwareName = output.getString("softwareName");
+			token = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken, softwareName);
 			allTokens.add(token);
 		}
 		return allTokens;
@@ -63,10 +65,13 @@ public class TokenDAO {
 			Connection con = DBConnection.createDatabaseConnection();
 			statement = con.createStatement();
 			statement.execute(
-					"REPLACE INTO credentials (softwareToken, accessToken, accessSecret, consumerToken, consumerSecret)"
-							+ "VALUES ('" + t.getSoftwareToken() + "','" + t.getAccessToken() + "','"
-							+ t.getAccessSecret() + "','" + t.getConsumerToken() + "','" + t.getConsumerSecret()
-							+ "')");
+					"REPLACE INTO credentials (softwareToken, accessToken, accessSecret, consumerToken, consumerSecret, softwareName)"
+							+ "VALUES ('" + t.getSoftwareToken() + "','" 
+							+ t.getAccessToken() + "','"
+							+ t.getAccessSecret() + "','" 
+							+ t.getConsumerToken() + "','"
+							+ t.getConsumerSecret() + "','" 
+							+ t.getSoftwareName() + "')");
 			con.close();
 		}
 	}

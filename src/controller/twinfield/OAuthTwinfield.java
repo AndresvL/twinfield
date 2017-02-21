@@ -2,6 +2,7 @@ package controller.twinfield;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,39 +14,47 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import DAO.twinfield.TokenDAO;
-import object.twinfield.Token;
+import DAO.TokenDAO;
+import DAO.twinfield.ObjectDAO;
+import controller.Authenticate;
+import object.Settings;
+import object.Token;
 
 import java.util.Map.Entry;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 // OAuth 1.0
-public class OAuthTwinfield {
+public class OAuthTwinfield extends Authenticate {
 	// Does this still work if there're multiple users using this methode?
 	@SuppressWarnings("unused")
 	private static String callbackConfirmed = null;
 	private static Token token = null;
 	private TokenDAO tokenDao = new TokenDAO();
 	private String callback = System.getenv("CALLBACK");
-	
-	public Token getTempToken(String consumerKey, String consumerSecret, String softwareToken)
+
+	public Token getTempToken(String consumerKey, String consumerSecret, String softwareToken, String softwareName)
 			throws ClientProtocolException, IOException, SQLException {
 		
-		//Check if user has the accessToken stored in the database
+		// Check if user has the accessToken stored in the database
 		Token accessToken = tokenDao.getAccessToken(softwareToken);
 		if (accessToken == null) {
 			token = new Token();
 			token.setConsumerToken(consumerKey);
 			token.setConsumerSecret(consumerSecret);
 			token.setSoftwareToken(softwareToken);
+			token.setSoftwareName(softwareName);
 			String uri = "https://login.twinfield.com/oauth/initiate.aspx";
 			// Change to WorkOrder host
 			// action is verify.do
-			
-			//check if callback is online or local
-			if(callback == null){
+
+			// check if callback is online or local
+			if (callback == null) {
 				callback = "http://localhost:8080/connect/verify.do";
-			}
-			else{
+			} else {
 				callback += "verify.do";
 			}
 			CloseableHttpClient httpclient;
@@ -94,15 +103,16 @@ public class OAuthTwinfield {
 				response.close();
 			}
 			return token;
-		}else{
+		} else {
 			return accessToken;
 		}
 	}
 
-	public Token getAccessToken(String tempToken, String verifyToken) throws ClientProtocolException, IOException {
+	public Token getAccessToken(String tempToken, String verifyToken, String softwareName) throws ClientProtocolException, IOException {
 		token.setTempToken(tempToken);
 		token.setVerifyToken(verifyToken);
-
+		token.setSoftwareName(softwareName);
+		
 		String uri = "https://login.twinfield.com/oauth/finalize.aspx";
 		CloseableHttpClient httpclient;
 		httpclient = HttpClients.createDefault();
@@ -125,6 +135,7 @@ public class OAuthTwinfield {
 			HttpEntity entity = response.getEntity();
 			String responseString = EntityUtils.toString(entity);
 			String params[] = responseString.split("&");
+			System.out.println("responseString " + responseString);
 			Map<String, String> map = new HashMap<String, String>();
 			for (String param : params) {
 				String name = param.split("=")[0];
@@ -149,5 +160,58 @@ public class OAuthTwinfield {
 			e.printStackTrace();
 		}
 		return token;
+	}
+
+	@Override
+	public void authenticate(String token, String secret, String softwareToken, HttpServletRequest req,
+			HttpServletResponse resp) throws ClientProtocolException, IOException, ServletException {
+		String softwareName = req.getParameter("softwareName");
+		Token checkToken = null;
+		try {
+			checkToken = getTempToken(token, secret, softwareToken, softwareName);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		req.getSession().setAttribute("error", null);
+		// Check if accessToken exist in db
+		if (checkToken.getAccessToken() == null) {
+			resp.sendRedirect("https://login.twinfield.com/oauth/login.aspx?oauth_token=" + checkToken.getTempToken());
+		} else {
+			String sessionID = SoapHandler.getSession(checkToken);
+			RequestDispatcher rd = null;
+			if (sessionID != null) {
+				@SuppressWarnings("unchecked")
+				ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
+						"<list><type>offices</type></list>", "office");
+
+				rd = req.getRequestDispatcher("adapter.jsp");
+				req.getSession().setAttribute("session", sessionID);
+				req.getSession().setAttribute("offices", offices);
+				ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
+				if (!allLogs.isEmpty() || allLogs != null) {
+					req.getSession().setAttribute("logs", null);
+					req.getSession().setAttribute("logs", allLogs);
+				}
+				Settings set = ObjectDAO.getSettings(softwareToken);
+				if (set != null) {
+					req.getSession().setAttribute("checkboxes", set.getImportObjects());
+					req.getSession().setAttribute("exportOffice", set.getExportOffice());
+					req.getSession().setAttribute("factuur", set.getFactuurType());
+					req.getSession().setAttribute("importOffice", set.getImportOffice());
+				}
+				// if session is null
+			} else {
+				rd = req.getRequestDispatcher("adapter.jsp");
+				req.getSession().setAttribute("session", null);
+				try {
+					TokenDAO.deleteToken(softwareToken);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				req.getSession().setAttribute("error", "Something went wrong with connecting to Twinfield");
+			}
+			rd.forward(req, resp);
+		}
+
 	}
 }

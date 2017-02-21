@@ -1,4 +1,4 @@
-package object.rest;
+package object.workorder;
 
 public class Employee {
 	private String firstName;

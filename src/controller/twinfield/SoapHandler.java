@@ -16,13 +16,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import object.Search;
-import object.rest.Address;
-import object.rest.HourType;
-import object.rest.Material;
-import object.rest.Project;
-import object.rest.Relation;
-import object.twinfield.Token;
+import object.Token;
+import object.twinfield.Search;
+import object.workorder.Address;
+import object.workorder.HourType;
+import object.workorder.Material;
+import object.workorder.Project;
+import object.workorder.Relation;
 
 public class SoapHandler {
 	private static String cluster;

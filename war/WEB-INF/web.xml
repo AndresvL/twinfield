@@ -27,7 +27,7 @@
 
 	<servlet>
 		<servlet-name>import data servlet</servlet-name>
-		<servlet-class>servlet.ImportDataServlet</servlet-class>
+		<servlet-class>servlet.SettingsServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>import data servlet</servlet-name>

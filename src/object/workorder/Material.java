@@ -1,4 +1,4 @@
-package object.rest;
+package object.workorder;
 
 public class Material {
 	private String code, unit;

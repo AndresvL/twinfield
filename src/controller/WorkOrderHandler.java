@@ -14,16 +14,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import object.rest.Address;
-import object.rest.Employee;
-import object.rest.HourType;
-import object.rest.Material;
-import object.rest.Project;
-import object.rest.Relation;
-import object.rest.WorkOrder;
+import object.workorder.Address;
+import object.workorder.Employee;
+import object.workorder.HourType;
+import object.workorder.Material;
+import object.workorder.Project;
+import object.workorder.Relation;
+import object.workorder.WorkOrder;
 
-public class RestHandler {
+public class WorkOrderHandler {
 	private static String version = "7";
+	//WorkOrder Api key
 	final static String softwareToken = "622a8ef3a712344ef07a4427550ae1e2b38e5342";
 
 	public static int checkToken(String token) {
@@ -55,16 +56,12 @@ public class RestHandler {
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken + "&row_id=" + id + "&update_status=" + status;
 		URL url;
-		String output = null;
 		try {
 			url = new URL(link);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
-			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-			while ((output = br.readLine()) != null) {
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

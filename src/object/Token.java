@@ -1,4 +1,4 @@
-package object.twinfield;
+package object;
 
 public class Token {
 	protected String softwareToken;
@@ -9,15 +9,17 @@ public class Token {
 	protected String accessToken;
 	protected String accessSecret;
 	protected String verifyToken;
+	protected String softwareName;
 	
-	public Token(String cT, String cS, String aT, String aS, String sT){
+	public Token(String cT, String cS, String aT, String aS, String sT, String sN){
 		this.consumerToken = cT;
 		this.consumerSecret = cS;
 		this.accessToken = aT;
 		this.accessSecret = aS;
 		this.softwareToken = sT;
 	}
-	public Token() {
+	public Token(){
+		
 	}
 	public void setConsumerToken(String key){
 		this.consumerToken = key;
@@ -72,5 +74,11 @@ public class Token {
 	}
 	public String getSoftwareToken(){
 		return softwareToken;
+	}
+	public void setSoftwareName(String name){
+		this.softwareName= name;
+	}
+	public String getSoftwareName(){
+		return softwareName;
 	}
 }

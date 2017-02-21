@@ -9,20 +9,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import DAO.TokenDAO;
 import DAO.twinfield.ObjectDAO;
-import DAO.twinfield.TokenDAO;
-import controller.RestHandler;
+import controller.WorkOrderHandler;
 import controller.twinfield.SoapHandler;
-import object.Search;
 import object.Settings;
-import object.rest.Address;
-import object.rest.Employee;
-import object.rest.HourType;
-import object.rest.Material;
-import object.rest.Project;
-import object.rest.Relation;
-import object.rest.WorkOrder;
-import object.twinfield.Token;
+import object.Token;
+import object.twinfield.Search;
+import object.workorder.Address;
+import object.workorder.Employee;
+import object.workorder.HourType;
+import object.workorder.Material;
+import object.workorder.Project;
+import object.workorder.Relation;
+import object.workorder.WorkOrder;
 
 public class SynchServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -32,9 +32,12 @@ public class SynchServlet extends HttpServlet {
 	private Search searchObject;
 	private String errorMessage = "";
 	private String redirect = System.getenv("CALLBACK");
-
+	private String softwareName = null;
+	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		errorMessage = "";
+		softwareName = (String) req.getSession().getAttribute("softwareName");
+		System.out.println("softwareTest " + softwareName);
 		ArrayList<Token> allTokens = null;
 		String softwareToken = req.getParameter("token");
 		String sessionID = (String) req.getSession().getAttribute("session");
@@ -42,9 +45,9 @@ public class SynchServlet extends HttpServlet {
 		if (softwareToken != null) {
 			importMethode(sessionID, softwareToken);
 			if(redirect != null){
-				resp.sendRedirect(redirect + "OAuth.do?token=" + softwareToken);
+				resp.sendRedirect(redirect + "OAuth.do?token=" + softwareToken + "&softwareName=" + softwareName);
 			}else{
-				resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + softwareToken);
+				resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + softwareToken + "&softwareName=" + softwareName);
 			}
 		} else {
 			// Get all users from database to Sync their data all at once
@@ -56,7 +59,7 @@ public class SynchServlet extends HttpServlet {
 			String token = null;
 			for (Token t : allTokens) {
 				token = t.getSoftwareToken();
-				if (RestHandler.checkToken(token) == 200) {
+				if (WorkOrderHandler.checkToken(token) == 200) {
 					String session = SoapHandler.getSession(t);
 					if (session != null) {
 						importMethode(session, token);
@@ -120,7 +123,7 @@ public class SynchServlet extends HttpServlet {
 		if (!emp.isEmpty()) {
 			ObjectDAO.saveEmployees(emp, token);
 			// Post data to WorkorderApp
-			Boolean b = RestHandler.addData(token, emp, "employees");
+			Boolean b = WorkOrderHandler.addData(token, emp, "employees");
 			if (b) {
 				errorMessage += "Employees imported<br />";
 			} else {
@@ -151,7 +154,7 @@ public class SynchServlet extends HttpServlet {
 		}
 		if (!projects.isEmpty()) {
 			ObjectDAO.saveProjects(projects, token);
-			Boolean b = RestHandler.addData(token, projects, "projects");
+			Boolean b = WorkOrderHandler.addData(token, projects, "projects");
 			if (b) {
 				errorMessage += "Projects imported<br />";
 			} else {
@@ -182,7 +185,7 @@ public class SynchServlet extends HttpServlet {
 		}
 		if (!materials.isEmpty()) {
 			ObjectDAO.saveMaterials(materials, token);
-			Boolean b = RestHandler.addData(token, materials, "materials");
+			Boolean b = WorkOrderHandler.addData(token, materials, "materials");
 			if (b) {
 				errorMessage += "Materials imported<br />";
 			} else {
@@ -212,7 +215,7 @@ public class SynchServlet extends HttpServlet {
 		}
 		if (!relations.isEmpty()) {
 			ObjectDAO.saveRelations(relations, token);
-			Boolean b = RestHandler.addData(token, relations, "relations");
+			Boolean b = WorkOrderHandler.addData(token, relations, "relations");
 			if (b) {
 				errorMessage += "Relations imported<br />";
 			} else {
@@ -243,7 +246,7 @@ public class SynchServlet extends HttpServlet {
 		}
 		if (!hourtypes.isEmpty()) {
 			ObjectDAO.saveHourTypes(hourtypes, token);
-			Boolean b = RestHandler.addData(token, hourtypes, "hourtypes");
+			Boolean b = WorkOrderHandler.addData(token, hourtypes, "hourtypes");
 			if (b) {
 				errorMessage += "Hourtypes imported<br />";
 			} else {
@@ -256,7 +259,7 @@ public class SynchServlet extends HttpServlet {
 
 	@SuppressWarnings("unchecked")
 	public void getWorkOrders(String office, String session, String token, String factuurType) {
-		ArrayList<WorkOrder> allData = RestHandler.getData(token, "GetWorkorders", factuurType, false);
+		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false);
 		ArrayList<WorkOrder> tempUren = new ArrayList<WorkOrder>();
 		int factuurAmount = 0;
 		if (allData.isEmpty() || allData == null) {
@@ -301,7 +304,7 @@ public class SynchServlet extends HttpServlet {
 				Boolean resultsFactuur = (Boolean) SoapHandler.createSOAPXML(session, string, "workorderFactuur");
 				System.out.println("resultsFactuur " + resultsFactuur);
 				if(resultsFactuur){
-					RestHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), resultsFactuur, "GetWorkorder", token);
+					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), resultsFactuur, "GetWorkorder", token);
 					factuurAmount++;
 				}
 			} else {
@@ -337,7 +340,7 @@ public class SynchServlet extends HttpServlet {
 		int i = 0;
 		for (Boolean b : results) {
 			WorkOrder o = tempUren.get(i);
-			RestHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), b, "GetWorkorder", token);
+			WorkOrderHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), b, "GetWorkorder", token);
 			if (b) {
 				i++;
 			}
