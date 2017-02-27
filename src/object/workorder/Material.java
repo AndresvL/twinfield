@@ -6,14 +6,16 @@ public class Material {
 	private double price;
 	private String subCode;
 	private String quantity;
+	private String modified;
 
-	public Material(String c, String subc, String u, String des, double p, String q) {
+	public Material(String c, String subc, String u, String des, double p, String q, String m) {
 		this.code = c;
 		this.subCode = subc;
 		this.unit = u;
 		this.description = des;
 		this.price = p;
 		this.quantity = q;
+		this.modified = m;
 	}
 
 	public String getCode() {
@@ -62,6 +64,14 @@ public class Material {
 
 	public void setQuantity(String quantity) {
 		this.quantity = quantity;
+	}
+
+	public String getModified() {
+		return modified;
+	}
+
+	public void setModified(String modified) {
+		this.modified = modified;
 	}
 
 }

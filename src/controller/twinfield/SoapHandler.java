@@ -37,7 +37,6 @@ public class SoapHandler {
 			// Send SOAP Message to SOAP Server
 			String url = "https://login.twinfield.com/webservices/session.asmx?/";
 			SOAPMessage soapResponse = soapConnection.call(createSOAPSession(token), url);
-			
 			SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
 			sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
 			cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
@@ -45,6 +44,7 @@ public class SoapHandler {
 			soapConnection.close();
 		} catch (Exception e) {
 			System.err.println("Error occurred while sending SOAP Request to Server");
+			
 			e.printStackTrace();
 		}
 		return sessionID;
@@ -108,7 +108,7 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
-			System.out.println("requestString " + data);
+//			System.out.println("requestString " + data);
 			logger.info(xmlString);
 			soapConnection.close();
 			builder = factory.newDocumentBuilder();
@@ -123,7 +123,6 @@ public class SoapHandler {
 			ArrayList<Boolean> results = new ArrayList<Boolean>();
 			NodeList workorder = doc.getChildNodes().item(0).getChildNodes();
 			int workorderResult = 0;
-			System.out.println("result " + workorder.getLength());
 			for (int i = 0; i < workorder.getLength(); i++) {
 				workorderResult = Integer
 						.parseInt(workorder.item(i).getAttributes().getNamedItem("result").getNodeValue());
@@ -269,12 +268,10 @@ public class SoapHandler {
 		if (dateStart.equals("")) {
 			dateStart = "2017-10-01";
 		}
-		System.out.println("start date " + dateStart);
 		// <validfrom>
 		String dateEnd = projects.item(2).getTextContent();
 		// <customer>
 		String debtorNumber = projects.item(4).getTextContent();
-		System.out.println("debnr " + debtorNumber);
 		// active
 		int active = 0;
 		if (status.equals("active")) {
@@ -288,6 +285,7 @@ public class SoapHandler {
 
 	// Converts String to Material Object
 	private static Object getMaterialXML(Document doc) {
+		ArrayList<Material> materials = new ArrayList<Material>();
 		Material m = null;
 		// <article>
 		NodeList allData = doc.getChildNodes().item(0).getChildNodes();
@@ -307,10 +305,10 @@ public class SoapHandler {
 			description = line.item(3).getTextContent();
 			subcode = line.item(5).getTextContent();
 			// do something with the subMaterials
+			m = new Material(code, subcode, unit, description, price, null, null);
+			materials.add(m);
 		}
-		m = new Material(code, subcode, unit, description, price, null);
-
-		return m;
+		return materials;
 	}
 
 	// Converts String to Relation Object
@@ -371,7 +369,7 @@ public class SoapHandler {
 					addressId);
 			allAddresses.add(a);
 		}
-		r = new Relation(name, debtorNumber, name, emailWorkorder, allAddresses);
+		r = new Relation(name, debtorNumber, name, emailWorkorder, allAddresses, null);
 		return r;
 	}
 

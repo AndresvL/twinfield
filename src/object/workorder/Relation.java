@@ -3,16 +3,17 @@ package object.workorder;
 import java.util.ArrayList;
 
 public class Relation {
-	private String name, debtorNumber, contact, emailWorkorder;
+	private String name, debtorNumber, contact, emailWorkorder, modified;
 	private ArrayList<Address> addresses;
 
 	public Relation(String name, String debtorNumber, String contact, String emailWorkorder,
-			ArrayList<Address> addresses) {
+			ArrayList<Address> addresses, String modified) {
 		this.name = name;
 		this.debtorNumber = debtorNumber;
 		this.contact = contact;
 		this.emailWorkorder = emailWorkorder;
 		this.setAddresses(addresses);
+		this.setModified(modified);
 	}
 
 	public String getName() {
@@ -53,5 +54,13 @@ public class Relation {
 
 	public void setAddresses(ArrayList<Address> addresses) {
 		this.addresses = addresses;
+	}
+
+	public String getModified() {
+		return modified;
+	}
+
+	public void setModified(String modified) {
+		this.modified = modified;
 	}
 }

@@ -78,9 +78,6 @@
 	}
 </script>
 <style>
-#float {
-	float: left;
-}
 
 .settings {
 	width: 50%;
@@ -101,7 +98,7 @@
 			<div class="panel-group">
 				<input type="hidden" value="${session}" id="session" /> <input
 					type="hidden" value="${error}" id="error" />
-				<form action="import.do">
+				<form action="settings.do">
 					<div class="panel panel-success">
 						<div class="panel-heading" title="test">Import settings</div>
 						<div class="panel-body">
@@ -192,8 +189,7 @@
 										<div class="form-group col-xs-12">
 											<input type="hidden" value="${softwareToken}" name="token" />
 											<input type="submit" class="btn btn-success btn-lg"
-												value="Synchronize" onclick="return synchMessage();" />
-
+												value="Synchronize" onsubmit="synchMessage();" />
 										</div>
 									</div>
 								</div>

@@ -17,6 +17,7 @@ public class Token {
 		this.accessToken = aT;
 		this.accessSecret = aS;
 		this.softwareToken = sT;
+		this.softwareName = sN;
 	}
 	public Token(){
 		

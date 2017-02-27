@@ -14,8 +14,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import DAO.ObjectDAO;
 import DAO.TokenDAO;
-import DAO.twinfield.ObjectDAO;
 import controller.Authenticate;
 import object.Settings;
 import object.Token;
@@ -33,14 +33,12 @@ public class OAuthTwinfield extends Authenticate {
 	@SuppressWarnings("unused")
 	private static String callbackConfirmed = null;
 	private static Token token = null;
-	private TokenDAO tokenDao = new TokenDAO();
 	private String callback = System.getenv("CALLBACK");
 
 	public Token getTempToken(String consumerKey, String consumerSecret, String softwareToken, String softwareName)
 			throws ClientProtocolException, IOException, SQLException {
-		
 		// Check if user has the accessToken stored in the database
-		Token accessToken = tokenDao.getAccessToken(softwareToken);
+		Token accessToken = TokenDAO.getToken(softwareToken);
 		if (accessToken == null) {
 			token = new Token();
 			token.setConsumerToken(consumerKey);
@@ -135,7 +133,6 @@ public class OAuthTwinfield extends Authenticate {
 			HttpEntity entity = response.getEntity();
 			String responseString = EntityUtils.toString(entity);
 			String params[] = responseString.split("&");
-			System.out.println("responseString " + responseString);
 			Map<String, String> map = new HashMap<String, String>();
 			for (String param : params) {
 				String name = param.split("=")[0];
@@ -155,7 +152,7 @@ public class OAuthTwinfield extends Authenticate {
 			response.close();
 		}
 		try {
-			tokenDao.saveAccessToken(token);
+			TokenDAO.saveToken(token);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -163,8 +160,12 @@ public class OAuthTwinfield extends Authenticate {
 	}
 
 	@Override
-	public void authenticate(String token, String secret, String softwareToken, HttpServletRequest req,
+	public void authenticate(String softwareToken, HttpServletRequest req,
 			HttpServletResponse resp) throws ClientProtocolException, IOException, ServletException {
+		//Env variable!
+		//Twinfield accessToken and accessSecret
+		String token = "818784741B7543C7AE95CE5BFB783DF2";
+		String secret = "F441FB65B6AA42C995F9FAF3662E8A10";
 		String softwareName = req.getParameter("softwareName");
 		Token checkToken = null;
 		try {
@@ -184,7 +185,7 @@ public class OAuthTwinfield extends Authenticate {
 				ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
 						"<list><type>offices</type></list>", "office");
 
-				rd = req.getRequestDispatcher("adapter.jsp");
+				rd = req.getRequestDispatcher("twinfield.jsp");
 				req.getSession().setAttribute("session", sessionID);
 				req.getSession().setAttribute("offices", offices);
 				ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
@@ -201,7 +202,7 @@ public class OAuthTwinfield extends Authenticate {
 				}
 				// if session is null
 			} else {
-				rd = req.getRequestDispatcher("adapter.jsp");
+				rd = req.getRequestDispatcher("twinfield.jsp");
 				req.getSession().setAttribute("session", null);
 				try {
 					TokenDAO.deleteToken(softwareToken);

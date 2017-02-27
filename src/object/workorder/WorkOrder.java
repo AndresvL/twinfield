@@ -22,17 +22,17 @@ public class WorkOrder {
 	// FACTUUR constructor
 	public WorkOrder(String projectNr, String workDate, String customerEmailInvoice, String customerEmail,
 			String customerDebtorNr, String status, String paymentMethod, ArrayList<Material> m, String creationDate, String id, String workorderNr) {
-		this.projectNr = projectNr;
-		setWorkDate(workDate);
-		this.customerEmailInvoice = customerEmailInvoice;
-		this.customerEmail = customerEmail;
-		this.customerDebtorNr = customerDebtorNr;
-		this.status = status;
+		this.projectNr = projectNr; //priceQuote
+		this.setWorkDate(workDate); //date
+		this.customerEmailInvoice = customerEmailInvoice; //EmailAddress
+		this.customerEmail = customerEmail;//EmailAddress
+		this.customerDebtorNr = customerDebtorNr; //DebtorCode
+		this.status = status; //Status
 		this.paymentMethod = paymentMethod;
-		this.materials = m;
-		setCreationDate(creationDate);
-		this.id = id;
-		this.workorderNr = workorderNr;
+		this.materials = m; //ProductCode...
+		this.setCreationDate(creationDate); 
+		this.id = id;//Identifier
+		this.workorderNr = workorderNr;//PriceQuoteCode
 	}
 
 	// UREN constructor

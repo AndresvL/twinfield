@@ -10,5 +10,5 @@ import org.apache.http.client.ClientProtocolException;
 
 
 public abstract class Authenticate {
-	public abstract void authenticate(String token, String secret, String softwareToken, HttpServletRequest req , HttpServletResponse resp) throws ClientProtocolException, IOException, ServletException;
+	public abstract void authenticate(String softwareToken, HttpServletRequest req , HttpServletResponse resp) throws ClientProtocolException, IOException, ServletException;
 }

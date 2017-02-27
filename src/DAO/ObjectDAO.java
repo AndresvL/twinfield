@@ -1,4 +1,4 @@
-package DAO.twinfield;
+package DAO;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import DBUtil.DBConnection;
 import object.Settings;
+import object.Token;
 import object.workorder.Address;
 import object.workorder.Employee;
 import object.workorder.HourType;
@@ -43,18 +44,43 @@ public class ObjectDAO {
 	}
 
 	public static void saveMaterials(ArrayList<Material> mat, String token) {
+		String subCode = null;
 		try {
 			Connection con = DBConnection.createDatabaseConnection();
 			Statement statement = con.createStatement();
 			for (Material m : mat) {
-				statement.execute("REPLACE INTO materials (code, description, price, unit, softwareToken)" + "VALUES ('"
-						+ m.getCode() + "','" + m.getDescription() + "','" + m.getPrice() + "','" + m.getUnit() + "','"
+				if(!m.getSubCode().equals("")){
+					subCode = m.getSubCode();
+				}
+				statement.execute("REPLACE INTO materials (code, subcode, description, price, unit, modified, softwareToken)" + "VALUES ('"
+						+ m.getCode() + "','" + subCode + "','" + m.getDescription() + "','" + m.getPrice() + "','" + m.getUnit() + "','" + m.getModified() + "','"
 						+ token + "')");
 			}
 			con.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static Material getMaterials(String softwareToken, String subCode, String desc) throws SQLException{
+		Material m = null;
+		try {
+		Connection con = DBConnection.createDatabaseConnection();
+		Statement statement = con.createStatement();
+		ResultSet output = null;
+		output = statement.executeQuery("SELECT * FROM materials WHERE softwareToken =\"" + softwareToken + "\" AND subCode =\"" + subCode + "\" AND description =\"" + desc + "\"");
+		while (output.next()) {
+			String code = output.getString("code");
+			String description = output.getString("description");
+			Double price = output.getDouble("price");
+			String unit = output.getString("unit");
+			m = new Material(code, subCode, unit, description, price, null, null);
+		}
+		con.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return m;
 	}
 
 	public static void saveProjects(ArrayList<Project> projects, String token) {
@@ -84,13 +110,12 @@ public class ObjectDAO {
 			for (Relation r : relations) {
 				for (Address a : r.getAddressess()) {
 					statement.execute(
-							"REPLACE INTO relations (name, code, contact, phone_number, email, email_workorder, street, house_number, postal_code, city, remark, type, addressId, softwareToken)"
-									+ "VALUES ('" + r.getName() + "','" + r.getDebtorNumber() + "','" + r.getContact()
+							"REPLACE INTO relations (name, code, contact, phone_number, email, email_workorder, street, house_number, postal_code, city, remark, type, addressId, modified, softwareToken)"
+									+ "VALUES ('" + r.getName() + "','" + r.getDebtorNumber() + "','" + a.getName()
 									+ "','" + a.getPhoneNumber() + "','" + a.getEmail() + "','" + r.getEmailWorkorder()
 									+ "','" + a.getStreet().replace("'", "''") + "','" + a.getHouseNumber() + "','"
 									+ a.getPostalCode() + "','" + a.getCity() + "','" + a.getRemark() + "','"
-									+ a.getType() + "','" + a.getAddressId() + "','" + token + "')");
-
+									+ a.getType() + "','" + a.getAddressId() + "','" + r.getModified() + "','" + token + "')");
 				}
 			}
 			con.close();
@@ -117,29 +142,6 @@ public class ObjectDAO {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public static Boolean checkSoftwareToken(String softwareToken, String columnName, String codeString,
-			String addressCode) throws SQLException {
-		Connection con = DBConnection.createDatabaseConnection();
-		Statement statement = con.createStatement();
-		boolean b = false;
-		ResultSet output;
-		if (columnName.equals("relations")) {
-			int code = Integer.parseInt(addressCode);
-			output = statement.executeQuery("SELECT * FROM " + columnName + " WHERE softwareToken =\"" + softwareToken
-					+ "\" AND addressId=" + code + " AND code=\"" + codeString + "\"");
-
-		} else {
-			output = statement.executeQuery("SELECT * FROM " + columnName + " WHERE softwareToken =\"" + softwareToken
-					+ "\" AND code=\"" + codeString + "\"");
-		}
-
-		if (output.next()) {
-			b = true;
-		}
-		return b;
-
 	}
 
 	public static Address getAddressID(String softwareToken, String addressType, String codeString) {
@@ -254,7 +256,7 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static void deleteLog(String token) {
 		ArrayList<Map<String, String>> allLogs = getLogs(token);
 		// sys date
@@ -283,5 +285,37 @@ public class ObjectDAO {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	public static Boolean hasContent(String softwareToken, String table) throws SQLException {
+		Boolean b = false;
+		Connection con = DBConnection.createDatabaseConnection();
+		Statement statement = con.createStatement();
+		ResultSet output = null;
+		output = statement.executeQuery("SELECT * FROM " + table + " WHERE softwareToken =\"" + softwareToken + "\"");
+		while (output.next()) {
+			b = true;
+		}
+		con.close();
+		return b;
+	}
+	
+	public static String getModifiedDate(String softwareToken, String type, String code, String table) throws SQLException {
+		String modified  = null;
+		Connection con = DBConnection.createDatabaseConnection();
+		Statement statement = con.createStatement();
+		ResultSet output = null;
+		switch(table){
+			case "materials":
+				output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken + "\" AND code =\"" + code + "\"");
+				break;
+			case "relations":
+				output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken + "\" AND type =\"" + type + "\" AND code =\"" + code + "\"");
+				break;
+		}
+		while (output.next()) {
+			modified = output.getString("modified");
+		}
+		con.close();
+		return modified;
 	}
 }

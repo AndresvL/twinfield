@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
@@ -14,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import DAO.ObjectDAO;
 import object.workorder.Address;
 import object.workorder.Employee;
 import object.workorder.HourType;
@@ -21,13 +23,14 @@ import object.workorder.Material;
 import object.workorder.Project;
 import object.workorder.Relation;
 import object.workorder.WorkOrder;
-
+//In this class you'll find all the methodes that are used to communicate with WBA
 public class WorkOrderHandler {
 	private static String version = "7";
 	//WorkOrder Api key
+	//Env variable!
 	final static String softwareToken = "622a8ef3a712344ef07a4427550ae1e2b38e5342";
 
-	public static int checkToken(String token) {
+	public static int checkWorkOrderToken(String token) {
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 				+ softwareToken;
 		int code = 0;
@@ -40,9 +43,7 @@ public class WorkOrderHandler {
 			conn.setRequestProperty("Content-Type", "application/json");
 
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
 			while ((output = br.readLine()) != null) {
-
 				JSONObject json = new JSONObject(output);
 				code = json.getInt("code");
 			}
@@ -62,6 +63,10 @@ public class WorkOrderHandler {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
+			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+			String output;
+			while ((output = br.readLine()) != null) {
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -92,6 +97,7 @@ public class WorkOrderHandler {
 			while ((output = br.readLine()) != null) {
 				WorkOrder w = null;
 				JSONObject json = new JSONObject(output);
+//				System.out.println("workorder output " + output);
 				if (json.getInt("code") == 200) {
 					allData = new ArrayList<WorkOrder>();
 					JSONArray array = json.getJSONArray("object");
@@ -106,7 +112,6 @@ public class WorkOrderHandler {
 							customerEmailInvoice = object.getString("CustomerEmailInvoice");
 							customerEmail = object.getString("CustomerEmail");
 							customerDebtorNr = object.getString("CustomerDebtorNr");
-							System.out.println("costumdbnr " + customerDebtorNr);
 							employeeNr = object.getString("EmployeeNr");
 							status = object.getString("status");
 							creationDate = object.getString("CreationDate");
@@ -135,6 +140,7 @@ public class WorkOrderHandler {
 							}
 							JSONArray materials = object.getJSONArray("materials");
 							ArrayList<Material> alleMaterials = new ArrayList<Material>();
+							System.out.println("jsonArray materials " + materials);
 							for (int j = 0; j < materials.length(); j++) {
 								JSONObject material = materials.getJSONObject(j);
 								materialCode = material.getString("MaterialCode");
@@ -142,8 +148,10 @@ public class WorkOrderHandler {
 								materialUnit = material.getString("MaterialUnit");
 								materialName = material.getString("MaterialName");
 								materialPrice = material.getDouble("MaterialPrice");
-								Material m = new Material(materialCode, materialCode, materialUnit, materialName,
-										materialPrice, materialNr);
+								//Get material code from db
+								Material sub = ObjectDAO.getMaterials(token, materialCode, materialName);
+								Material m = new Material(sub.getCode(), materialCode, materialUnit, materialName,
+										materialPrice, materialNr, null);
 								alleMaterials.add(m);
 							}
 							w = new WorkOrder(projectNr, workDate, customerEmailInvoice, customerEmail,
@@ -151,7 +159,7 @@ public class WorkOrderHandler {
 							allData.add(w);
 						} else {
 							JSONArray periods = object.getJSONArray("workperiods");
-
+							
 							if (periods.length() > 0) {
 								for (int j = 0; j < periods.length(); j++) {
 									JSONObject period = periods.getJSONObject(j);
@@ -168,7 +176,7 @@ public class WorkOrderHandler {
 					}
 				}
 			}
-		} catch (IOException | JSONException e) {
+		} catch (IOException | JSONException | SQLException e) {
 			e.printStackTrace();
 		}
 		return allData;
@@ -203,7 +211,6 @@ public class WorkOrderHandler {
 			input = hourtypeInput(array);
 			break;
 		}
-		System.out.println("input " + input);
 		OutputStream os = conn.getOutputStream();
 		os.write(input.getBytes("UTF-8"));
 		os.flush();
@@ -285,14 +292,14 @@ public class WorkOrderHandler {
 				j++;
 				if (i == array.size() && j == r.getAddressess().size()) {
 					input += "{\"name\":\"" + r.getName() + "\",\"debtor_number\":\"" + r.getDebtorNumber()
-							+ "\",\"contact\":\"" + r.getContact() + "\",\"phone_number\":\"" + a.getPhoneNumber()
+							+ "\",\"contact\":\"" + a.getName() + "\",\"phone_number\":\"" + a.getPhoneNumber()
 							+ "\",\"email\":\"" + a.getEmail() + "\",\"email_workorder\":\"" + r.getEmailWorkorder()
 							+ "\",\"street\":\"" + a.getStreet() + "\",\"house_number\":\"" + a.getHouseNumber()
 							+ "\",\"postal_code\":\"" + a.getPostalCode() + "\",\"city\":\"" + a.getCity()
 							+ "\",\"remark\":\"" + a.getRemark() + "\"}";
 				} else {
 					input += "{\"name\":\"" + r.getName() + "\",\"debtor_number\":\"" + r.getDebtorNumber()
-							+ "\",\"contact\":\"" + "leeg" + "\",\"phone_number\":\"" + a.getPhoneNumber()
+							+ "\",\"contact\":\"" + a.getName() + "\",\"phone_number\":\"" + a.getPhoneNumber()
 							+ "\",\"email\":\"" + a.getEmail() + "\",\"email_workorder\":\"" + r.getEmailWorkorder()
 							+ "\",\"street\":\"" + a.getStreet() + "\",\"house_number\":\"" + a.getHouseNumber()
 							+ "\",\"postal_code\":\"" + a.getPostalCode() + "\",\"city\":\"" + a.getCity()
@@ -310,7 +317,12 @@ public class WorkOrderHandler {
 		String input = "[";
 		int i = 1;
 		for (Material m : array) {
-			String code = m.getCode();
+			String code = null;
+			if( m.getSubCode() != null && !m.getSubCode().equals("")){
+				code = m.getSubCode();
+			}else{
+				code = m.getCode();
+			}
 
 			if (i == array.size()) {
 				input += "{\"code\":\"" + code + "\",\"description\":\"" + m.getDescription() + "\",\"price\":\""

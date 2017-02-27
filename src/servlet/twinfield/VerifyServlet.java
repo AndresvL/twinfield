@@ -27,7 +27,7 @@ public class VerifyServlet extends HttpServlet {
 		@SuppressWarnings("unchecked")
 		ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
 				"<list><type>offices</type></list>", "office");
-		rd = req.getRequestDispatcher("adapter.jsp");
+		rd = req.getRequestDispatcher("twinfield.jsp");
 		req.getSession().setAttribute("offices", offices);
 		req.getSession().setAttribute("softwareToken", token.getSoftwareToken());
 		req.getSession().setAttribute("session", sessionID);

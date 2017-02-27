@@ -10,7 +10,7 @@ public class TokenDAO {
 	private static Statement statement;
 	private static ResultSet output;
 
-	public Token getAccessToken(String token) throws SQLException {
+	public static Token getToken(String token) throws SQLException {
 		Token t = null;
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
@@ -40,10 +40,11 @@ public class TokenDAO {
 		return token;
 
 	}
-	
+
 	public static ArrayList<Token> getSoftwareTokens() throws SQLException {
 		Token token = null;
-		ArrayList<Token> allTokens = new ArrayList<Token>();;
+		ArrayList<Token> allTokens = new ArrayList<Token>();
+		;
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
 		output = statement.executeQuery("SELECT * FROM credentials");
@@ -60,20 +61,37 @@ public class TokenDAO {
 		return allTokens;
 
 	}
-	public void saveAccessToken(Token t) throws SQLException {
+
+	public static void saveToken(Token t) throws SQLException {
 		if (getSoftwareToken(t.getSoftwareToken()) == null) {
 			Connection con = DBConnection.createDatabaseConnection();
 			statement = con.createStatement();
 			statement.execute(
 					"REPLACE INTO credentials (softwareToken, accessToken, accessSecret, consumerToken, consumerSecret, softwareName)"
-							+ "VALUES ('" + t.getSoftwareToken() + "','" 
-							+ t.getAccessToken() + "','"
-							+ t.getAccessSecret() + "','" 
-							+ t.getConsumerToken() + "','"
-							+ t.getConsumerSecret() + "','" 
+							+ "VALUES ('" + t.getSoftwareToken() + "','" + t.getAccessToken() + "','"
+							+ t.getAccessSecret() + "','" + t.getConsumerToken() + "','" + t.getConsumerSecret() + "','"
 							+ t.getSoftwareName() + "')");
 			con.close();
 		}
+	}
+
+	public static void saveModifiedDate(String date, String softwareToken) throws SQLException {
+		Connection con = DBConnection.createDatabaseConnection();
+		statement = con.createStatement();
+		statement.execute("UPDATE credentials SET modified = \"" + date + "\" WHERE softwareToken = \"" + softwareToken + "\"");
+		con.close();
+	}
+	
+	public static String getModifiedDate(String softwareToken) throws SQLException {
+		String date = null;
+		Connection con = DBConnection.createDatabaseConnection();
+		statement = con.createStatement();
+		output = statement.executeQuery("SELECT modified FROM credentials WHERE softwareToken =\"" + softwareToken + "\"");
+		while (output.next()) {
+			date = output.getString("modified");
+		}
+		con.close();
+		return date;
 	}
 
 	public static void deleteToken(String softwareToken) throws SQLException {

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
-import DAO.twinfield.ObjectDAO;
+import DAO.ObjectDAO;
 import object.Settings;
 
 public class SettingsServlet extends HttpServlet {

@@ -3,6 +3,7 @@ package object.workorder;
 public class Address {
 	private String name, phoneNumber, email, street, houseNumber, postalCode, city, remark, type;
 	private int addressId;
+	
 	public Address(){
 		
 	}

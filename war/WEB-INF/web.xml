@@ -10,7 +10,7 @@
 
 	<servlet>
 		<servlet-name>oauth servlet</servlet-name>
-		<servlet-class>servlet.twinfield.OAuthServlet</servlet-class>
+		<servlet-class>servlet.OAuthServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>oauth servlet</servlet-name>
@@ -26,12 +26,12 @@
 	</servlet-mapping>
 
 	<servlet>
-		<servlet-name>import data servlet</servlet-name>
+		<servlet-name>save settings servlet</servlet-name>
 		<servlet-class>servlet.SettingsServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>import data servlet</servlet-name>
-		<url-pattern>/import.do</url-pattern>
+		<servlet-name>save settings servlet</servlet-name>
+		<url-pattern>/settings.do</url-pattern>
 	</servlet-mapping>
 	
 	<servlet>

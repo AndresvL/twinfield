@@ -12,7 +12,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 
-<title>Wefact Connection</title>
+<title>WeFact Connection</title>
 
 <!-- Bootstrap Core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -42,30 +42,26 @@
 		    <![endif]-->
 <script>
 	function checkSession() {
-		if ($('#softwareToken').val() == "" || $('#softwareToken').val() == null) {
-			swal({
-				title : 'Warning',
-				text : 'You are not connected',
-				type : 'error'
-			}).then(function() {
-				$('#settings').hide();
-			});
+		//Get the modal
+		var modal = document.getElementById('myModal');
+
+		// When the user clicks on the button, open the modal 
+		if ($('#client').val() == "" || $('#client').val() == null) {
+			modal.style.display = "block";
 		}
 	}
-
 </script>
 <style>
-#float {
-	float: left;
-}
 
 .settings {
 	width: 50%;
+	height: 100%;
 	float: left;
 }
 
 .log {
 	width: 50%;
+	height: 100%;
 	float: right;
 }
 </style>
@@ -76,21 +72,61 @@
 	<div id="float">
 		<div class="settings">
 			<div class="panel-group">
-				<form action="OAuth.do"><input type="hidden" value="${softwareToken}" name="token" id="softwareToken"/> <input type="text" id="clientToken" value="10b566e8fe030c6d083ebee7d043757f" name="clientToken"/> <input type="submit" value="Submit"/></form>
-				<form action="import.do">
+				<!-- The Modal -->
+				<div id="myModal" class="modal">
+					<!-- Modal content -->
+					<div class="modal-content">
+						<form action="OAuth.do">
+							<input type="hidden" value="${softwareToken}" name="token"
+								id="softwareToken" /> <input type="hidden" value="${softwareName}" name="softwareName"
+								id="softwareToken" /> <input type="hidden"
+								value="${clientToken}" id="client" />
+							<table>
+								<tr>
+									<td>
+										<h2>Authentication</h2>
+									</td>
+								</tr>
+								<tr>
+									<td><label>${errorMessage}</label></td>
+								</tr>
+								<tr>
+									<td><label>Securitycode WeFact</label> <img
+										src="./img/vraagteken.jpg"
+										title="Login to WeFact and navigate to Instellingen > API > beveiligingscode"
+										height="13" width="13" /></td>
+								</tr>
+								<tr>
+									<td><input type="text" class="form-control"
+										id="clientToken"
+										placeholder="example: 10b566e8fe030c6d083ebee7d043757f"
+										value="10b566e8fe030c6d083ebee7d043757f" name="clientToken"
+										required /></td>
+								</tr>
+							</table>
+							<br /> <input type="submit" value="Submit"
+								class="btn btn-success btn-lg" />
+						</form>
+					</div>
+
+				</div>
+
+				<form action="settings.do">
 					<div class="panel panel-success">
 						<div class="panel-heading">Import settings</div>
 						<div class="panel-body">
 							<div class="row control-group">
 								<div class="form-group col-xs-12 floating-label controls">
-									<label>Select objects for import</label> <img src="./img/vraagteken.jpg" title="Select the objects you want to import from Twinfield into WorkOrderApp" height="13" width="13"/><br />
-									Saved imports: <b><c:forEach items="${checkboxes}"
-											var="checkboxs">${checkboxs}, </c:forEach></b>
+									<label>Select objects for import</label> <img
+										src="./img/vraagteken.jpg"
+										title="Select the objects you want to import from WeFact into WorkOrderApp"
+										height="13" width="13" /><br /> Saved imports: <b> <c:forEach
+											items="${checkboxes}" var="checkboxs">${checkboxs}, 
+										</c:forEach></b>
 									<div class="checkbox">
 										<label><input type="checkbox" value="materials"
-											name="importType" ${checkboxs == 'materials' ? 'checked="checked"' : ''}>Materials</label>
+											name="importType">Materials</label>
 									</div>
-									
 									<div class="checkbox">
 										<label><input type="checkbox" value="relations"
 											name="importType">Relations</label>
@@ -109,8 +145,10 @@
 						<div class="panel-body">
 							<div class="row control-group">
 								<div class="form-group col-xs-12 floating-label controls">
-									<label>Werkbontype</label> <img src="./img/vraagteken.jpg" title="Choose the status of the workorder you want to export" height="13" width="13"/>
-									<select name="factuurType" class="form-control" id="factuurlist" required>
+									<label>Werkbontype</label> <img src="./img/vraagteken.jpg"
+										title="Choose the status of the workorder you want to export"
+										height="13" width="13" /> <select name="factuurType"
+										class="form-control" id="factuurlist" required>
 										<option disabled selected value>-- Select a
 											Werkbontype --</option>
 										<option value="Compleet"
@@ -119,40 +157,40 @@
 											${factuur == 'Afgehandeld' ? 'selected="selected"' : ''}>Afgehandeld</option>
 									</select>
 								</div>
-							
+
 							</div>
 							<br>
 							<div id="success"></div>
 							<div class="row">
 								<div class="form-group col-xs-12">
 									<input type="submit" class="btn btn-success btn-lg"
-										value="Save" name="category"/>
+										value="Save" name="category" />
 								</div>
 							</div>
 						</div>
 					</div>
 				</form>
-				
-					<div class="panel panel-success">
-						<div class="panel-heading">Manually synchronize</div>
-						<div class="panel-body">
-							<div class="row control-group">
-								<div class="form-group col-xs-12 floating-label controls">
-									<div id="success"></div>
-									<div class="row">
-										<div class="form-group col-xs-12">
+
+				<div class="panel panel-success">
+					<div class="panel-heading">Manually synchronize</div>
+					<div class="panel-body">
+						<div class="row control-group">
+							<div class="form-group col-xs-12 floating-label controls">
+								<div id="success"></div>
+								<div class="row">
+									<div class="form-group col-xs-12">
 										<form action="sync.do">
 											<input type="hidden" value="${softwareToken}" name="token" />
 											<input type="submit" class="btn btn-success btn-lg"
 												value="Synchronize" onclick="return synchMessage();" />
 										</form>
-										</div>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				
+				</div>
+
 			</div>
 
 		</div>
