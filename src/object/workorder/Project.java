@@ -80,7 +80,7 @@ public class Project {
 		}
 	}
 	public String getDate_end() {
-		if(dateEnd== null){
+		if(dateEnd == null){
 			return "2017-01-02";
 		}else{
 			return dateEnd;

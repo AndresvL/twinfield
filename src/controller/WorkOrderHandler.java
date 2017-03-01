@@ -23,16 +23,23 @@ import object.workorder.Material;
 import object.workorder.Project;
 import object.workorder.Relation;
 import object.workorder.WorkOrder;
+
 //In this class you'll find all the methodes that are used to communicate with WBA
 public class WorkOrderHandler {
 	private static String version = "7";
-	//WorkOrder Api key
-	//Env variable!
-	final static String softwareToken = "622a8ef3a712344ef07a4427550ae1e2b38e5342";
+	// WorkOrder Api key
+	// Env variable!
+	 final static String softwareToken =
+	 "622a8ef3a712344ef07a4427550ae1e2b38e5342";
 
-	public static int checkWorkOrderToken(String token) {
-		String link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
+	// change later
+	public static int checkWorkOrderToken(String token, String softwareName) {
+		String link  = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 				+ softwareToken;
+		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null){
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
+					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
+		}
 		int code = 0;
 		String output = null;
 		try {
@@ -53,9 +60,18 @@ public class WorkOrderHandler {
 		return code;
 
 	}
-	public static void setWorkorderStatus(String id, String workorderNr, Boolean status, String type, String token){
+
+	public static void setWorkorderStatus(String id, String workorderNr, Boolean status, String type, String token,
+			String softwareName) {
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-				+ "&software_token=" + softwareToken + "&row_id=" + id + "&update_status=" + status;
+				+ "&software_token=" + softwareToken + "&row_id=" + id
+				+ "&update_status=" + status;
+		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase())!= null){
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
+					+ "&software_token=" + System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&row_id=" + id
+					+ "&update_status=" + status;
+		}
+		
 		URL url;
 		try {
 			url = new URL(link);
@@ -66,13 +82,16 @@ public class WorkOrderHandler {
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 			String output;
 			while ((output = br.readLine()) != null) {
+//				System.out.println("setWorkorderStatus " + output);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	public static ArrayList<WorkOrder> getData(String token, String type, String stat, boolean updateStatus) {
+
+	public static ArrayList<WorkOrder> getData(String token, String type, String stat, boolean updateStatus,
+			String softwareName) {
 		// Header
 		// ProjectNr, performancedate, invoiceaddressnumber,
 		// deliveraddressnumber, customercode, status, paymentmethod(cash, bank,
@@ -84,7 +103,13 @@ public class WorkOrderHandler {
 		String materialCode, materialNr, materialUnit, materialName;
 		double materialPrice;
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-				+ "&software_token=" + softwareToken + "&status=" + stat + "&update_status=" + updateStatus;
+				+ "&software_token=" + softwareToken + "&status=" + stat
+				+ "&update_status=" + updateStatus;
+		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase())!= null){
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
+					+ "&software_token=" + System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&status=" + stat
+					+ "&update_status=" + updateStatus;
+		}
 		String output = null;
 		ArrayList<WorkOrder> allData = null;
 		try {
@@ -97,7 +122,7 @@ public class WorkOrderHandler {
 			while ((output = br.readLine()) != null) {
 				WorkOrder w = null;
 				JSONObject json = new JSONObject(output);
-//				System.out.println("workorder output " + output);
+				// System.out.println("workorder output " + output);
 				if (json.getInt("code") == 200) {
 					allData = new ArrayList<WorkOrder>();
 					JSONArray array = json.getJSONArray("object");
@@ -105,8 +130,8 @@ public class WorkOrderHandler {
 						JSONObject object = array.getJSONObject(i);
 						projectNr = object.getString("ProjectNr");
 						id = object.getString("id");
-						workorderNr	= object.getString("WorkorderNo");
-						//CHANGE 
+						workorderNr = object.getString("WorkorderNo");
+						// CHANGE
 						if (projectNr.equals("")) {
 							workDate = object.getString("WorkDate");
 							customerEmailInvoice = object.getString("CustomerEmailInvoice");
@@ -140,7 +165,6 @@ public class WorkOrderHandler {
 							}
 							JSONArray materials = object.getJSONArray("materials");
 							ArrayList<Material> alleMaterials = new ArrayList<Material>();
-							System.out.println("jsonArray materials " + materials);
 							for (int j = 0; j < materials.length(); j++) {
 								JSONObject material = materials.getJSONObject(j);
 								materialCode = material.getString("MaterialCode");
@@ -148,18 +172,19 @@ public class WorkOrderHandler {
 								materialUnit = material.getString("MaterialUnit");
 								materialName = material.getString("MaterialName");
 								materialPrice = material.getDouble("MaterialPrice");
-								//Get material code from db
+								// Get material code from db
 								Material sub = ObjectDAO.getMaterials(token, materialCode, materialName);
 								Material m = new Material(sub.getCode(), materialCode, materialUnit, materialName,
 										materialPrice, materialNr, null);
 								alleMaterials.add(m);
 							}
 							w = new WorkOrder(projectNr, workDate, customerEmailInvoice, customerEmail,
-									customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id, workorderNr);
+									customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id,
+									workorderNr);
 							allData.add(w);
 						} else {
 							JSONArray periods = object.getJSONArray("workperiods");
-							
+
 							if (periods.length() > 0) {
 								for (int j = 0; j < periods.length(); j++) {
 									JSONObject period = periods.getJSONObject(j);
@@ -168,7 +193,8 @@ public class WorkOrderHandler {
 									workDate = period.getString("WorkDate");
 									description = period.getString("WorkRemark");
 									duration = period.getString("TotalTime");
-									w = new WorkOrder(employeeNr, hourType, workDate, projectNr, description, duration, id);
+									w = new WorkOrder(employeeNr, hourType, workDate, projectNr, description, duration,
+											id);
 									allData.add(w);
 								}
 							}
@@ -183,10 +209,15 @@ public class WorkOrderHandler {
 
 	}
 
-	public static boolean addData(String token, Object array, String type) throws ServletException, IOException {
+	public static boolean addData(String token, Object array, String type, String softwareName)
+			throws ServletException, IOException {
 		boolean b = false;
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken;
+		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase())!= null){
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
+					+ "&software_token=" + System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
+		}
 		URL url = new URL(link);
 		String input = null;
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -218,7 +249,6 @@ public class WorkOrderHandler {
 		BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 		String output;
 		System.out.println("Output from Server .... \n");
-		
 
 		while ((output = br.readLine()) != null) {
 			System.out.println(output);
@@ -318,9 +348,9 @@ public class WorkOrderHandler {
 		int i = 1;
 		for (Material m : array) {
 			String code = null;
-			if( m.getSubCode() != null && !m.getSubCode().equals("")){
+			if (m.getSubCode() != null && !m.getSubCode().equals("")) {
 				code = m.getSubCode();
-			}else{
+			} else {
 				code = m.getCode();
 			}
 

@@ -44,14 +44,15 @@ public class ObjectDAO {
 	}
 
 	public static void saveMaterials(ArrayList<Material> mat, String token) {
-		String subCode = null;
 		try {
 			Connection con = DBConnection.createDatabaseConnection();
 			Statement statement = con.createStatement();
 			for (Material m : mat) {
+				String subCode = null;
 				if(!m.getSubCode().equals("")){
 					subCode = m.getSubCode();
 				}
+				System.out.println("SUB " +subCode);
 				statement.execute("REPLACE INTO materials (code, subcode, description, price, unit, modified, softwareToken)" + "VALUES ('"
 						+ m.getCode() + "','" + subCode + "','" + m.getDescription() + "','" + m.getPrice() + "','" + m.getUnit() + "','" + m.getModified() + "','"
 						+ token + "')");

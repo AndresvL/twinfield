@@ -1,7 +1,13 @@
 package controller.twinfield;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.Format;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 
@@ -23,7 +29,28 @@ public class TwinfieldHandler {
 	private Search searchObject;
 	private String errorMessage = "";
 	
-	public String getEmployees(String office, String session, String token) throws ServletException, IOException {
+	public String getDateMinHour(String string){
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date date = null;
+		try {
+			//String to date
+			date = format.parse(string);
+			//Create Calender to edit time
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			cal.add(Calendar.HOUR_OF_DAY, -2);
+			date = cal.getTime();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		//Date to String
+		Format formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String s = formatter.format(date);
+		return s;
+	}
+	
+	public String getEmployees(String office, String session, String token, String softwareName, String date)
+			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		options = new String[][] { { "ArrayOfString", "string", "office", office } };
@@ -40,22 +67,29 @@ public class TwinfieldHandler {
 		if (!emp.isEmpty()) {
 			ObjectDAO.saveEmployees(emp, token);
 			// Post data to WorkorderApp
-			Boolean b = WorkOrderHandler.addData(token, emp, "employees");
+			Boolean b = WorkOrderHandler.addData(token, emp, "employees", softwareName);
 			if (b) {
-				errorMessage += "Employees imported<br />";
+				errorMessage += "Success, " + responseArray.size() + " employees imported<br />";
 			} else {
 				errorMessage += "Something went wrong with Employees<br />";
 			}
 		} else {
-			errorMessage += "No Employees found<br />";
+			errorMessage += "No Employees to import<br />";
 		}
 		return errorMessage;
 	}
 
-	public String getProjects (String office, String session, String token) throws ServletException, IOException {
+	public String getProjects(String office, String session, String token, String softwareName, String date)
+			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
-		options = new String[][] { { "ArrayOfString", "string", "dimtype", "PRJ" } };
+		if(date != null){
+			options = new String[][] { { "ArrayOfString", "string", "dimtype", "PRJ" },
+				{ "ArrayOfString", "string", "office", office }, { "ArrayOfString", "string", "modifiedsince", getDateMinHour(date)} };
+		}else{
+			options = new String[][] { { "ArrayOfString", "string", "dimtype", "PRJ" },
+				{ "ArrayOfString", "string", "office", office }};
+		}
 		searchObject = new Search("DIM", "*", 0, 1, 100, options);
 		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
 		ArrayList<Project> projects = new ArrayList<Project>();
@@ -72,19 +106,20 @@ public class TwinfieldHandler {
 		}
 		if (!projects.isEmpty()) {
 			ObjectDAO.saveProjects(projects, token);
-			Boolean b = WorkOrderHandler.addData(token, projects, "projects");
+			Boolean b = WorkOrderHandler.addData(token, projects, "projects", softwareName);
 			if (b) {
-				errorMessage += "Projects imported<br />";
+				errorMessage += "Success, " + responseArray.size() + " projects imported<br />";
 			} else {
 				errorMessage += "Something went wrong with Projects<br />";
 			}
 		} else {
-			errorMessage += "No Projects found in office " + office + "<br />";
+			errorMessage += "No projects to import<br />";
 		}
 		return errorMessage;
 	}
 
-	public String getMaterials(String office, String session, String token) throws ServletException, IOException {
+	public String getMaterials(String office, String session, String token, String softwareName, String date)
+			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		options = new String[][] { { "ArrayOfString", "string", "office", office } };
@@ -99,29 +134,36 @@ public class TwinfieldHandler {
 			if (obj != null) {
 				@SuppressWarnings("unchecked")
 				ArrayList<Material> subMaterial = (ArrayList<Material>) obj;
-				for(Material sub : subMaterial){
+				for (Material sub : subMaterial) {
 					materials.add(sub);
 				}
 			}
 		}
 		if (!materials.isEmpty()) {
 			ObjectDAO.saveMaterials(materials, token);
-			Boolean b = WorkOrderHandler.addData(token, materials, "materials");
+			Boolean b = WorkOrderHandler.addData(token, materials, "materials", softwareName);
 			if (b) {
-				errorMessage += "Materials imported<br />";
+				errorMessage += "Success, " + responseArray.size() + " materials imported<br />";
 			} else {
 				errorMessage += "Something went wrong with Materials<br />";
 			}
 		} else {
-			errorMessage += "No Materials found in office " + office + "<br />";
+			errorMessage += "No Materials to import<br />";
 		}
 		return errorMessage;
 	}
 
-	public String getRelations(String office, String session, String token) throws ServletException, IOException {
+	public String getRelations(String office, String session, String token, String softwareName, String date)
+			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
-		options = new String[][] { { "ArrayOfString", "string", "dimtype", "DEB" } };
+		if(date != null){
+			options = new String[][] { { "ArrayOfString", "string", "dimtype", "DEB" },
+				{ "ArrayOfString", "string", "office", office }, { "ArrayOfString", "string", "modifiedsince", getDateMinHour(date)} };
+		}else{
+			options = new String[][] { { "ArrayOfString", "string", "dimtype", "DEB" },
+				{ "ArrayOfString", "string", "office", office } };
+		}
 		searchObject = new Search("DIM", "*", 0, 1, 100, options);
 		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
 		ArrayList<Relation> relations = new ArrayList<Relation>();
@@ -129,6 +171,7 @@ public class TwinfieldHandler {
 			String[] parts = responseArray.get(i).split(",");
 			String string = "<read><type>dimensions</type><office>" + office + "</office><dimtype>DEB</dimtype><code>"
 					+ parts[0] + "</code></read>";
+			System.out.println("CODE " + parts[0]);
 			Object obj = SoapHandler.createSOAPXML(session, string, "relation");
 			if (obj != null) {
 				Relation r = (Relation) obj;
@@ -137,23 +180,29 @@ public class TwinfieldHandler {
 		}
 		if (!relations.isEmpty()) {
 			ObjectDAO.saveRelations(relations, token);
-			Boolean b = WorkOrderHandler.addData(token, relations, "relations");
+			Boolean b = WorkOrderHandler.addData(token, relations, "relations", softwareName);
 			if (b) {
-				errorMessage += "Relations imported<br />";
+				errorMessage += "Success, " + responseArray.size() + " relations imported<br />";
 			} else {
 				errorMessage += "Something went wrong with Relations<br />";
 			}
 		} else {
-			errorMessage += "No Relations found in office " + office + "<br />";
+			errorMessage += "No Relations to import<br />";
 		}
 		return errorMessage;
 	}
 
-	public String getHourTypes(String office, String session, String token) throws ServletException, IOException {
+	public String getHourTypes(String office, String session, String token, String softwareName, String date)
+			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
-		options = new String[][] { { "ArrayOfString", "string", "office", office },
+		if(date != null){
+			options = new String[][] { { "ArrayOfString", "string", "office", office },
+				{ "ArrayOfString", "string", "dimtype", "ACT" }, { "ArrayOfString", "string", "modifiedsince", getDateMinHour(date)} };
+		}else{
+			options = new String[][] { { "ArrayOfString", "string", "office", office },
 				{ "ArrayOfString", "string", "dimtype", "ACT" } };
+		}
 		searchObject = new Search("DIM", "*", 0, 1, 100, options);
 		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
 		ArrayList<HourType> hourtypes = new ArrayList<HourType>();
@@ -169,21 +218,24 @@ public class TwinfieldHandler {
 		}
 		if (!hourtypes.isEmpty()) {
 			ObjectDAO.saveHourTypes(hourtypes, token);
-			Boolean b = WorkOrderHandler.addData(token, hourtypes, "hourtypes");
+			Boolean b = WorkOrderHandler.addData(token, hourtypes, "hourtypes", softwareName);
 			if (b) {
-				errorMessage += "Hourtypes imported<br />";
+				errorMessage += "Success, " + responseArray.size() + " hourtypes imported<br />";
 			} else {
 				errorMessage += "Something went wrong with Hourtypes<br />";
 			}
 		} else {
-			errorMessage += "No Hourtypes found in office " + office + "<br />";
+			errorMessage += "No Hourtypes to import<br />";
 		}
 		return errorMessage;
 	}
+
 	@SuppressWarnings("unchecked")
-	public String getWorkOrders(String office, String session, String token, String factuurType) {
-		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false);
+	public String getWorkOrders(String office, String session, String token, String factuurType, String softwareName) {
+		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,
+				softwareName);
 		ArrayList<WorkOrder> tempUren = new ArrayList<WorkOrder>();
+		int factuurSuccess = 0;
 		int factuurAmount = 0;
 		if (allData.isEmpty() || allData == null) {
 			System.out.println("allData is empty");
@@ -193,6 +245,7 @@ public class TwinfieldHandler {
 		for (WorkOrder w : allData) {
 			// if projectnr is empty create a invoice
 			if (w.getProjectNr().equals("")) {
+				factuurAmount++;
 				Address factuur = null;
 				Address post = null;
 				post = ObjectDAO.getAddressID(token, "postal", w.getCustomerDebtorNr());
@@ -219,26 +272,22 @@ public class TwinfieldHandler {
 					i++;
 					// subCode is empty for now because werkbonapp
 					// doesnt provide this function
-					String subCode = "";
 					string += "<line id=\"" + i + "\">" + "<article>" + m.getCode() + "</article>" + "<subarticle>"
-							+ m.getSubCode() + "</subarticle>" + "<quantity>" + m.getQuantity() + "</quantity>" + "<units>"
-							+ m.getUnit() + "</units>" + "</line>";
+							+ m.getSubCode() + "</subarticle>" + "<quantity>" + m.getQuantity() + "</quantity>"
+							+ "<units>" + m.getUnit() + "</units>" + "</line>";
 				}
 				string += "</lines></salesinvoice>";
 				Boolean resultsFactuur = (Boolean) SoapHandler.createSOAPXML(session, string, "workorderFactuur");
-//				System.out.println("resultsFactuur " + resultsFactuur);
 				if (resultsFactuur) {
 					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), resultsFactuur, "GetWorkorder",
-							token);
-					factuurAmount++;
+							token, softwareName);
+					factuurSuccess++;
 				}
 			} else {
-				String code = "PERSONAL";
+				String code = "DIRECT";
 				invoiceType = "UREN";
 				System.out.println("employeenr " + w.getEmployeeNr());
-				System.out.println("w.getHourType()" + w.getHourType());
 				if (!w.getHourType().equals("") && !w.getEmployeeNr().equals("")) {
-					
 					tempUren.add(w);
 					hourString += "<teq>" + "<header>" + "<office>" + office + "</office>"
 					// Check this later
@@ -257,23 +306,29 @@ public class TwinfieldHandler {
 		int i = 0;
 		for (Boolean b : results) {
 			WorkOrder o = tempUren.get(i);
-			WorkOrderHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), b, "GetWorkorder", token);
+			WorkOrderHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), b, "GetWorkorder", token, softwareName);
 			if (b) {
 				i++;
+			} else {
+
 			}
 
 		}
 		if (i != 0) {
-			errorMessage += i + " uurboeking(en) created<br />";
+			errorMessage += i + " Uurboeking(en) created<br />";
+		} else if (results.size() > 0 && i == 0) {
+			errorMessage += "Uurboeking error, wrong export office selected<br />";
 		} else {
-			errorMessage += "0 uurboekingen created<br />";
+			errorMessage += "No uurboeking workorder found<br />";
 		}
 
 		// Factuur
-		if (factuurAmount > 0) {
-			errorMessage += factuurAmount + " Invoices created<br />";
+		if (factuurSuccess > 0) {
+			errorMessage += factuurSuccess + " Invoice(s) created<br />";
+		} else if (factuurAmount > 0 && factuurSuccess == 0) {
+			errorMessage += "Invoice error, wrong export office selected<br />";
 		} else {
-			errorMessage += "0 Invoices created<br />";
+			errorMessage += "No invoice workorder found<br />";
 		}
 		return errorMessage;
 	}

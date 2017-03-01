@@ -15,8 +15,9 @@ public class SettingsServlet extends HttpServlet {
 	String importOffice = null, exportOffice = null;
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		softwareName = (String) req.getSession().getAttribute("softwareName");
+//		softwareName = (String) req.getSession().getAttribute("softwareName");
 		factuurType = req.getParameter("factuurType");
+		softwareName = req.getParameter("softwareName");
 		String[] importTypes = req.getParameterValues("importType");
 		String token = (String) req.getSession().getAttribute("softwareToken");
 		//For each connection another case;
@@ -48,6 +49,7 @@ public class SettingsServlet extends HttpServlet {
 			}
 		}
 		if (redirect != null) {
+//			 + "&checkbox=" + oldImport
 			resp.sendRedirect(redirect + "OAuth.do?token=" + token + "&softwareName=" + softwareName);
 		} else {
 			resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + token + "&softwareName=" + softwareName);

@@ -45,7 +45,6 @@
 		//Get the modal
 		var modal = document.getElementById('myModal');
 
-		// When the user clicks on the button, open the modal 
 		if ($('#client').val() == "" || $('#client').val() == null) {
 			modal.style.display = "block";
 		}

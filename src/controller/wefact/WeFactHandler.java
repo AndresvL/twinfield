@@ -29,7 +29,8 @@ import object.workorder.WorkOrder;
 
 public class WeFactHandler {
 	private String controller, action;
-	String array  = null;
+	private String array  = null;
+	final String softwareName = "WeFact";
 
 	public HttpURLConnection getConnection(int postDataLength) throws IOException {
 		String link = "https://www.mijnwefact.nl/apiv2/api.php";
@@ -162,7 +163,7 @@ public class WeFactHandler {
 		}
 		if (!materials.isEmpty()) {
 			ObjectDAO.saveMaterials(materials, softwareToken);
-			Boolean b = WorkOrderHandler.addData(softwareToken, materials, "materials");
+			Boolean b = WorkOrderHandler.addData(softwareToken, materials, "materials", softwareName);
 			if (b) {
 				errorMessage += "Success " + importCount + " materials imported<br />";
 				errorMessage += "and " + editCount + " materials edited<br />";
@@ -310,7 +311,7 @@ public class WeFactHandler {
 		}
 		if (!relations.isEmpty()) {
 			ObjectDAO.saveRelations(relations, softwareToken);
-			Boolean b = WorkOrderHandler.addData(softwareToken, relations, "relations");
+			Boolean b = WorkOrderHandler.addData(softwareToken, relations, "relations", softwareName);
 			if (b) {
 				errorMessage += "Success " + importCount + " relations imported<br />";
 				errorMessage += "and " + editCount + " relations edited<br />";

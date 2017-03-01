@@ -40,7 +40,6 @@ public class SoapHandler {
 			SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
 			sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
 			cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
-
 			soapConnection.close();
 		} catch (Exception e) {
 			System.err.println("Error occurred while sending SOAP Request to Server");
@@ -108,12 +107,10 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
-//			System.out.println("requestString " + data);
-			logger.info(xmlString);
 			soapConnection.close();
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
-
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -145,15 +142,23 @@ public class SoapHandler {
 		if (result != 0) {
 			switch (type) {
 			case "project":
+				logger.info("ProjectRequest " + data);
+				logger.info("ProjectResponse " + xmlString);
 				obj = getProjectXML(doc);
 				break;
 			case "material":
+				logger.info("MaterialRequest " + data);
+				logger.info("MaterialResponse " + xmlString);
 				obj = getMaterialXML(doc);
 				break;
 			case "relation":
+				logger.info("RelationRequest " + data);
+				logger.info("RelationResponse " + xmlString);
 				obj = getRelationXML(doc);
 				break;
 			case "hourtype":
+				logger.info("HourtypeRequest " + data);
+				logger.info("HourtypeResponse " + xmlString);
 				obj = getHourTypeXML(doc);
 				break;
 			case "office":
@@ -266,10 +271,13 @@ public class SoapHandler {
 		// <validfrom>
 		String dateStart = projects.item(1).getTextContent();
 		if (dateStart.equals("")) {
-			dateStart = "2017-10-01";
+			dateStart = null;
 		}
 		// <validfrom>
 		String dateEnd = projects.item(2).getTextContent();
+		if (dateEnd.equals("")) {
+			dateEnd = null;
+		}
 		// <customer>
 		String debtorNumber = projects.item(4).getTextContent();
 		// active
@@ -435,7 +443,6 @@ public class SoapHandler {
 
 	public static ArrayList<Map<String, String>> getOffices(Document doc) {
 		ArrayList<Map<String, String>> offices = new ArrayList<Map<String, String>>();
-
 		// <offices>
 		NodeList allData = doc.getChildNodes().item(0).getChildNodes();
 		for (int i = 0; i < allData.getLength(); i++) {

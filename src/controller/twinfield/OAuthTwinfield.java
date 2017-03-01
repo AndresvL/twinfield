@@ -21,6 +21,7 @@ import object.Settings;
 import object.Token;
 
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -34,7 +35,8 @@ public class OAuthTwinfield extends Authenticate {
 	private static String callbackConfirmed = null;
 	private static Token token = null;
 	private String callback = System.getenv("CALLBACK");
-
+	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
+	
 	public Token getTempToken(String consumerKey, String consumerSecret, String softwareToken, String softwareName)
 			throws ClientProtocolException, IOException, SQLException {
 		// Check if user has the accessToken stored in the database
@@ -106,11 +108,12 @@ public class OAuthTwinfield extends Authenticate {
 		}
 	}
 
-	public Token getAccessToken(String tempToken, String verifyToken, String softwareName) throws ClientProtocolException, IOException {
+	public Token getAccessToken(String tempToken, String verifyToken, String softwareName)
+			throws ClientProtocolException, IOException {
 		token.setTempToken(tempToken);
 		token.setVerifyToken(verifyToken);
 		token.setSoftwareName(softwareName);
-		
+
 		String uri = "https://login.twinfield.com/oauth/finalize.aspx";
 		CloseableHttpClient httpclient;
 		httpclient = HttpClients.createDefault();
@@ -160,12 +163,19 @@ public class OAuthTwinfield extends Authenticate {
 	}
 
 	@Override
-	public void authenticate(String softwareToken, HttpServletRequest req,
-			HttpServletResponse resp) throws ClientProtocolException, IOException, ServletException {
-		//Env variable!
-		//Twinfield accessToken and accessSecret
-		String token = "818784741B7543C7AE95CE5BFB783DF2";
-		String secret = "F441FB65B6AA42C995F9FAF3662E8A10";
+	public void authenticate(String softwareToken, HttpServletRequest req, HttpServletResponse resp)
+			throws ClientProtocolException, IOException, ServletException {
+		RequestDispatcher rd = null;
+		// Env variable!
+		// Twinfield accessToken and accessSecret
+		String token = System.getenv("TWINFIELD_TOKEN");
+		if(token == null){
+			token = "818784741B7543C7AE95CE5BFB783DF2";
+		}
+		String secret = System.getenv("TWINFIELD_SECRET");
+		if(secret == null){
+			secret = "F441FB65B6AA42C995F9FAF3662E8A10";
+		}
 		String softwareName = req.getParameter("softwareName");
 		Token checkToken = null;
 		try {
@@ -175,44 +185,53 @@ public class OAuthTwinfield extends Authenticate {
 		}
 		req.getSession().setAttribute("error", null);
 		// Check if accessToken exist in db
-		if (checkToken.getAccessToken() == null) {
-			resp.sendRedirect("https://login.twinfield.com/oauth/login.aspx?oauth_token=" + checkToken.getTempToken());
-		} else {
-			String sessionID = SoapHandler.getSession(checkToken);
-			RequestDispatcher rd = null;
-			if (sessionID != null) {
-				@SuppressWarnings("unchecked")
-				ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
-						"<list><type>offices</type></list>", "office");
-
-				rd = req.getRequestDispatcher("twinfield.jsp");
-				req.getSession().setAttribute("session", sessionID);
-				req.getSession().setAttribute("offices", offices);
-				ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
-				if (!allLogs.isEmpty() || allLogs != null) {
-					req.getSession().setAttribute("logs", null);
-					req.getSession().setAttribute("logs", allLogs);
-				}
-				Settings set = ObjectDAO.getSettings(softwareToken);
-				if (set != null) {
-					req.getSession().setAttribute("checkboxes", set.getImportObjects());
-					req.getSession().setAttribute("exportOffice", set.getExportOffice());
-					req.getSession().setAttribute("factuur", set.getFactuurType());
-					req.getSession().setAttribute("importOffice", set.getImportOffice());
-				}
-				// if session is null
+		if (checkToken != null) {
+			if (checkToken.getAccessToken() == null) {
+				resp.sendRedirect(
+						"https://login.twinfield.com/oauth/login.aspx?oauth_token=" + checkToken.getTempToken());
 			} else {
-				rd = req.getRequestDispatcher("twinfield.jsp");
-				req.getSession().setAttribute("session", null);
-				try {
-					TokenDAO.deleteToken(softwareToken);
-				} catch (SQLException e) {
-					e.printStackTrace();
+				String sessionID = SoapHandler.getSession(checkToken);
+				logger.info("OAuth autenticate session= " + sessionID);
+				logger.info("OAuth autenticate WBAToken= " + softwareToken);
+				if (sessionID != null) {
+					@SuppressWarnings("unchecked")
+					ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
+							"<list><type>offices</type></list>", "office");
+
+					rd = req.getRequestDispatcher("twinfield.jsp");
+					req.getSession().setAttribute("session", sessionID);
+					req.getSession().setAttribute("offices", offices);
+					ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
+					if (!allLogs.isEmpty() || allLogs != null) {
+						req.getSession().setAttribute("logs", allLogs);
+					}
+					Settings set = ObjectDAO.getSettings(softwareToken);
+					if (set != null) {
+						req.getSession().setAttribute("checkboxes", set.getImportObjects());
+						req.getSession().setAttribute("exportOffice", set.getExportOffice());
+						req.getSession().setAttribute("factuur", set.getFactuurType());
+						req.getSession().setAttribute("importOffice", set.getImportOffice());
+					}
+					// if session is null
+				} else {
+					rd = req.getRequestDispatcher("twinfield.jsp");
+					req.getSession().setAttribute("session", null);
+					try {
+						TokenDAO.deleteToken(softwareToken);
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+					req.getSession().setAttribute("error", "Something went wrong with connecting to Twinfield");
 				}
-				req.getSession().setAttribute("error", "Something went wrong with connecting to Twinfield");
+				rd.forward(req, resp);
 			}
+		}else{
+			rd = req.getRequestDispatcher("twinfield.jsp");
+			req.getSession().setAttribute("session", null);
+			req.getSession().setAttribute("error", "Something went wrong with connecting to Database");
 			rd.forward(req, resp);
 		}
+		
 
 	}
 }
