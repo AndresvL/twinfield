@@ -317,7 +317,7 @@ public class TwinfieldHandler {
 		if (i != 0) {
 			errorMessage += i + " Uurboeking(en) created<br />";
 		} else if (results.size() > 0 && i == 0) {
-			errorMessage += "Uurboeking error, wrong export office selected<br />";
+			errorMessage += "Error occured while sending the uurboeking, Please contact Support<br />";
 		} else {
 			errorMessage += "No uurboeking workorder found<br />";
 		}
@@ -326,7 +326,7 @@ public class TwinfieldHandler {
 		if (factuurSuccess > 0) {
 			errorMessage += factuurSuccess + " Invoice(s) created<br />";
 		} else if (factuurAmount > 0 && factuurSuccess == 0) {
-			errorMessage += "Invoice error, wrong export office selected<br />";
+			errorMessage += "Something went wrong with sending the invoice, Please contact Support<br />";
 		} else {
 			errorMessage += "No invoice workorder found<br />";
 		}

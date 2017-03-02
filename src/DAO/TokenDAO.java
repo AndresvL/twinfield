@@ -37,6 +37,7 @@ public class TokenDAO {
 		while (output.next()) {
 			token = output.getString("softwareToken");
 		}
+		con.close();
 		return token;
 
 	}
@@ -44,7 +45,6 @@ public class TokenDAO {
 	public static ArrayList<Token> getSoftwareTokens() throws SQLException {
 		Token token = null;
 		ArrayList<Token> allTokens = new ArrayList<Token>();
-		;
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
 		output = statement.executeQuery("SELECT * FROM credentials");
@@ -58,6 +58,7 @@ public class TokenDAO {
 			token = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken, softwareName);
 			allTokens.add(token);
 		}
+		con.close();
 		return allTokens;
 
 	}

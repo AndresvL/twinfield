@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import DBUtil.DBConnection;
 import object.Settings;
-import object.Token;
 import object.workorder.Address;
 import object.workorder.Employee;
 import object.workorder.HourType;
@@ -37,7 +36,6 @@ public class ObjectDAO {
 
 			}
 			con.close();
-
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -160,8 +158,8 @@ public class ObjectDAO {
 				String addressId = output.getString("addressId");
 				System.out.println("addressDB " + addressId);
 				a.setAddressId(Integer.parseInt(addressId));
-				con.close();
 			}
+			con.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -179,7 +177,6 @@ public class ObjectDAO {
 							+ set.getFactuurType() + "','" + set.getImportObjects() + "','" + token + "')");
 
 			con.close();
-
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -203,8 +200,8 @@ public class ObjectDAO {
 				String[] strValues = importTypes.split(",\\s");
 				ArrayList<String> allTypes = new ArrayList<String>(Arrays.asList(strValues));
 				set = new Settings(importOffice, exportOffice, factuurType, allTypes);
-				con.close();
 			}
+			con.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -233,6 +230,7 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 		Collections.reverse(allLogs);
+		
 		return allLogs;
 	}
 

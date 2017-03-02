@@ -3,7 +3,6 @@ package servlet.twinfield;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +13,8 @@ import controller.twinfield.SoapHandler;
 import object.Token;
 
 public class VerifyServlet extends HttpServlet {
+
+	private String redirect = System.getenv("CALLBACK");
 	private static final long serialVersionUID = 1L;
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -23,14 +24,18 @@ public class VerifyServlet extends HttpServlet {
 		String softwareName = (String) req.getSession().getAttribute("softwareName");
 		Token token = oauth.getAccessToken(temporaryToken, temporaryVerifier, softwareName);
 		String sessionID = SoapHandler.getSession(token);
-		RequestDispatcher rd = null;
 		@SuppressWarnings("unchecked")
 		ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
 				"<list><type>offices</type></list>", "office");
-		rd = req.getRequestDispatcher("twinfield.jsp");
+		
 		req.getSession().setAttribute("offices", offices);
 		req.getSession().setAttribute("softwareToken", token.getSoftwareToken());
 		req.getSession().setAttribute("session", sessionID);
-		rd.forward(req, resp);
+		if (redirect != null) {
+//			 + "&checkbox=" + oldImport
+			resp.sendRedirect(redirect + "OAuth.do?token=" +  token.getSoftwareToken() + "&softwareName=" + softwareName);
+		} else {
+			resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + token.getSoftwareToken() + "&softwareName=" + softwareName);
+		}
 	}
 }

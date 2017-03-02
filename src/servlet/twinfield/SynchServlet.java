@@ -94,7 +94,6 @@ public class SynchServlet extends HttpServlet {
 		if(!loggedIn){
 			date = TokenDAO.getModifiedDate(t.getSoftwareToken());
 		}		
-		System.out.println("date boolean " + date);
 		try {
 			switch (t.getSoftwareName()) {
 			case "Twinfield":

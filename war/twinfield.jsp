@@ -37,9 +37,9 @@
 <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
-		        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-		        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-		    <![endif]-->
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script> 
+ <![endif]-->
 
 <style>
 .settings {
@@ -48,6 +48,10 @@
 }
 
 #help {
+	float: right;
+}
+
+#show {
 	float: right;
 }
 
@@ -79,93 +83,106 @@
 				<div class="modal-content">
 					<div class="modal-header">
 						<span class="close">&times;</span>
-						<h2>Instructies</h2>
+						<h2>
+							Welkom <small>bij de Twinfield koppeling</small>
+						</h2>
 					</div>
 					<div class="modal-body">
-						<h3>Welkom bij de Twinfield koppeling</h3>
-						<br />
-						<p>Informatie</p>
-						Op deze pagina is het mogelijk om de import en export gegevens tussen WerkbonApp en Twinfield in te stellen.<br />
-						Elke 15 minuten zal er een automatische synchronisatie plaatsvinden aan de hand van deze instellingen.<br />
-						Het is ook mogelijk om handmatig een synchronisatie uit te voeren door onderaan op de knop synchronize te klikken.<br />
-						<br />
-						<p>Data Mapping</p>
-						<table class="table table-hover">
-							<thead>
-								<tr>
-									<th>WerkbonApp</th>
-									<th>Twinfield</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<th colspan="2">Import</th>
-								</tr>
-								<tr>
-									<td>Medewerkers</td>
-									<td>Gebruikers</td>
-								</tr>
-								<tr>
-									<td>Projecten</td>
-									<td>Projecten</td>
-								</tr>
-								<tr>
-									<td>Materialen</td>
-									<td>Artikelen</td>
-								</tr>
-								<tr>
-									<td>Relaties</td>
-									<td>Debiteuren</td>
-								</tr>
-								<tr>
-									<td>Urensoorten</td>
-									<td>Aktiviteiten</td>
-								</tr>
-								<tr>
-									<th colspan="2">Export</th>
-								</tr>
+						<h4>Informatie</h4>
+						- Op deze pagina is het mogelijk om de
+						<mark>import</mark>
+						en
+						<mark>export</mark>
+						gegevens <br />tussen WerkbonApp en Twinfield in te stellen<br />
+						- Elke 15 minuten zal er een
+						<mark>automatische synchronisatie</mark>
+						plaatsvinden aan de hand van deze instellingen.<br /> - Het is
+						mogelijk om
+						<mark>handmatig een synchronisatie uit te voeren</mark>
+						door onderaan op de knop synchronize te klikken.<br /> <br />
 
-								<tr>
-									<td>Werkbon (zonder projectNr)</td>
-									<td>Factuur</td>
-								</tr>
-								<tr>
-									<td>Werkbon (met projectNr)</td>
-									<td>Urenboeking</td>
-								</tr>
-							</tbody>
-						</table>
-						<p>In Twinfield moeten de volgende gebruikersrollen worden
-							toegevoegd</p>
+						<h4>Belangrijk</h4>
+						<b>Let op! Twinfield is leidend. <br> De <abbr>import
+								settings</abbr> mogen alleen in Twinfield worden gewijzigd.
+						</b> <br /> <br />
+						<button type="button" id="show" class="btn btn-info">Show</button>
+						<h4>Data Mapping</h4>
+
+						<div id="mappingTable" style="display: none;">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>WerkbonApp</th>
+										<th>Twinfield</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<th colspan="2">Import</th>
+									</tr>
+									<tr>
+										<td>Medewerkers</td>
+										<td>Gebruikers</td>
+									</tr>
+									<tr>
+										<td>Projecten</td>
+										<td>Projecten</td>
+									</tr>
+									<tr>
+										<td>Materialen</td>
+										<td>Artikelen</td>
+									</tr>
+									<tr>
+										<td>Relaties</td>
+										<td>Debiteuren</td>
+									</tr>
+									<tr>
+										<td>Urensoorten</td>
+										<td>Aktiviteiten</td>
+									</tr>
+									<tr>
+										<th colspan="2">Export</th>
+									</tr>
+									<tr>
+										<td>Werkbon (zonder projectNr)</td>
+										<td>Factuur</td>
+									</tr>
+									<tr>
+										<td>Werkbon (met projectNr)</td>
+										<td>Urenboeking</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<br />
+						<h4>Gebruikersrollen</h4>
+						In Twinfield <abbr>moet</abbr> de volgende gebruikersrol worden
+						toegevoegd.<br /> <br />
 						<div class="image">
 							<img src="./img/rol.png" width="100%" height="100%"
 								title="Ga naar Projecten > Uren & onkosten > Tarieven & toegang" />
 						</div>
-						<br />
-						<p>
-							<b>Let op! Twinfield is leidend. <br> De import settings mogen alleen in Twinfield worden gewijzigd</b>
-						</p>
-
 					</div>
 					<div class="modal-footer">
-						<h3>WorkOrderApp B.V.</h3>
+						<p>WorkOrderApp B.V.</p>
 					</div>
 				</div>
 
 			</div>
 			<input type="hidden" value="${session}" id="session" /> <input
-				type="hidden" value="${error}" id="error" />
+				type="hidden" value="${error}" id="error" /> <input type="hidden"
+				value="${saved}" id="saved" name="saved" />
 			<form action="settings.do" id="save">
 				<div class="panel panel-success">
 					<div class="panel-heading" title="test">Import settings</div>
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
-							<input type="hidden" value="${softwareName}" name="softwareName" /> 
+								<input type="hidden" value="${softwareName}" name="softwareName" />
 								<label>Office</label> <img src="./img/vraagteken.jpg"
 									title="Choose an administration" height="13" width="13" /> <select
 									name="offices" class="form-control" id="officelist" required>
-									<option>-- Select an office --</option>
+									<option disabled selected value>-- Select an office --</option>
 									<c:forEach items="${offices}" var="office">
 										<option value="${office.code}"
 											${office.code == importOffice ? 'selected="selected"' : ''}>
@@ -176,8 +193,6 @@
 									title="Select the objects you want to import from Twinfield into WorkOrderApp"
 									height="13" width="13" /><br /> Saved imports: <b><c:forEach
 										items="${checkboxes}" var="checkboxs">${checkboxs}, </c:forEach></b>
-								<%-- <input type="text" id="checkbox" name="checkbox" value="${checkboxes}" /> <input
-									type="text" id="oldCheckbox" value="${oldCheckboxes}" /> --%>
 								<div class="checkbox">
 									<label><input type="checkbox" value="employees"
 										name="importType" id="employees">Employees</label>
@@ -198,10 +213,8 @@
 									<label><input type="checkbox" value="hourtypes"
 										name="importType">Hourtypes</label>
 								</div>
-								<input type="button" value="Help" id="help"
-									class="btn btn-success btn-lg" />
+								<button type="button" id="help" class="btn btn-info btn-md">Help</button>
 							</div>
-
 						</div>
 					</div>
 				</div>
@@ -209,18 +222,18 @@
 					<div class="panel-heading">Export settings</div>
 					<div class="panel-body">
 						<div class="row control-group">
-							<input type="hidden" value="${errorExport}" id="errorExport" />
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Office</label> <img src="./img/vraagteken.jpg"
 									title="Choose an administration" height="13" width="13" /> <select
 									name="exportOffices" class="form-control" id="officeExportList"
-									required>
+									disabled>
 									<option>-- Select an office --</option>
 									<c:forEach items="${offices}" var="office">
 										<option value="${office.code}"
 											${office.code == exportOffice ? 'selected="selected"' : ''}>${office.name}</option>
 									</c:forEach>
-								</select>
+								</select> <input class="form-control" type="hidden" name="exportOffices"
+									id="exportOfficeValue" />
 							</div>
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Werkbontype</label> <img src="./img/vraagteken.jpg"
@@ -236,7 +249,7 @@
 						<div id="success"></div>
 						<div class="row">
 							<div class="form-group col-xs-12">
-								<input type="submit" class="btn btn-success btn-lg" value="Save"
+								<input type="submit" class="btn btn-success btn-md" value="Save"
 									name="category" />
 							</div>
 						</div>
@@ -253,8 +266,8 @@
 								<div class="row">
 									<div class="form-group col-xs-12">
 										<input type="hidden" value="${softwareToken}" name="token" />
-										<input type="submit" class="btn btn-success btn-lg"
-											value="Synchronize" />
+										<input type="submit" class="btn btn-success btn-md"
+											value="Synchronize"  id="syncbutton"/>
 									</div>
 								</div>
 							</div>
@@ -271,7 +284,6 @@
 			<div class="panel-body">
 				<div class="row control-group">
 					<div class="form-group col-xs-12 floating-label controls">
-
 						<table class="table table-hover">
 							<thead>
 								<tr>
@@ -312,6 +324,10 @@
 	<script src="js/freelancer.min.js"></script>
 	<script>
 		$(document).ready(function() {
+			<!-- reload page every 15 - 20 sec min -->
+			setTimeout(function(){
+				  location.reload();
+			  },880000)
 			var modal = $('#checkbox').val();
 			if ($('#session').val() == "" || $('#session').val() == null) {
 				if ($('#error').val() != null) {
@@ -330,14 +346,18 @@
 
 			} else {
 				$('.settings').show();
-				/* if ($('#checkbox').val() != $('#oldCheckbox').val()) {
+				if ($('#saved').val() == "true") {
 					swal({
-						title :'Success',
-						text : 'Settings are save!',
+						title : 'Success',
+						text : 'Settings are saved!',
 						type : 'success'
 					})
-				} */
+				}
+				$('#saved').val("false");
 			}
+		});
+		$("#show").click(function() {
+			$("#mappingTable").toggle();
 		});
 		$("#help").click(function() {
 			var modal = document.getElementById('myModal');
@@ -370,7 +390,7 @@
 						})
 					}
 				});
-		$("#sync").submit(
+		$("#syncbutton").click(
 				function(event) {
 					if ($('#officeExportList').val() == null
 							|| $('#officelist').val() == null) {
@@ -380,8 +400,32 @@
 							text : 'No administration selected',
 							type : 'error'
 						})
+					} else {
+						event.preventDefault();
+						swal({
+							  title: 'Please wait',
+							  text: 'Data wordt gesynchroniseerd.',
+							  imageUrl: 'WBA.png',
+							  imageWidth: 250,
+							  imageHeight: 220,
+							  timer: 500
+							  
+							}).then(
+							  function () {
+								  $( "#sync" ).submit();
+							  },
+							  function (dismiss) {
+							    if (dismiss === 'timer') {
+							    	 $( "#sync" ).submit();
+							    }
+							  })
 					}
+					
 				});
+		$("#officelist").change(function() {
+			$("#officeExportList").val($("#officelist").val());
+			$("#exportOfficeValue").val($("#officelist").val());
+		});
 	</script>
 </body>
 

@@ -117,6 +117,8 @@ public class SoapHandler {
 		int result = Integer.parseInt(doc.getChildNodes().item(0).getAttributes().getNamedItem("result").getNodeValue());
 		
 		if(type.equals("workorder")){
+			logger.info("WorkorderRequest " + data);
+			logger.info("WorkorderResponse " + xmlString);
 			ArrayList<Boolean> results = new ArrayList<Boolean>();
 			NodeList workorder = doc.getChildNodes().item(0).getChildNodes();
 			int workorderResult = 0;

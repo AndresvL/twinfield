@@ -18,6 +18,16 @@ public class OAuthServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String softwareToken = req.getParameter("token");
 		String softwareName = req.getParameter("softwareName");
+		if(req.getParameterMap().containsKey("saved")){
+			if(req.getParameter("saved").equals("true")){
+				req.getSession().setAttribute("saved", true);
+			}else{
+				req.getSession().setAttribute("saved", false);
+			}
+		}else{
+			req.getSession().setAttribute("saved", false);
+		}
+		
 //		String oldImport = req.getParameter("checkbox");
 
 		RequestDispatcher rd = null;
