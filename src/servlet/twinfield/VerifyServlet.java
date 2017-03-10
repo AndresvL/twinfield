@@ -23,9 +23,13 @@ public class VerifyServlet extends HttpServlet {
 		OAuthTwinfield oauth = new OAuthTwinfield();
 		String softwareName = (String) req.getSession().getAttribute("softwareName");
 		Token token = oauth.getAccessToken(temporaryToken, temporaryVerifier, softwareName);
-		String sessionID = SoapHandler.getSession(token);
+		String sessionID = null;
+		String cluster = null;
+		String[] array = SoapHandler.getSession(token);
+		sessionID = array[0];
+		cluster = array[1];
 		@SuppressWarnings("unchecked")
-		ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
+		ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID, cluster,
 				"<list><type>offices</type></list>", "office");
 		
 		req.getSession().setAttribute("offices", offices);

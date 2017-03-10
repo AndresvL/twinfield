@@ -95,18 +95,18 @@ public class SynchServlet extends HttpServlet {
 	public void setSyncMethods(Token t, HttpServletRequest req, boolean loggedIn) throws Exception {
 		String date = null;
 		String sessionID = (String)req.getSession().getAttribute("session");
-		if(sessionID == null){
-			
-		}
+		String cluster = (String)req.getSession().getAttribute("cluster");
 		if(!loggedIn){
 			date = TokenDAO.getModifiedDate(t.getSoftwareToken());
-			sessionID = SoapHandler.getSession(t);
+			String[] array = SoapHandler.getSession(t);
+			sessionID = array[0];
+			cluster = array[1];
 			req.getSession().setAttribute("session", null);
 		}
 		try {
 			switch (t.getSoftwareName()) {
 			case "Twinfield":
-				twinfieldImport(sessionID, t.getSoftwareToken(), t.getSoftwareName(), date);
+				twinfieldImport(sessionID, cluster, t.getSoftwareToken(), t.getSoftwareName(), date);
 				break;
 			case "WeFact":
 				weFactImport(t.getSoftwareToken(), clientToken, date);
@@ -138,7 +138,7 @@ public class SynchServlet extends HttpServlet {
 		}
 	}
 
-	public void twinfieldImport(String session, String token, String softwareName, String date) throws Exception {
+	public void twinfieldImport(String session, String cluster, String token, String softwareName, String date) throws Exception {
 		TwinfieldHandler twinfield = new TwinfieldHandler();
 		Settings set = ObjectDAO.getSettings(token);
 		if (set != null) {
@@ -147,29 +147,29 @@ public class SynchServlet extends HttpServlet {
 			for (String type : importTypes) {
 				switch (type) {
 				case "employees":
-					messageArray = twinfield.getEmployees(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getEmployees(set.getImportOffice(), session, cluster, token, softwareName, date);
 					setErrorMessage(messageArray);
 					break;
 				case "projects":
-					messageArray = twinfield.getProjects(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getProjects(set.getImportOffice(), session, cluster, token, softwareName, date);
 					setErrorMessage(messageArray);
 					break;
 				case "materials":
-					messageArray = twinfield.getMaterials(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getMaterials(set.getImportOffice(), session, cluster, token, softwareName, date);
 					setErrorMessage(messageArray);
 					break;
 				case "relations":
-					messageArray = twinfield.getRelations(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getRelations(set.getImportOffice(), session, cluster, token, softwareName, date);
 					setErrorMessage(messageArray);
 					break;
 				case "hourtypes":
-					messageArray = twinfield.getHourTypes(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getHourTypes(set.getImportOffice(), session, cluster,  token, softwareName, date);
 					setErrorMessage(messageArray);
 					break;
 				}
 			}
 			// Export section
-			messageArray = twinfield.getWorkOrders(set.getExportOffice(), session, token, set.getFactuurType(), softwareName);
+			messageArray = twinfield.getWorkOrders(set.getExportOffice(), session, cluster, token, set.getFactuurType(), softwareName);
 			setErrorMessageDetails(messageArray);
 			System.out.println("checkUpdate " + checkUpdate);
 			if (checkUpdate.equals("true")) {

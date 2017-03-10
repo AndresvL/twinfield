@@ -57,13 +57,13 @@ public class TwinfieldHandler {
 		return s;
 	}
 
-	public String[] getEmployees(String office, String session, String token, String softwareName, String date)
+	public String[] getEmployees(String office, String session, String cluster, String token, String softwareName, String date)
 			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		options = new String[][] { { "ArrayOfString", "string", "office", office } };
 		searchObject = new Search("USR", "*", 0, 1, 100, options);
-		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
+		responseArray = SoapHandler.createSOAPFinder(session, cluster, searchObject);
 		ArrayList<Employee> emp = new ArrayList<Employee>();
 		// Split data from ArrayList
 		for (int i = 0; i < responseArray.size(); i++) {
@@ -87,7 +87,7 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getProjects(String office, String session, String token, String softwareName, String date)
+	public String[] getProjects(String office, String session, String cluster, String token, String softwareName, String date)
 			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
@@ -100,14 +100,14 @@ public class TwinfieldHandler {
 					{ "ArrayOfString", "string", "office", office } };
 		}
 		searchObject = new Search("DIM", "*", 0, 1, 100, options);
-		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
+		responseArray = SoapHandler.createSOAPFinder(session, cluster, searchObject);
 		ArrayList<Project> projects = new ArrayList<Project>();
 		for (int i = 0; i < responseArray.size(); i++) {
 			String[] parts = responseArray.get(i).split(",");
 			// XMLString
 			String string = "<read><type>dimensions</type><office>" + office + "</office><dimtype>PRJ</dimtype><code>"
 					+ parts[0] + "</code></read>";
-			Object obj = SoapHandler.createSOAPXML(session, string, "project");
+			Object obj = SoapHandler.createSOAPXML(session, cluster, string, "project");
 			if (obj != null) {
 				Project p = (Project) obj;
 				projects.add(p);
@@ -129,19 +129,19 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getMaterials(String office, String session, String token, String softwareName, String date)
+	public String[] getMaterials(String office, String session, String cluster, String token, String softwareName, String date)
 			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		options = new String[][] { { "ArrayOfString", "string", "office", office } };
 		searchObject = new Search("ART", "*", 0, 1, 100, options);
-		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
+		responseArray = SoapHandler.createSOAPFinder(session, cluster, searchObject);
 		ArrayList<Material> materials = new ArrayList<Material>();
 		for (int i = 0; i < responseArray.size(); i++) {
 			String[] parts = responseArray.get(i).split(",");
 			String string = "<read><type>article</type><office>" + office + "</office><code>" + parts[0]
 					+ "</code></read>";
-			Object obj = SoapHandler.createSOAPXML(session, string, "material");
+			Object obj = SoapHandler.createSOAPXML(session, cluster, string, "material");
 			if (obj != null) {
 				@SuppressWarnings("unchecked")
 				ArrayList<Material> subMaterial = (ArrayList<Material>) obj;
@@ -164,7 +164,7 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getRelations(String office, String session, String token, String softwareName, String date)
+	public String[] getRelations(String office, String session, String cluster, String token, String softwareName, String date)
 			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
@@ -177,14 +177,14 @@ public class TwinfieldHandler {
 					{ "ArrayOfString", "string", "office", office } };
 		}
 		searchObject = new Search("DIM", "*", 0, 1, 100, options);
-		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
+		responseArray = SoapHandler.createSOAPFinder(session, cluster, searchObject);
 		ArrayList<Relation> relations = new ArrayList<Relation>();
 		for (int i = 0; i < responseArray.size(); i++) {
 			String[] parts = responseArray.get(i).split(",");
 			String string = "<read><type>dimensions</type><office>" + office + "</office><dimtype>DEB</dimtype><code>"
 					+ parts[0] + "</code></read>";
 			System.out.println("DebtorNr " + parts[0]);
-			Object obj = SoapHandler.createSOAPXML(session, string, "relation");
+			Object obj = SoapHandler.createSOAPXML(session, cluster, string, "relation");
 			if (obj != null) {
 				Relation r = (Relation) obj;
 				relations.add(r);
@@ -204,7 +204,7 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getHourTypes(String office, String session, String token, String softwareName, String date)
+	public String[] getHourTypes(String office, String session, String cluster, String token, String softwareName, String date)
 			throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
@@ -217,13 +217,13 @@ public class TwinfieldHandler {
 					{ "ArrayOfString", "string", "dimtype", "ACT" } };
 		}
 		searchObject = new Search("DIM", "*", 0, 1, 100, options);
-		responseArray = SoapHandler.createSOAPFinder(session, searchObject);
+		responseArray = SoapHandler.createSOAPFinder(session, cluster, searchObject);
 		ArrayList<HourType> hourtypes = new ArrayList<HourType>();
 		for (int i = 0; i < responseArray.size(); i++) {
 			String[] parts = responseArray.get(i).split(",");
 			String string = "<read><type>dimensions</type><office>" + office + "</office><dimtype>ACT</dimtype><code>"
 					+ parts[0] + "</code></read>";
-			Object obj = SoapHandler.createSOAPXML(session, string, "hourtype");
+			Object obj = SoapHandler.createSOAPXML(session, cluster, string, "hourtype");
 			if (obj != null) {
 				HourType h = (HourType) obj;
 				hourtypes.add(h);
@@ -244,7 +244,7 @@ public class TwinfieldHandler {
 	}
 
 	@SuppressWarnings("unchecked")
-	public String[] getWorkOrders(String office, String session, String token, String factuurType, String softwareName) {
+	public String[] getWorkOrders(String office, String session, String cluster, String token, String factuurType, String softwareName) {
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,	softwareName);
 		ArrayList<WorkOrder> tempUren = new ArrayList<WorkOrder>();
 		if (allData.isEmpty() || allData == null) {
@@ -259,7 +259,7 @@ public class TwinfieldHandler {
 			// if projectnr is empty create an invoice
 			if (w.getProjectNr().equals("")) {
 				factuurAmount++;
-				setFactuur(w, token, office, session, softwareName);
+				setFactuur(w, token, office, session, cluster, softwareName);
 
 			} else {
 				setUurboeking(w, office, tempUren);
@@ -283,7 +283,7 @@ public class TwinfieldHandler {
 		}
 		//Uren error
 		if (!hourString.equals("<teqs></teqs>")) {
-			ArrayList<String> results = (ArrayList<String>) SoapHandler.createSOAPXML(session, hourString, "workorder");
+			ArrayList<String> results = (ArrayList<String>) SoapHandler.createSOAPXML(session, cluster, hourString, "workorder");
 			int urenSuccess = 0;
 			for (String s : results) {
 				if (s.equals("true")) {
@@ -313,7 +313,7 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	private void setFactuur(WorkOrder w, String token, String office, String session, String softwareName) {
+	private void setFactuur(WorkOrder w, String token, String office, String session, String cluster, String softwareName) {
 		Address factuur = null;
 		Address post = null;
 		post = ObjectDAO.getAddressID(token, "postal", w.getCustomerDebtorNr());
@@ -354,7 +354,7 @@ public class TwinfieldHandler {
 			factuurString += "</lines></salesinvoice>";
 			//If material exist
 			if (!factuurString.equals("</lines></salesinvoice>")) {
-				String resultsFactuur = (String) SoapHandler.createSOAPXML(session, factuurString, "workorderFactuur");
+				String resultsFactuur = (String) SoapHandler.createSOAPXML(session, cluster, factuurString, "workorderFactuur");
 				if (resultsFactuur.equals("true")) {
 					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder", token,
 							softwareName);

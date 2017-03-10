@@ -191,18 +191,22 @@ public class OAuthTwinfield extends Authenticate {
 						"https://login.twinfield.com/oauth/login.aspx?oauth_token=" + checkToken.getTempToken());
 			} else {
 				String sessionID = (String) req.getSession().getAttribute("session");
+				String cluster = (String) req.getSession().getAttribute("cluster");
 				if(sessionID == null){
-					sessionID = SoapHandler.getSession(checkToken);
+					String[] array = SoapHandler.getSession(checkToken);
+					sessionID = array[0];
+					cluster = array[1];
 				}
 				logger.info("session= " + sessionID);
 				logger.info("WBAToken= " + softwareToken);
 				if (sessionID != null) {
 					@SuppressWarnings("unchecked")
-					ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
+					ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID, cluster,
 							"<list><type>offices</type></list>", "office");
 
 					rd = req.getRequestDispatcher("twinfield.jsp");
 					req.getSession().setAttribute("session", sessionID);
+					req.getSession().setAttribute("cluster", cluster);
 					req.getSession().setAttribute("offices", offices);
 					ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
 					if (!allLogs.isEmpty() || allLogs != null) {

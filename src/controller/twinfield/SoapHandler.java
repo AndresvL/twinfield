@@ -26,11 +26,11 @@ import object.workorder.Project;
 import object.workorder.Relation;
 
 public class SoapHandler {
-	private static String cluster;
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
 
-	public static String getSession(Token token) {
+	public static String[] getSession(Token token) {
 		String sessionID = null;
+		String cluster = null;
 		try {
 			// Create SOAP Connection
 			SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
@@ -49,7 +49,8 @@ public class SoapHandler {
 
 			e.printStackTrace();
 		}
-		return sessionID;
+		String[] sessionArray = new String[] { sessionID, cluster};
+		return sessionArray;
 	}
 
 	private static SOAPMessage createSOAPSession(Token token) throws Exception {
@@ -80,7 +81,7 @@ public class SoapHandler {
 		return soapMessage;
 	}
 
-	public static Object createSOAPXML(String session, String data, String type) {
+	public static Object createSOAPXML(String session, String cluster, String data, String type) {
 		// Create SOAP Connection
 		SOAPMessage soapResponse = null;
 		SOAPConnection soapConnection = null;
@@ -94,6 +95,7 @@ public class SoapHandler {
 			soapConnection = soapConnectionFactory.createConnection();
 			// Send SOAP Message to SOAP Server
 			String url = cluster + "/webservices/processxml.asmx?wsdl";
+			System.out.println("CLUSTER " + url);
 			MessageFactory messageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
 			SOAPMessage soapMessage = messageFactory.createMessage();
 			SOAPPart soapPart = soapMessage.getSOAPPart();
@@ -179,7 +181,7 @@ public class SoapHandler {
 	}
 
 	// See Finder methode from Twinfield
-	public static ArrayList<String> createSOAPFinder(String session, Search object) {
+	public static ArrayList<String> createSOAPFinder(String session, String cluster, Search object) {
 		// Create SOAP Connection
 		SOAPMessage soapResponse = null;
 		SOAPConnection soapConnection = null;
