@@ -1,4 +1,4 @@
-package servlet.twinfield;
+package servlet;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -26,10 +26,13 @@ import object.Token;
 
 public class SynchServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private String errorMessage = "";
+	private String errorMessage;
 	private String redirect = System.getenv("CALLBACK");
 	private String softwareName = null;
 	private String clientToken = null;
+	private String[] messageArray = null;
+	private String checkUpdate = "false";
+	private String errorDetails = null;
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		errorMessage = "";
@@ -91,13 +94,18 @@ public class SynchServlet extends HttpServlet {
 
 	public void setSyncMethods(Token t, HttpServletRequest req, boolean loggedIn) throws Exception {
 		String date = null;
+		String sessionID = (String)req.getSession().getAttribute("session");
+		if(sessionID == null){
+			
+		}
 		if(!loggedIn){
 			date = TokenDAO.getModifiedDate(t.getSoftwareToken());
-		}		
+			sessionID = SoapHandler.getSession(t);
+			req.getSession().setAttribute("session", null);
+		}
 		try {
 			switch (t.getSoftwareName()) {
 			case "Twinfield":
-				String sessionID = SoapHandler.getSession(t);
 				twinfieldImport(sessionID, t.getSoftwareToken(), t.getSoftwareName(), date);
 				break;
 			case "WeFact":
@@ -111,39 +119,67 @@ public class SynchServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 	}
+	
+	public void setErrorMessage(String[] messageArray){
+		if(messageArray!= null){
+			errorMessage += messageArray[0];
+			if(messageArray[1].equals("true")){
+				checkUpdate = "true";
+			}
+		}
+	}
+	
+	public void setErrorMessageDetails(String[] messageArray){
+		if(messageArray != null){
+			errorMessage = messageArray[0];
+			if(messageArray[1] != null){
+				errorDetails = messageArray[1];
+			}
+		}
+	}
 
 	public void twinfieldImport(String session, String token, String softwareName, String date) throws Exception {
 		TwinfieldHandler twinfield = new TwinfieldHandler();
 		Settings set = ObjectDAO.getSettings(token);
-		System.out.println("TOKEN= " + token);
 		if (set != null) {
 			ArrayList<String> importTypes = set.getImportObjects();
 			// Import section
 			for (String type : importTypes) {
 				switch (type) {
 				case "employees":
-					errorMessage += twinfield.getEmployees(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getEmployees(set.getImportOffice(), session, token, softwareName, date);
+					setErrorMessage(messageArray);
 					break;
 				case "projects":
-					errorMessage += twinfield.getProjects(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getProjects(set.getImportOffice(), session, token, softwareName, date);
+					setErrorMessage(messageArray);
 					break;
 				case "materials":
-					errorMessage += twinfield.getMaterials(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getMaterials(set.getImportOffice(), session, token, softwareName, date);
+					setErrorMessage(messageArray);
 					break;
 				case "relations":
-					errorMessage += twinfield.getRelations(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getRelations(set.getImportOffice(), session, token, softwareName, date);
+					setErrorMessage(messageArray);
 					break;
 				case "hourtypes":
-					errorMessage += twinfield.getHourTypes(set.getImportOffice(), session, token, softwareName, date);
+					messageArray = twinfield.getHourTypes(set.getImportOffice(), session, token, softwareName, date);
+					setErrorMessage(messageArray);
 					break;
 				}
 			}
 			// Export section
-			errorMessage = twinfield.getWorkOrders(set.getExportOffice(), session, token, set.getFactuurType(), softwareName);
-			if (errorMessage.startsWith("Success")) {
+			messageArray = twinfield.getWorkOrders(set.getExportOffice(), session, token, set.getFactuurType(), softwareName);
+			setErrorMessageDetails(messageArray);
+			System.out.println("checkUpdate " + checkUpdate);
+			if (checkUpdate.equals("true")) {
 				TokenDAO.saveModifiedDate(getDate(null), token);
 			}
-			ObjectDAO.saveLog(errorMessage, token);
+			if(!errorMessage.equals("")){
+				ObjectDAO.saveLog(errorMessage, errorDetails, token);
+			}else{
+				ObjectDAO.saveLog("Niks te importeren", errorDetails, token);
+			}
 		}
 	}
 
@@ -172,8 +208,7 @@ public class SynchServlet extends HttpServlet {
 			// Export section
 			// wefact.getWorkOrders(set.getExportOffice(), session, token,
 			// set.getFactuurType());
-//			System.out.println("errorMessage " + errorMessage);
-			ObjectDAO.saveLog(errorMessage, token);
+			ObjectDAO.saveLog(errorMessage, null,  token);
 		}
 	}
 }

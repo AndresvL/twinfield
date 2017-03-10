@@ -18,18 +18,18 @@ public class OAuthServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String softwareToken = req.getParameter("token");
 		String softwareName = req.getParameter("softwareName");
-		if(req.getParameterMap().containsKey("saved")){
-			if(req.getParameter("saved").equals("true")){
-				req.getSession().setAttribute("saved", true);
+		String checkSaved = (String) req.getSession().getAttribute("checkSaved");
+		if(checkSaved != null){
+			if(checkSaved.equals("true")){
+				req.getSession().setAttribute("saved", "true");
+				req.getSession().setAttribute("checkSaved", "false");
 			}else{
-				req.getSession().setAttribute("saved", false);
+				req.getSession().setAttribute("saved", "false");
 			}
 		}else{
-			req.getSession().setAttribute("saved", false);
+			req.getSession().setAttribute("saved", "false");
 		}
 		
-//		String oldImport = req.getParameter("checkbox");
-
 		RequestDispatcher rd = null;
 		// Set session with software name and token
 		if (WorkOrderHandler.checkWorkOrderToken(softwareToken, softwareName) == 200) {
@@ -37,9 +37,9 @@ public class OAuthServlet extends HttpServlet {
 			req.getSession().setAttribute("softwareName", softwareName);
 			req.getSession().setAttribute("checkboxes", null);
 			req.getSession().setAttribute("logs", null);
+			req.getSession().setAttribute("offices", null);
 			switch (softwareName) {
 			case "Twinfield":
-//				req.getSession().setAttribute("oldCheckboxes", oldImport);
 				OAuthTwinfield oauth = new OAuthTwinfield();
 				oauth.authenticate(softwareToken, req, resp);				
 				break;
@@ -58,6 +58,8 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("error", "Token is invalid");
 				break;
 			case "WeFact":
+				rd = req.getRequestDispatcher("weFact.jsp");
+				req.getSession().setAttribute("error", "Token is invalid");
 				break;
 			default:
 				break;

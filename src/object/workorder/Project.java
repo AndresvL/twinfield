@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Project {
-	private String code, code_ext, debtorNumber, status, name, dateStart, dateEnd, description, authoriser;
+	private String code, codeExtern, debtorNumber, status, name, dateStart, dateEnd, description, authoriser;
 	private int progress, active;
 	
 	public Project(String code, String name){
@@ -15,12 +15,12 @@ public class Project {
 	
 	public Project(String code, String code_ext, String debtor_number, String status, String name, String date_start, String date_end, String description, int progress, int active, String authoriser){
 		this.code = code;
-		this.code_ext = code_ext;
+		this.codeExtern = code_ext;
 		this.debtorNumber = debtor_number;
 		this.status = status;
 		this.name = name;
-		this.setDate_start(date_start);
-		this.setDate_end(date_end);
+		this.setDateStart(date_start);
+		this.setDateEnd(date_end);
 		this.description = description;
 		this.progress = progress;
 		this.active = active;
@@ -33,19 +33,19 @@ public class Project {
 	public void setCode(String code) {
 		this.code = code;
 	}
-	public String getCode_ext() {
-		return code_ext;
+	public String getCodeExt() {
+		return codeExtern;
 	}
-	public void setCode_ext(String code_ext) {
-		this.code_ext = code_ext;
+	public void setCodeExt(String code_ext) {
+		this.codeExtern = code_ext;
 	}
-	public String getDebtor_number() {
-		if(this.debtorNumber.equals("")){
+	public String getDebtorNumber() {
+		if(debtorNumber == null || debtorNumber.equals("")){
 			debtorNumber = "leeg";
 		}
 		return debtorNumber;
 	}
-	public void setDebtor_number(String debtor_number) {
+	public void setDebtorNumber(String debtor_number) {
 		this.debtorNumber = debtor_number;
 	}
 	public String getStatus() {
@@ -67,7 +67,7 @@ public class Project {
 			return dateStart;
 		}
 	}
-	public void setDate_start(String date_start) {
+	public void setDateStart(String date_start) {
 		if (date_start != null) {
 			try {
 				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMdd");
@@ -86,7 +86,7 @@ public class Project {
 			return dateEnd;
 		}
 	}
-	public void setDate_end(String date_end) {
+	public void setDateEnd(String date_end) {
 		if (date_end != null) {
 			try {
 				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMdd");

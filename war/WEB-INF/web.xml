@@ -4,10 +4,6 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
  http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
 	version="2.4">
-	<welcome-file-list>
-		<welcome-file>adapter.jsp</welcome-file>
-	</welcome-file-list>
-
 	<servlet>
 		<servlet-name>oauth servlet</servlet-name>
 		<servlet-class>servlet.OAuthServlet</servlet-class>
@@ -36,7 +32,7 @@
 	
 	<servlet>
 		<servlet-name>sync servlet</servlet-name>
-		<servlet-class>servlet.twinfield.SynchServlet</servlet-class>
+		<servlet-class>servlet.SynchServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>sync servlet</servlet-name>

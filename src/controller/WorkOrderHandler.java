@@ -29,14 +29,13 @@ public class WorkOrderHandler {
 	private static String version = "7";
 	// WorkOrder Api key
 	// Env variable!
-	 final static String softwareToken =
-	 "622a8ef3a712344ef07a4427550ae1e2b38e5342";
+	final static String softwareToken = "622a8ef3a712344ef07a4427550ae1e2b38e5342";
 
 	// change later
 	public static int checkWorkOrderToken(String token, String softwareName) {
-		String link  = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
+		String link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 				+ softwareToken;
-		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null){
+		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
 		}
@@ -64,14 +63,13 @@ public class WorkOrderHandler {
 	public static void setWorkorderStatus(String id, String workorderNr, Boolean status, String type, String token,
 			String softwareName) {
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-				+ "&software_token=" + softwareToken + "&row_id=" + id
-				+ "&update_status=" + status;
-		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase())!= null){
-			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-					+ "&software_token=" + System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&row_id=" + id
-					+ "&update_status=" + status;
+				+ "&software_token=" + softwareToken + "&row_id=" + id + "&update_status=" + status;
+		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
+					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&row_id=" + id + "&update_status="
+					+ status;
 		}
-		
+
 		URL url;
 		try {
 			url = new URL(link);
@@ -82,7 +80,7 @@ public class WorkOrderHandler {
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 			String output;
 			while ((output = br.readLine()) != null) {
-//				System.out.println("setWorkorderStatus " + output);
+				// System.out.println("setWorkorderStatus " + output);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -90,24 +88,25 @@ public class WorkOrderHandler {
 
 	}
 
-	public static ArrayList<WorkOrder> getData(String token, String type, String stat, boolean updateStatus,
+	public static ArrayList<WorkOrder>getData(String token, String type, String stat, boolean updateStatus,
 			String softwareName) {
 		// Header
 		// ProjectNr, performancedate, invoiceaddressnumber,
 		// deliveraddressnumber, customercode, status, paymentmethod(cash, bank,
 		// cheque, cashondelivery, da)
 		String projectNr, workDate = null, customerEmailInvoice, customerEmail, customerDebtorNr, status, paymentMethod,
-				creationDate, id, workorderNr;
+				creationDate, id, orderNr;
 		String employeeNr = null, hourType = null, description = null, duration = null;
 		// line
 		String materialCode, materialNr, materialUnit, materialName;
 		double materialPrice;
+
+		// Request to WorkOrderApp
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-				+ "&software_token=" + softwareToken + "&status=" + stat
-				+ "&update_status=" + updateStatus;
-		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase())!= null){
-			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-					+ "&software_token=" + System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&status=" + stat
+				+ "&software_token=" + softwareToken + "&status=" + stat + "&update_status=" + updateStatus;
+		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
+					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&status=" + stat
 					+ "&update_status=" + updateStatus;
 		}
 		String output = null;
@@ -122,7 +121,6 @@ public class WorkOrderHandler {
 			while ((output = br.readLine()) != null) {
 				WorkOrder w = null;
 				JSONObject json = new JSONObject(output);
-				// System.out.println("workorder output " + output);
 				if (json.getInt("code") == 200) {
 					allData = new ArrayList<WorkOrder>();
 					JSONArray array = json.getJSONArray("object");
@@ -130,72 +128,82 @@ public class WorkOrderHandler {
 						JSONObject object = array.getJSONObject(i);
 						projectNr = object.getString("ProjectNr");
 						id = object.getString("id");
-						workorderNr = object.getString("WorkorderNo");
-						// CHANGE
-						if (projectNr.equals("")) {
-							workDate = object.getString("WorkDate");
-							customerEmailInvoice = object.getString("CustomerEmailInvoice");
-							customerEmail = object.getString("CustomerEmail");
-							customerDebtorNr = object.getString("CustomerDebtorNr");
-							employeeNr = object.getString("EmployeeNr");
-							status = object.getString("status");
-							creationDate = object.getString("CreationDate");
-							switch (status) {
-							case "Afgehandeld":
-								status = "final";
-								break;
-							case "Klaargezet":
-								status = "concept";
-								break;
-							default:
-								status = "concept";
-								break;
-							}
-							paymentMethod = object.getString("PaymentMethod");
-							switch (paymentMethod) {
-							case "pin betaling":
-								paymentMethod = "bank";
-								break;
-							case "contant voldaan":
-								paymentMethod = "cash";
-								break;
-							default:
-								paymentMethod = "bank";
-								break;
-							}
-							JSONArray materials = object.getJSONArray("materials");
-							ArrayList<Material> alleMaterials = new ArrayList<Material>();
-							for (int j = 0; j < materials.length(); j++) {
-								JSONObject material = materials.getJSONObject(j);
-								materialCode = material.getString("MaterialCode");
-								materialNr = material.getString("MaterialNr");
-								materialUnit = material.getString("MaterialUnit");
-								materialName = material.getString("MaterialName");
-								materialPrice = material.getDouble("MaterialPrice");
-								// Get material code from db
-								Material sub = ObjectDAO.getMaterials(token, materialCode, materialName);
-								Material m = new Material(sub.getCode(), materialCode, materialUnit, materialName,
-										materialPrice, materialNr, null);
-								alleMaterials.add(m);
-							}
-							w = new WorkOrder(projectNr, workDate, customerEmailInvoice, customerEmail,
-									customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id,
-									workorderNr);
-							allData.add(w);
-						} else {
-							JSONArray periods = object.getJSONArray("workperiods");
-
-							if (periods.length() > 0) {
-								for (int j = 0; j < periods.length(); j++) {
-									JSONObject period = periods.getJSONObject(j);
-									employeeNr = period.getString("EmployeeNr");
-									hourType = period.getString("HourType");
-									workDate = period.getString("WorkDate");
-									description = period.getString("WorkRemark");
-									duration = period.getString("TotalTime");
-									w = new WorkOrder(employeeNr, hourType, workDate, projectNr, description, duration,
-											id);
-									allData.add(w);
+						orderNr = object.getString("OrderNr");
+						if (object.getInt("archived") == 0) {
+							// CHANGE
+							if (projectNr.equals("")) {
+								workDate = object.getString("WorkDate");
+								customerEmailInvoice = object.getString("CustomerEmailInvoice");
+								customerEmail = object.getString("CustomerEmail");
+								customerDebtorNr = object.getString("CustomerDebtorNr");
+								employeeNr = object.getString("EmployeeNr");
+								status = object.getString("status");
+								creationDate = object.getString("CreationDate");
+								switch (status) {
+								case "Afgehandeld":
+									status = "final";
+									break;
+								case "Klaargezet":
+									status = "concept";
+									break;
+								default:
+									status = "concept";
+									break;
+								}
+								paymentMethod = object.getString("PaymentMethod");
+								switch (paymentMethod) {
+								case "pin betaling":
+									paymentMethod = "bank";
+									break;
+								case "contant voldaan":
+									paymentMethod = "cash";
+									break;
+								default:
+									paymentMethod = "bank";
+									break;
+								}
+								JSONArray materials = object.getJSONArray("materials");
+								ArrayList<Material> alleMaterials = new ArrayList<Material>();
+								for (int j = 0; j < materials.length(); j++) {
+									JSONObject material = materials.getJSONObject(j);
+									materialCode = material.getString("MaterialCode");
+									materialNr = material.getString("MaterialNr");
+									materialUnit = material.getString("MaterialUnit");
+									materialName = material.getString("MaterialName");
+									materialPrice = material.getDouble("MaterialPrice");
+									// Get material code from db
+									Material sub = ObjectDAO.getMaterials(token, materialCode, materialName);
+									Material m = null;
+									if (sub != null) {
+										// Check if material has subCode
+										if (sub.getSubCode() != null) {
+											m = new Material(sub.getCode(), materialCode, materialUnit, materialName,
+													materialPrice, materialNr, null);
+										} else {
+											m = new Material(materialCode, null, materialUnit, materialName,
+													materialPrice, materialNr, null);
+										}
+									}
+									alleMaterials.add(m);
+								}
+								w = new WorkOrder(projectNr, workDate, customerEmailInvoice, customerEmail,
+										customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id,
+										orderNr);
+								allData.add(w);
+							} else {
+								JSONArray periods = object.getJSONArray("workperiods");
+								if (periods.length() > 0) {
+									for (int j = 0; j < periods.length(); j++) {
+										JSONObject period = periods.getJSONObject(j);
+										employeeNr = period.getString("EmployeeNr");
+										hourType = period.getString("HourType");
+										workDate = period.getString("WorkDate");
+										description = period.getString("WorkRemark");
+										duration = period.getString("TotalTime");
+										w = new WorkOrder(employeeNr, hourType, workDate, projectNr, description,
+												duration, id);
+										allData.add(w);
+									}
 								}
 							}
 						}
@@ -209,14 +217,14 @@ public class WorkOrderHandler {
 
 	}
 
-	public static boolean addData(String token, Object array, String type, String softwareName)
+	public static int addData(String token, Object array, String type, String softwareName)
 			throws ServletException, IOException {
-		boolean b = false;
+		int b = 0;
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken;
-		if(System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase())!= null){
-			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-					+ "&software_token=" + System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
+		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
+					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
 		}
 		URL url = new URL(link);
 		String input = null;
@@ -241,6 +249,9 @@ public class WorkOrderHandler {
 		case "hourtypes":
 			input = hourtypeInput(array);
 			break;
+		case "workorder":
+			input = workorderInput(array);
+			break;
 		}
 		OutputStream os = conn.getOutputStream();
 		os.write(input.getBytes("UTF-8"));
@@ -251,12 +262,10 @@ public class WorkOrderHandler {
 		System.out.println("Output from Server .... \n");
 
 		while ((output = br.readLine()) != null) {
-			System.out.println(output);
+			System.out.println("OUTPUT" + output);
 			try {
 				JSONObject json = new JSONObject(output);
-				if (json.getInt("code") == 200) {
-					b = true;
-				}
+				b = json.getInt("object");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -292,13 +301,13 @@ public class WorkOrderHandler {
 		for (Project p : array) {
 			if (i == array.size()) {
 				input += "{\"code\":\"" + p.getCode() + "\",\"code_ext\":\"" + "leeg" + "\",\"debtor_number\":\""
-						+ p.getDebtor_number() + "\",\"status\":\"" + p.getStatus() + "\",\"name\":\"" + p.getName()
+						+ p.getDebtorNumber() + "\",\"status\":\"" + p.getStatus() + "\",\"name\":\"" + p.getName()
 						+ "\",\"description\":\"" + p.getDescription() + "\",\"progress\":\"" + p.getProgress()
 						+ "\",\"date_start\":\"" + p.getDate_start() + "\",\"date_end\":\"" + p.getDate_end()
 						+ "\",\"active\":\"" + p.getActive() + "\"}";
 			} else {
 				input += "{\"code\":\"" + p.getCode() + "\",\"code_ext\":\"" + "leeg" + "\",\"debtor_number\":\""
-						+ p.getDebtor_number() + "\",\"status\":\"" + p.getStatus() + "\",\"name\":\"" + p.getName()
+						+ p.getDebtorNumber() + "\",\"status\":\"" + p.getStatus() + "\",\"name\":\"" + p.getName()
 						+ "\",\"description\":\"" + p.getDescription() + "\",\"progress\":\"" + p.getProgress()
 						+ "\",\"date_start\":\"" + p.getDate_start() + "\",\"date_end\":\"" + p.getDate_end()
 						+ "\",\"active\":\"" + p.getActive() + "\"},";
@@ -353,7 +362,6 @@ public class WorkOrderHandler {
 			} else {
 				code = m.getCode();
 			}
-
 			if (i == array.size()) {
 				input += "{\"code\":\"" + code + "\",\"description\":\"" + m.getDescription() + "\",\"price\":\""
 						+ m.getPrice() + "\",\"unit\":\"" + m.getUnit() + "\"}";
@@ -386,5 +394,23 @@ public class WorkOrderHandler {
 			}
 		}
 		return input += "]";
+	}
+	public static String workorderInput(Object obj) {
+		return version;
+//		@SuppressWarnings("unchecked")
+//		ArrayList<WorkOrder> array = (ArrayList<WorkOrder>) obj;
+//		String input = "[";
+//		int i = 1;
+//		for (WorkOrder w : array) {
+//			if (i == array.size()) {
+//				input += "{\"firstname\":\"" + e.getFirstName() + "\",\"lastname\":\"" + e.getLastName()
+//						+ "\",\"number\":\"" + e.getCode() + "\"}";
+//			} else {
+//				i++;
+//				input += "{\"firstname\":\"" + e.getFirstName() + "\",\"lastname\":\"" + e.getLastName()
+//						+ "\",\"number\":\"" + e.getCode() + "\"},";
+//			}
+//		}
+//		return input += "]";
 	}
 }

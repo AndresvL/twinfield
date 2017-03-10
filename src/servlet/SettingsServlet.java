@@ -36,6 +36,7 @@ public class SettingsServlet extends HttpServlet {
 			for (String type : importTypes) {
 				impTypes.add(type);
 			}
+			req.getSession().setAttribute("checkSaved", saved);
 			Settings set = new Settings(importOffice, exportOffice, factuurType, impTypes);
 			ObjectDAO.saveSettings(set, token);
 		}else{
@@ -53,9 +54,9 @@ public class SettingsServlet extends HttpServlet {
 		}
 		if (redirect != null) {
 //			 + "&checkbox=" + oldImport
-			resp.sendRedirect(redirect + "OAuth.do?token=" + token + "&softwareName=" + softwareName + "&saved=" + saved);
+			resp.sendRedirect(redirect + "OAuth.do?token=" + token + "&softwareName=" + softwareName);
 		} else {
-			resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + token + "&softwareName=" + softwareName + "&saved=" + saved);
+			resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + token + "&softwareName=" + softwareName);
 		}
 	}
 }

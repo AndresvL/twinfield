@@ -32,14 +32,12 @@ public class OAuthWeFact extends Authenticate {
 		try {
 			dbToken = TokenDAO.getToken(softwareToken);
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (dbToken == null) {
 			if (!req.getParameterMap().containsKey("clientToken")) {
 				// Login page
 				rd = req.getRequestDispatcher("weFact.jsp");
-				req.getSession().setAttribute("clientToken", null);
 				rd.forward(req, resp);
 				// If clientToken is filled in
 			} else {

@@ -190,9 +190,12 @@ public class OAuthTwinfield extends Authenticate {
 				resp.sendRedirect(
 						"https://login.twinfield.com/oauth/login.aspx?oauth_token=" + checkToken.getTempToken());
 			} else {
-				String sessionID = SoapHandler.getSession(checkToken);
-				logger.info("OAuth autenticate session= " + sessionID);
-				logger.info("OAuth autenticate WBAToken= " + softwareToken);
+				String sessionID = (String) req.getSession().getAttribute("session");
+				if(sessionID == null){
+					sessionID = SoapHandler.getSession(checkToken);
+				}
+				logger.info("session= " + sessionID);
+				logger.info("WBAToken= " + softwareToken);
 				if (sessionID != null) {
 					@SuppressWarnings("unchecked")
 					ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID,
@@ -221,14 +224,14 @@ public class OAuthTwinfield extends Authenticate {
 					} catch (SQLException e) {
 						e.printStackTrace();
 					}
-					req.getSession().setAttribute("error", "Something went wrong with connecting to Twinfield");
+					req.getSession().setAttribute("error", "Er ging iets mis tijdens het verbinden met Twinfield");
 				}
 				rd.forward(req, resp);
 			}
 		}else{
 			rd = req.getRequestDispatcher("twinfield.jsp");
 			req.getSession().setAttribute("session", null);
-			req.getSession().setAttribute("error", "Something went wrong with connecting to Database");
+			req.getSession().setAttribute("error", "Er ging iets mis tijdens het verbinden met de Database");
 			rd.forward(req, resp);
 		}
 		

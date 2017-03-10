@@ -1,5 +1,6 @@
 package controller.twinfield;
 
+import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ import object.workorder.Relation;
 public class SoapHandler {
 	private static String cluster;
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
-	
+
 	public static String getSession(Token token) {
 		String sessionID = null;
 		try {
@@ -38,12 +39,14 @@ public class SoapHandler {
 			String url = "https://login.twinfield.com/webservices/session.asmx?/";
 			SOAPMessage soapResponse = soapConnection.call(createSOAPSession(token), url);
 			SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
-			sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
+			if (soapPart != null) {
+				sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
+			}
 			cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
 			soapConnection.close();
 		} catch (Exception e) {
 			System.err.println("Error occurred while sending SOAP Request to Server");
-			
+
 			e.printStackTrace();
 		}
 		return sessionID;
@@ -107,37 +110,41 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
+
 			soapConnection.close();
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		int result = Integer.parseInt(doc.getChildNodes().item(0).getAttributes().getNamedItem("result").getNodeValue());
-		
-		if(type.equals("workorder")){
-			logger.info("WorkorderRequest " + data);
-			logger.info("WorkorderResponse " + xmlString);
-			ArrayList<Boolean> results = new ArrayList<Boolean>();
+		int result = Integer
+				.parseInt(doc.getChildNodes().item(0).getAttributes().getNamedItem("result").getNodeValue());
+
+		if (type.equals("workorder")) {
+			logger.info("UrenboekingRequest " + data);
+			logger.info("UrenboekingResponse " + xmlString);
+			ArrayList<String> results = new ArrayList<String>();
 			NodeList workorder = doc.getChildNodes().item(0).getChildNodes();
 			int workorderResult = 0;
 			for (int i = 0; i < workorder.getLength(); i++) {
 				workorderResult = Integer
 						.parseInt(workorder.item(i).getAttributes().getNamedItem("result").getNodeValue());
 				if (workorderResult == 1) {
-					results.add(true);
+					results.add("true");
 				} else {
-					results.add(false);
+					results.add(xmlString);
 				}
 			}
 			return results;
 		}
-		if(type.equals("workorderFactuur")){
-			if(result > 0){
-				return true;
-			}else{
-				return false;
+		if (type.equals("workorderFactuur")) {
+			logger.info("FactuurRequest " + data);
+			logger.info("FactuurResponse " + xmlString);
+			if (result > 0) {
+				return "true";
+			} else {
+				return xmlString;
 			}
 		}
 		// Check if SOAP result is 0 or 1
@@ -199,6 +206,10 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			soapConnection.close();
 
+//			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//			soapResponse.writeTo(baos);
+//			String results = baos.toString();
+//			System.out.println("SESSIONCALL " + results);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -266,30 +277,40 @@ public class SoapHandler {
 		// <dimension status>
 		String status = doc.getChildNodes().item(0).getAttributes().getNamedItem("status").getNodeValue();
 		// <projects>
-		NodeList projects = doc.getElementsByTagName("projects").item(0).getChildNodes();
-		// <invoicedescription>
-		String description = projects.item(0).getTextContent();
-		String authoriser = projects.item(1).getTextContent();
-		// <validfrom>
-		String dateStart = projects.item(1).getTextContent();
-		if (dateStart.equals("")) {
-			dateStart = null;
-		}
-		// <validfrom>
-		String dateEnd = projects.item(2).getTextContent();
-		if (dateEnd.equals("")) {
-			dateEnd = null;
-		}
-		// <customer>
-		String debtorNumber = projects.item(4).getTextContent();
-		// active
+		NodeList projectsNode = doc.getElementsByTagName("projects");
+		NodeList projects = null;
+		String description = null;
+		String authoriser = null;
+		String dateStart = null;
+		String dateEnd = null;
+		String debtorNumber = null;
 		int active = 0;
-		if (status.equals("active")) {
-			active = 1;
+		if (projectsNode.getLength() > 0) {
+			projects = projectsNode.item(0).getChildNodes();
+
+			// <invoicedescription>
+			description = projects.item(0).getTextContent();
+			authoriser = projects.item(1).getTextContent();
+			// <validfrom>
+			dateStart = projects.item(1).getTextContent();
+			if (dateStart.equals("")) {
+				dateStart = null;
+			}
+			// <validfrom>
+			dateEnd = projects.item(2).getTextContent();
+			if (dateEnd.equals("")) {
+				dateEnd = null;
+			}
+			// <customer>
+			debtorNumber = projects.item(4).getTextContent();
+			// active
+			
+			if (status.equals("active")) {
+				active = 1;
+			}
 		}
 		p = new Project(code, code_ext, debtorNumber, status, name, dateStart, dateEnd, description, 0, active,
 				authoriser);
-
 		return p;
 	}
 
@@ -351,19 +372,23 @@ public class SoapHandler {
 			if (email.equals("")) {
 				email = "leeg";
 			}
-			String streetNumber[] = address.item(9).getTextContent().split("\\s+");
-			for (int j = 0; j < streetNumber.length; j++) {
-				if (j == streetNumber.length - 1) {
-					houseNumber = streetNumber[j];
-				} else if (j == streetNumber.length - 2) {
-					street += streetNumber[j];
-				} else {
-					street += streetNumber[j] + " ";
+			String streetArray = address.item(9).getTextContent();
+			String[] streetNumber = null;
+			if (streetArray != null) {
+				streetNumber = streetArray.split("\\s+");
+
+				for (int j = 0; j < streetNumber.length; j++) {
+					if (j == streetNumber.length - 1) {
+						houseNumber = streetNumber[j];
+					} else if (j == streetNumber.length - 2) {
+						street += streetNumber[j];
+					} else {
+						street += streetNumber[j] + " ";
+					}
 				}
-			}
-			street.replace("'s", "s");
-			if (street.equals("")) {
-				street = "leeg";
+				if (street.equals("")) {
+					street = "leeg";
+				}
 			}
 			houseNumber = streetNumber[streetNumber.length - 1];
 			postalCode = address.item(3).getTextContent();
@@ -375,6 +400,9 @@ public class SoapHandler {
 				city = "leeg";
 			}
 			remark = address.item(8).getTextContent();
+			if (remark.equals("")) {
+				remark = "leeg";
+			}
 			Address a = new Address(name, phoneNumber, email, street, houseNumber, postalCode, city, remark, type,
 					addressId);
 			allAddresses.add(a);
@@ -419,7 +447,7 @@ public class SoapHandler {
 				NodeList columns = allData.item(1).getChildNodes();
 				// <Items>
 				NodeList items = allData.item(2).getChildNodes();
-				for (int i = 0; i < totalRows; i++) {
+				for (int i = 0; i < items.getLength(); i++) {
 					String temp = null;
 					// <ArrayOfString>
 					NodeList content = items.item(i).getChildNodes();

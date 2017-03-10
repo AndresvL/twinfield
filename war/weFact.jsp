@@ -111,6 +111,7 @@
 				</div>
 
 				<form action="settings.do">
+				<input type="hidden" value="${softwareName}" name="softwareName" />
 					<div class="panel panel-success">
 						<div class="panel-heading">Import settings</div>
 						<div class="panel-body">
@@ -181,7 +182,7 @@
 										<form action="sync.do">
 											<input type="hidden" value="${softwareToken}" name="token" />
 											<input type="submit" class="btn btn-success btn-lg"
-												value="Synchronize" onclick="return synchMessage();" />
+												value="Sync" onclick="return synchMessage();" />
 										</form>
 									</div>
 								</div>

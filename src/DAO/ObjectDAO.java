@@ -47,35 +47,50 @@ public class ObjectDAO {
 			Statement statement = con.createStatement();
 			for (Material m : mat) {
 				String subCode = null;
-				if(!m.getSubCode().equals("")){
-					subCode = m.getSubCode();
+				if (m.getSubCode() != null) {
+					if (!m.getSubCode().equals("")) {
+						subCode = m.getSubCode();
+					}
 				}
-				System.out.println("SUB " +subCode);
-				statement.execute("REPLACE INTO materials (code, subcode, description, price, unit, modified, softwareToken)" + "VALUES ('"
-						+ m.getCode() + "','" + subCode + "','" + m.getDescription() + "','" + m.getPrice() + "','" + m.getUnit() + "','" + m.getModified() + "','"
-						+ token + "')");
+				statement.execute(
+						"REPLACE INTO materials (code, subcode, description, price, unit, modified, softwareToken)"
+								+ "VALUES ('" + m.getCode() + "','" + subCode + "','" + m.getDescription() + "','"
+								+ m.getPrice() + "','" + m.getUnit() + "','" + m.getModified() + "','" + token + "')");
 			}
 			con.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public static Material getMaterials(String softwareToken, String subCode, String desc) throws SQLException{
+
+	public static Material getMaterials(String softwareToken, String subCode, String desc) throws SQLException {
 		Material m = null;
 		try {
-		Connection con = DBConnection.createDatabaseConnection();
-		Statement statement = con.createStatement();
-		ResultSet output = null;
-		output = statement.executeQuery("SELECT * FROM materials WHERE softwareToken =\"" + softwareToken + "\" AND subCode =\"" + subCode + "\" AND description =\"" + desc + "\"");
-		while (output.next()) {
-			String code = output.getString("code");
-			String description = output.getString("description");
-			Double price = output.getDouble("price");
-			String unit = output.getString("unit");
-			m = new Material(code, subCode, unit, description, price, null, null);
-		}
-		con.close();
+			Connection con = DBConnection.createDatabaseConnection();
+			Statement statement = con.createStatement();
+			ResultSet output = null;
+			output = statement.executeQuery("SELECT * FROM materials WHERE softwareToken =\"" + softwareToken
+					+ "\" AND subCode =\"" + subCode + "\" AND description =\"" + desc + "\"");
+			// Check if subCode exists
+			while (output.next()) {
+				String code = output.getString("code");
+				String description = output.getString("description");
+				Double price = output.getDouble("price");
+				String unit = output.getString("unit");
+				m = new Material(code, subCode, unit, description, price, null, null);
+			}
+			// check if code exists
+			if (m == null) {
+				output = statement.executeQuery("SELECT * FROM materials WHERE softwareToken =\"" + softwareToken
+						+ "\" AND code =\"" + subCode + "\" AND description =\"" + desc + "\"");
+				while (output.next()) {
+					String description = output.getString("description");
+					Double price = output.getDouble("price");
+					String unit = output.getString("unit");
+					m = new Material(subCode, null, unit, description, price, null, null);
+				}
+			}
+			con.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -90,7 +105,7 @@ public class ObjectDAO {
 			for (Project p : projects) {
 				statement.execute(
 						"REPLACE INTO projects (code, code_ext, debtor_number, status, name, description, progress, date_start, date_end, active, softwareToken)"
-								+ "VALUES ('" + p.getCode() + "','" + p.getCode_ext() + "','" + p.getDebtor_number()
+								+ "VALUES ('" + p.getCode() + "','" + p.getCodeExt() + "','" + p.getDebtorNumber()
 								+ "','" + p.getStatus() + "','" + p.getName() + "','" + p.getDescription() + "','"
 								+ p.getProgress() + "','" + p.getDate_start() + "','" + p.getDate_end() + "','"
 								+ p.getActive() + "','" + token + "')");
@@ -110,11 +125,14 @@ public class ObjectDAO {
 				for (Address a : r.getAddressess()) {
 					statement.execute(
 							"REPLACE INTO relations (name, code, contact, phone_number, email, email_workorder, street, house_number, postal_code, city, remark, type, addressId, modified, softwareToken)"
-									+ "VALUES ('" + r.getName() + "','" + r.getDebtorNumber() + "','" + a.getName()
-									+ "','" + a.getPhoneNumber() + "','" + a.getEmail() + "','" + r.getEmailWorkorder()
-									+ "','" + a.getStreet().replace("'", "''") + "','" + a.getHouseNumber() + "','"
+									+ "VALUES ('" + r.getName().replaceAll("'", "''") + "','"
+									+ r.getDebtorNumber().replaceAll("'", "''") + "','"
+									+ a.getName().replaceAll("'", "''") + "','" + a.getPhoneNumber() + "','"
+									+ a.getEmail() + "','" + r.getEmailWorkorder() + "','"
+									+ a.getStreet().replaceAll("'", "''") + "','" + a.getHouseNumber() + "','"
 									+ a.getPostalCode() + "','" + a.getCity() + "','" + a.getRemark() + "','"
-									+ a.getType() + "','" + a.getAddressId() + "','" + r.getModified() + "','" + token + "')");
+									+ a.getType() + "','" + a.getAddressId() + "','" + r.getModified() + "','" + token
+									+ "')");
 				}
 			}
 			con.close();
@@ -151,12 +169,11 @@ public class ObjectDAO {
 			Statement statement = con.createStatement();
 			ResultSet output = statement.executeQuery("SELECT * FROM relations WHERE softwareToken =\"" + softwareToken
 					+ "\" AND type=\"" + addressType + "\"AND code=\"" + codeString + "\"");
-			System.out.println("SELECT * FROM relations WHERE softwareToken=\"" + softwareToken
-					+ "\" AND type=\"" + addressType + "\" AND code=\"" + codeString + "\"");
+			System.err.println("adressID output " + "SELECT * FROM relations WHERE softwareToken =\"" + softwareToken
+					+ "\" AND type=\"" + addressType + "\"AND code=\"" + codeString + "\"");
 			if (output.next()) {
 				a = new Address();
 				String addressId = output.getString("addressId");
-				System.out.println("addressDB " + addressId);
 				a.setAddressId(Integer.parseInt(addressId));
 			}
 			con.close();
@@ -220,9 +237,11 @@ public class ObjectDAO {
 			while (output.next()) {
 				String timestamp = output.getString("timestamp");
 				String messageString = output.getString("message");
+				String details = output.getString("details");
 				Map<String, String> logMap = new HashMap<String, String>();
 				logMap.put("timestamp", timestamp);
 				logMap.put("message", messageString);
+				logMap.put("details", details);
 				allLogs.add(logMap);
 			}
 			con.close();
@@ -230,11 +249,11 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 		Collections.reverse(allLogs);
-		
+
 		return allLogs;
 	}
 
-	public static void saveLog(String log, String token) {
+	public static void saveLog(String log, String details, String token) {
 		// sys date
 		LocalDateTime a = LocalDateTime.now();
 		ZoneId zone = ZoneId.of("Europe/Paris");
@@ -247,15 +266,15 @@ public class ObjectDAO {
 		try {
 			Connection con = DBConnection.createDatabaseConnection();
 			Statement statement = con.createStatement();
-			statement.execute("REPLACE INTO log (message, timestamp, softwareToken)" + "VALUES ('" + log + "','"
-					+ timestamp + "','" + token + "')");
+			statement.execute("REPLACE INTO log (message, details, timestamp, softwareToken)" + "VALUES ('" + log
+					+ "','" + details + "','" + timestamp + "','" + token + "')");
 
 			con.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void deleteLog(String token) {
 		ArrayList<Map<String, String>> allLogs = getLogs(token);
 		// sys date
@@ -285,6 +304,7 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 	}
+
 	public static Boolean hasContent(String softwareToken, String table) throws SQLException {
 		Boolean b = false;
 		Connection con = DBConnection.createDatabaseConnection();
@@ -297,19 +317,22 @@ public class ObjectDAO {
 		con.close();
 		return b;
 	}
-	
-	public static String getModifiedDate(String softwareToken, String type, String code, String table) throws SQLException {
-		String modified  = null;
+
+	public static String getModifiedDate(String softwareToken, String type, String code, String table)
+			throws SQLException {
+		String modified = null;
 		Connection con = DBConnection.createDatabaseConnection();
 		Statement statement = con.createStatement();
 		ResultSet output = null;
-		switch(table){
-			case "materials":
-				output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken + "\" AND code =\"" + code + "\"");
-				break;
-			case "relations":
-				output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken + "\" AND type =\"" + type + "\" AND code =\"" + code + "\"");
-				break;
+		switch (table) {
+		case "materials":
+			output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
+					+ "\" AND code =\"" + code + "\"");
+			break;
+		case "relations":
+			output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
+					+ "\" AND type =\"" + type + "\" AND code =\"" + code + "\"");
+			break;
 		}
 		while (output.next()) {
 			modified = output.getString("modified");

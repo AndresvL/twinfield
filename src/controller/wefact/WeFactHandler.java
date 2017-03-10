@@ -163,8 +163,8 @@ public class WeFactHandler {
 		}
 		if (!materials.isEmpty()) {
 			ObjectDAO.saveMaterials(materials, softwareToken);
-			Boolean b = WorkOrderHandler.addData(softwareToken, materials, "materials", softwareName);
-			if (b) {
+			int successAmount = WorkOrderHandler.addData(softwareToken, materials, "materials", softwareName);
+			if (successAmount > 0) {
 				errorMessage += "Success " + importCount + " materials imported<br />";
 				errorMessage += "and " + editCount + " materials edited<br />";
 			} else {
@@ -311,8 +311,8 @@ public class WeFactHandler {
 		}
 		if (!relations.isEmpty()) {
 			ObjectDAO.saveRelations(relations, softwareToken);
-			Boolean b = WorkOrderHandler.addData(softwareToken, relations, "relations", softwareName);
-			if (b) {
+			int successAmount = WorkOrderHandler.addData(softwareToken, relations, "relations", softwareName);
+			if (successAmount > 0) {
 				errorMessage += "Success " + importCount + " relations imported<br />";
 				errorMessage += "and " + editCount + " relations edited<br />";
 			} else {

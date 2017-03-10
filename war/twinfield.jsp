@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,7 +13,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 
-<title>Twinfield Connection</title>
+<title>Twinfield Koppeling</title>
 
 <!-- Bootstrap Core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -55,6 +56,15 @@
 	float: right;
 }
 
+#savebutton {
+	margin-right: 10px;
+	float: right;
+}
+
+#syncbutton {
+	float: right;
+}
+
 .image img {
 	-webkit-transition: all 1s ease; /* Safari and Chrome */
 	-moz-transition: all 1s ease; /* Firefox */
@@ -93,18 +103,20 @@
 						<mark>import</mark>
 						en
 						<mark>export</mark>
-						gegevens <br />tussen WerkbonApp en Twinfield in te stellen<br />
-						- Elke 15 minuten zal er een
+						gegevens tussen WerkbonApp en Twinfield in te stellen<br /> -
+						Elke 15 minuten zal er een
 						<mark>automatische synchronisatie</mark>
 						plaatsvinden aan de hand van deze instellingen.<br /> - Het is
 						mogelijk om
 						<mark>handmatig een synchronisatie uit te voeren</mark>
-						door onderaan op de knop synchronize te klikken.<br /> <br />
+						door onderaan op de knop Start Synchronisation te klikken.<br />
+						<br />
 
 						<h4>Belangrijk</h4>
-						<b>Let op! Twinfield is leidend. <br> De <abbr>import
+						<b>Let op! Twinfield is leidend. <br>- De <abbr>import
 								settings</abbr> mogen alleen in Twinfield worden gewijzigd.
-						</b> <br /> <br />
+						<br />
+						- Bij een <abbr>foutmelding</abbr> kan je op het bericht(log) klikken om meer details te zien. <br /><br /></b>
 						<button type="button" id="show" class="btn btn-info">Show</button>
 						<h4>Data Mapping</h4>
 
@@ -137,7 +149,7 @@
 										<td>Debiteuren</td>
 									</tr>
 									<tr>
-										<td>Urensoorten</td>
+										<td>Uursoorten</td>
 										<td>Aktiviteiten</td>
 									</tr>
 									<tr>
@@ -174,60 +186,60 @@
 				value="${saved}" id="saved" name="saved" />
 			<form action="settings.do" id="save">
 				<div class="panel panel-success">
-					<div class="panel-heading" title="test">Import settings</div>
+					<div class="panel-heading">Import instellingen</div>
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
 								<input type="hidden" value="${softwareName}" name="softwareName" />
-								<label>Office</label> <img src="./img/vraagteken.jpg"
-									title="Choose an administration" height="13" width="13" /> <select
+								<label>Administratie</label> <img src="./img/vraagteken.jpg"
+									title="Kies een administratie" height="13" width="13" /> <select
 									name="offices" class="form-control" id="officelist" required>
-									<option disabled selected value>-- Select an office --</option>
+									<option disabled selected value>-- Selecteer een administratie --</option>
 									<c:forEach items="${offices}" var="office">
 										<option value="${office.code}"
 											${office.code == importOffice ? 'selected="selected"' : ''}>
 											${office.name}</option>
 									</c:forEach>
-								</select><br> <label>Select objects for import</label> <img
+								</select><br> <label>Selecteer objecten om te importeren</label> <img
 									src="./img/vraagteken.jpg"
-									title="Select the objects you want to import from Twinfield into WorkOrderApp"
-									height="13" width="13" /><br /> Saved imports: <b><c:forEach
+									title="Selecteer de objecten die je wilt importeren van Twinfield naar WerkbonApp"
+									height="13" width="13" /><br /> Opgeslagen objecten: <b><c:forEach
 										items="${checkboxes}" var="checkboxs">${checkboxs}, </c:forEach></b>
 								<div class="checkbox">
 									<label><input type="checkbox" value="employees"
-										name="importType" id="employees">Employees</label>
+										name="importType" id="employees">Medewerkers</label>
 								</div>
 								<div class="checkbox">
 									<label><input type="checkbox" value="projects"
-										name="importType" id="projects">Projects</label>
+										name="importType" id="projects">Projecten</label>
 								</div>
 								<div class="checkbox">
 									<label><input type="checkbox" value="materials"
-										name="importType">Materials</label>
+										name="importType">Materialen</label>
 								</div>
 								<div class="checkbox">
 									<label><input type="checkbox" value="relations"
-										name="importType">Relations</label>
+										name="importType">Relaties</label>
 								</div>
 								<div class="checkbox">
 									<label><input type="checkbox" value="hourtypes"
-										name="importType">Hourtypes</label>
+										name="importType">Uursoorten</label>
 								</div>
-								<button type="button" id="help" class="btn btn-info btn-md">Help</button>
+								<button type="button" id="help" class="btn btn-info btn-lg">Help</button>
 							</div>
 						</div>
 					</div>
 				</div>
 				<div class="panel panel-success">
-					<div class="panel-heading">Export settings</div>
+					<div class="panel-heading">Export instellingen</div>
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
-								<label>Office</label> <img src="./img/vraagteken.jpg"
+								<label>Administratie</label> <img src="./img/vraagteken.jpg"
 									title="Choose an administration" height="13" width="13" /> <select
 									name="exportOffices" class="form-control" id="officeExportList"
 									disabled>
-									<option>-- Select an office --</option>
+									<option>-- Selecteer een administratie --</option>
 									<c:forEach items="${offices}" var="office">
 										<option value="${office.code}"
 											${office.code == exportOffice ? 'selected="selected"' : ''}>${office.name}</option>
@@ -237,7 +249,7 @@
 							</div>
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Werkbontype</label> <img src="./img/vraagteken.jpg"
-									title="Choose the status of the workorder you want to export"
+									title="Kies de werkbon status"
 									height="13" width="13" /><input class="form-control"
 									type="text" disabled value="Compleet" /> <input
 									class="form-control" type="hidden" name="factuurType"
@@ -246,59 +258,43 @@
 							</div>
 						</div>
 						<br>
-						<div id="success"></div>
 						<div class="row">
 							<div class="form-group col-xs-12">
-								<input type="submit" class="btn btn-success btn-md" value="Save"
-									name="category" />
-							</div>
-						</div>
-					</div>
-				</div>
-			</form>
-			<form action="sync.do" id="sync">
-				<div class="panel panel-success">
-					<div class="panel-heading">Manually synchronize</div>
-					<div class="panel-body">
-						<div class="row control-group">
-							<div class="form-group col-xs-12 floating-label controls">
-								<div id="success"></div>
-								<div class="row">
-									<div class="form-group col-xs-12">
-										<input type="hidden" value="${softwareToken}" name="token" />
-										<input type="submit" class="btn btn-success btn-md"
-											value="Synchronize"  id="syncbutton"/>
-									</div>
-								</div>
+								<input type="submit" class="btn btn-success btn-lg" value="Sync"
+									id="syncbutton" /> <input type="submit"
+									class="btn btn-success btn-lg" value="Save" name="category"
+									id="savebutton" />
 							</div>
 						</div>
 					</div>
 				</div>
 			</form>
 		</div>
-
 	</div>
+	<!-- this form will be validated after syncbutton is pressed  -->
+	<form action="sync.do" id="sync">
+		<input type="hidden" value="${softwareToken}" name="token" />
+	</form>
 	<div class="settings" style="display: none;">
 		<div class="panel panel-success">
-			<div class="panel-heading">Logs</div>
+			<div class="panel-heading">Log</div>
 			<div class="panel-body">
 				<div class="row control-group">
 					<div class="form-group col-xs-12 floating-label controls">
 						<table class="table table-hover">
 							<thead>
 								<tr>
-									<th>Timestamp</th>
-									<th>Log</th>
+									<th>Tijd</th>
+									<th>Bericht</th>
 								</tr>
 							</thead>
 							<tbody>
 								<c:forEach items="${logs}" var="log">
-									<tr>
+									<tr class="showDetails" data-href='${fn:escapeXml(log.details)}'>
 										<td>${log.timestamp}</td>
 										<td>${log.message}</td>
 									</tr>
 								</c:forEach>
-
 							</tbody>
 						</table>
 					</div>
@@ -322,111 +318,7 @@
 
 	<!-- Theme JavaScript -->
 	<script src="js/freelancer.min.js"></script>
-	<script>
-		$(document).ready(function() {
-			<!-- reload page every 15 - 20 sec min -->
-			setTimeout(function(){
-				  location.reload();
-			  },880000)
-			var modal = $('#checkbox').val();
-			if ($('#session').val() == "" || $('#session').val() == null) {
-				if ($('#error').val() != null) {
-					swal({
-						title : 'Warning',
-						text : $('#error').val(),
-						type : 'error'
-					})
-				} else {
-					swal({
-						title : 'Warning',
-						text : 'You are not connected',
-						type : 'error'
-					})
-				}
-
-			} else {
-				$('.settings').show();
-				if ($('#saved').val() == "true") {
-					swal({
-						title : 'Success',
-						text : 'Settings are saved!',
-						type : 'success'
-					})
-				}
-				$('#saved').val("false");
-			}
-		});
-		$("#show").click(function() {
-			$("#mappingTable").toggle();
-		});
-		$("#help").click(function() {
-			var modal = document.getElementById('myModal');
-			modal.style.display = "block";
-			// Get the <span> element that closes the modal
-			var span = document.getElementsByClassName("close")[0];
-			// When the user clicks on <span> (x), close the modal
-			span.onclick = function() {
-				modal.style.display = "none";
-			}
-
-			// When the user clicks anywhere outside of the modal, close it
-			window.onclick = function(event) {
-				if (event.target == modal) {
-					modal.style.display = "none";
-				}
-			}
-		});
-		$("#save").submit(
-				function(event) {
-					/* var text = $('#checkbox').val();
-					$('#oldCheckbox').val(text);				 */
-					if ($('#officeExportList').val() == null
-							|| $('#officelist').val() == null) {
-						event.preventDefault();
-						swal({
-							title : 'Warning',
-							text : 'No administration selected',
-							type : 'error'
-						})
-					}
-				});
-		$("#syncbutton").click(
-				function(event) {
-					if ($('#officeExportList').val() == null
-							|| $('#officelist').val() == null) {
-						event.preventDefault();
-						swal({
-							title : 'Warning',
-							text : 'No administration selected',
-							type : 'error'
-						})
-					} else {
-						event.preventDefault();
-						swal({
-							  title: 'Please wait',
-							  text: 'Data wordt gesynchroniseerd.',
-							  imageUrl: 'WBA.png',
-							  imageWidth: 250,
-							  imageHeight: 220,
-							  timer: 500
-							  
-							}).then(
-							  function () {
-								  $( "#sync" ).submit();
-							  },
-							  function (dismiss) {
-							    if (dismiss === 'timer') {
-							    	 $( "#sync" ).submit();
-							    }
-							  })
-					}
-					
-				});
-		$("#officelist").change(function() {
-			$("#officeExportList").val($("#officelist").val());
-			$("#exportOfficeValue").val($("#officelist").val());
-		});
-	</script>
+	<script src="js/extra.js"></script>
 </body>
 
 </html>

@@ -1,5 +1,3 @@
-/controller/
-/object/
-/DAO/
 /servlet/
-/DBUtil/
+/DAO/
+/controller/
