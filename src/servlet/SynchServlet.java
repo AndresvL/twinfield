@@ -69,7 +69,7 @@ public class SynchServlet extends HttpServlet {
 				System.out.println(allTokens.size() + " Users found in database");
 				if (WorkOrderHandler.checkWorkOrderToken(token, softwareName) == 200) {
 					try {
-						this.setSyncMethods(t, req, false);
+						this.setSyncMethods(t, null, false);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -94,15 +94,20 @@ public class SynchServlet extends HttpServlet {
 
 	public void setSyncMethods(Token t, HttpServletRequest req, boolean loggedIn) throws Exception {
 		String date = null;
-		String sessionID = (String)req.getSession().getAttribute("session");
-		String cluster = (String)req.getSession().getAttribute("cluster");
+		String sessionID = null;
+		String cluster = null;
+//		if(req != null){
+//			sessionID = (String)req.getSession().getAttribute("session");
+//			cluster = (String)req.getSession().getAttribute("cluster");
+//		}		
+		//sessionID from session is old when sync.do has been called!!!
 		if(!loggedIn){
 			date = TokenDAO.getModifiedDate(t.getSoftwareToken());
-			String[] array = SoapHandler.getSession(t);
-			sessionID = array[0];
-			cluster = array[1];
-			req.getSession().setAttribute("session", null);
 		}
+		String[] array = SoapHandler.getSession(t);
+		sessionID = array[0];
+		cluster = array[1];
+	
 		try {
 			switch (t.getSoftwareName()) {
 			case "Twinfield":
@@ -171,7 +176,6 @@ public class SynchServlet extends HttpServlet {
 			// Export section
 			messageArray = twinfield.getWorkOrders(set.getExportOffice(), session, cluster, token, set.getFactuurType(), softwareName);
 			setErrorMessageDetails(messageArray);
-			System.out.println("checkUpdate " + checkUpdate);
 			if (checkUpdate.equals("true")) {
 				TokenDAO.saveModifiedDate(getDate(null), token);
 			}

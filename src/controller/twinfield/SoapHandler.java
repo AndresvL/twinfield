@@ -46,7 +46,7 @@ public class SoapHandler {
 			soapConnection.close();
 		} catch (Exception e) {
 			System.err.println("Error occurred while sending SOAP Request to Server");
-
+			
 			e.printStackTrace();
 		}
 		String[] sessionArray = new String[] { sessionID, cluster};
@@ -95,7 +95,6 @@ public class SoapHandler {
 			soapConnection = soapConnectionFactory.createConnection();
 			// Send SOAP Message to SOAP Server
 			String url = cluster + "/webservices/processxml.asmx?wsdl";
-			System.out.println("CLUSTER " + url);
 			MessageFactory messageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
 			SOAPMessage soapMessage = messageFactory.createMessage();
 			SOAPPart soapPart = soapMessage.getSOAPPart();
@@ -112,8 +111,12 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
-
+			
 			soapConnection.close();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			soapResponse.writeTo(out);
+			String strMsg = new String(out.toByteArray());
+//			System.out.println("XMLSTRING " + xmlString + " session " + session + " SOAP " + strMsg);
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
 

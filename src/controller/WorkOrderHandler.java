@@ -109,6 +109,7 @@ public class WorkOrderHandler {
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&status=" + stat
 					+ "&update_status=" + updateStatus;
 		}
+		System.out.println("workorder link = " + link);
 		String output = null;
 		ArrayList<WorkOrder> allData = null;
 		try {

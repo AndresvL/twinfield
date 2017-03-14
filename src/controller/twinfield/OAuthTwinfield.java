@@ -190,13 +190,15 @@ public class OAuthTwinfield extends Authenticate {
 				resp.sendRedirect(
 						"https://login.twinfield.com/oauth/login.aspx?oauth_token=" + checkToken.getTempToken());
 			} else {
-				String sessionID = (String) req.getSession().getAttribute("session");
-				String cluster = (String) req.getSession().getAttribute("cluster");
-				if(sessionID == null){
+				String sessionID = null;
+				String cluster = null;
+//				String sessionID = (String) req.getSession().getAttribute("session");
+//				String cluster = (String) req.getSession().getAttribute("cluster");
+//				if(sessionID == null){
 					String[] array = SoapHandler.getSession(checkToken);
 					sessionID = array[0];
 					cluster = array[1];
-				}
+//				}
 				logger.info("session= " + sessionID);
 				logger.info("WBAToken= " + softwareToken);
 				if (sessionID != null) {

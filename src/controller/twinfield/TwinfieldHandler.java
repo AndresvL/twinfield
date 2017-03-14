@@ -36,6 +36,7 @@ public class TwinfieldHandler {
 	private String errorFactuurDetails = "";
 	private String errorUrenDetails = "";
 	private int urenError = 0;
+	private String oldProjectNr = null;
 
 	public String getDateMinHour(String string) {
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -57,8 +58,8 @@ public class TwinfieldHandler {
 		return s;
 	}
 
-	public String[] getEmployees(String office, String session, String cluster, String token, String softwareName, String date)
-			throws ServletException, IOException {
+	public String[] getEmployees(String office, String session, String cluster, String token, String softwareName,
+			String date) throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		options = new String[][] { { "ArrayOfString", "string", "office", office } };
@@ -87,8 +88,8 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getProjects(String office, String session, String cluster, String token, String softwareName, String date)
-			throws ServletException, IOException {
+	public String[] getProjects(String office, String session, String cluster, String token, String softwareName,
+			String date) throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		if (date != null) {
@@ -115,7 +116,6 @@ public class TwinfieldHandler {
 			}
 		}
 		if (!projects.isEmpty()) {
-			System.out.println("PROJECT NOT NULL");
 			ObjectDAO.saveProjects(projects, token);
 			int successAmount = WorkOrderHandler.addData(token, projects, "projects", softwareName);
 			if (successAmount > 0) {
@@ -129,8 +129,8 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getMaterials(String office, String session, String cluster, String token, String softwareName, String date)
-			throws ServletException, IOException {
+	public String[] getMaterials(String office, String session, String cluster, String token, String softwareName,
+			String date) throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		options = new String[][] { { "ArrayOfString", "string", "office", office } };
@@ -164,8 +164,8 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getRelations(String office, String session, String cluster, String token, String softwareName, String date)
-			throws ServletException, IOException {
+	public String[] getRelations(String office, String session, String cluster, String token, String softwareName,
+			String date) throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		if (date != null) {
@@ -183,7 +183,6 @@ public class TwinfieldHandler {
 			String[] parts = responseArray.get(i).split(",");
 			String string = "<read><type>dimensions</type><office>" + office + "</office><dimtype>DEB</dimtype><code>"
 					+ parts[0] + "</code></read>";
-			System.out.println("DebtorNr " + parts[0]);
 			Object obj = SoapHandler.createSOAPXML(session, cluster, string, "relation");
 			if (obj != null) {
 				Relation r = (Relation) obj;
@@ -204,8 +203,8 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 
-	public String[] getHourTypes(String office, String session, String cluster, String token, String softwareName, String date)
-			throws ServletException, IOException {
+	public String[] getHourTypes(String office, String session, String cluster, String token, String softwareName,
+			String date) throws ServletException, IOException {
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		if (date != null) {
@@ -244,51 +243,60 @@ public class TwinfieldHandler {
 	}
 
 	@SuppressWarnings("unchecked")
-	public String[] getWorkOrders(String office, String session, String cluster, String token, String factuurType, String softwareName) {
-		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,	softwareName);
+	public String[] getWorkOrders(String office, String session, String cluster, String token, String factuurType,
+			String softwareName) {
+		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,
+				softwareName);
 		ArrayList<WorkOrder> tempUren = new ArrayList<WorkOrder>();
 		if (allData.isEmpty() || allData == null) {
 			System.out.println("allData is empty");
 		}
 		hourString = "<teqs>";
 		for (WorkOrder w : allData) {
-			if(allData.size() > 20){
-				errorMessage += "Er zijn meer dan 20 werkbonnen gevonden met status compleet";
-				return new String[] { errorMessage, "Neem contact op met WerkbonApp Support" };
-			}
+//			 if(allData.size() > 20){
+//			 errorMessage += "Er zijn meer dan 20 werkbonnen of uurboekingen gevonden met status compleet";
+//			 return new String[] { errorMessage, "Neem contact op met WerkbonApp Support" };
+//			 }
 			// if projectnr is empty create an invoice
 			if (w.getProjectNr().equals("")) {
 				factuurAmount++;
 				setFactuur(w, token, office, session, cluster, softwareName);
-
 			} else {
+				// set hourString
 				setUurboeking(w, office, tempUren);
 			}
 		}
 		hourString += "</teqs>";
-		
-		//factuur error
+
+		// factuur error
 		if (factuurAmount > 0) {
-			// Factuur
-			if (factuurSuccess > 0 && factuurError == 0) {
-				errorMessage += factuurSuccess + " facturen aangemaakt<br />";
-			} else if (factuurError > 0) {
-				errorMessage += "Er ging iets mis met het verzenden van een factuur, klik voor meer details<br />";
+			if (factuurError > 5) {
+				errorMessage += "Er zijn teveel werkbonnen met errors";
+				errorFactuurDetails = "Zorg dat de bonnen die je niet wilt versturen op afgehandeld staan.";
+			} else {
+				// Factuur
+				if (factuurSuccess > 0 && factuurError == 0) {
+					errorMessage += factuurSuccess + " facturen aangemaakt<br />";
+				} else if (factuurError > 0) {
+					errorMessage += "Er ging iets mis met het verzenden van een factuur, klik voor meer details<br />";
 
-			} else if (factuurError > 0 && factuurSuccess > 0) {
-				errorMessage += factuurSuccess + " van de " + factuurAmount + " facturen verzonden<br />";
+				} else if (factuurError > 0 && factuurSuccess > 0) {
+					errorMessage += factuurSuccess + " van de " + factuurAmount + " facturen verzonden<br />";
 
+				}
 			}
 			messageArray = new String[] { errorMessage, errorFactuurDetails };
 		}
-		//Uren error
+		// Uren error
 		if (!hourString.equals("<teqs></teqs>")) {
-			ArrayList<String> results = (ArrayList<String>) SoapHandler.createSOAPXML(session, cluster, hourString, "workorder");
+			ArrayList<String> results = (ArrayList<String>) SoapHandler.createSOAPXML(session, cluster, hourString,
+					"workorder");
 			int urenSuccess = 0;
 			for (String s : results) {
 				if (s.equals("true")) {
 					WorkOrder o = tempUren.get(urenSuccess);
-					WorkOrderHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), true, "GetWorkorder", token,	softwareName);
+					WorkOrderHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), true, "GetWorkorder", token,
+							softwareName);
 					urenSuccess++;
 				} else {
 					urenError++;
@@ -296,24 +304,31 @@ public class TwinfieldHandler {
 				}
 			}
 			int urenAmount = urenSuccess + urenError;
-			if (urenSuccess > 0 && urenError == 0) {
-				errorMessage += urenSuccess + " uurboekingen aangemaakt<br />";
-			} else if (results.size() > 0 && urenSuccess == 0) {
-				errorMessage += "Er ging iets mis met het verzenden van de uurboeking, klik voor meer details<br />";
-			} else if (urenError > 0 && urenSuccess > 0) {
-				errorMessage += urenSuccess + " van de " + urenAmount + " facturen verzonden<br />";
+			if (urenError > 5) {
+				errorMessage += "Er zijn teveel uurboekingen met errors";
+				errorUrenDetails = "Zorg dat de bonnen die je niet wilt versturen op afgehandeld staan.";
 			} else {
-				errorMessage += "Geen uurboeking werkbonnen gevonden<br />";
+				if (urenSuccess > 0 && urenError == 0) {
+					errorMessage += urenSuccess + " uurboekingen aangemaakt<br />";
+				} else if (results.size() > 0 && urenSuccess == 0) {
+					errorMessage += "Er ging iets mis met het verzenden van de uurboeking, klik voor meer details<br />";
+				} else if (urenError > 0 && urenSuccess > 0) {
+					errorMessage += urenSuccess + " van de " + urenAmount + " facturen verzonden<br />";
+				} else {
+					errorMessage += "Geen uurboeking werkbonnen gevonden<br />";
+				}
 			}
-			messageArray = new String[] { errorMessage, errorUrenDetails };
+			
 		}
-		for (int k = 0; k < messageArray.length; k++) {
-			System.out.println("messageArray " + messageArray[k]);
-		}
+		messageArray = new String[] { errorMessage, errorUrenDetails };
+		// for (int k = 0; k < messageArray.length; k++) {
+		// System.out.println("messageArray " + messageArray[k]);
+		// }
 		return messageArray;
 	}
 
-	private void setFactuur(WorkOrder w, String token, String office, String session, String cluster, String softwareName) {
+	private void setFactuur(WorkOrder w, String token, String office, String session, String cluster,
+			String softwareName) {
 		Address factuur = null;
 		Address post = null;
 		post = ObjectDAO.getAddressID(token, "postal", w.getCustomerDebtorNr());
@@ -347,14 +362,16 @@ public class TwinfieldHandler {
 							+ "<subarticle>" + sub + "</subarticle>" + "<quantity>" + m.getQuantity() + "</quantity>"
 							+ "<units>" + m.getUnit() + "</units>" + "</line>";
 				} else {
-					errorMessage += "Een materiaal op werkbon " + w.getWorkorderNr() + " bestaat niet in Twinfield<br />";
+					errorMessage += "Een materiaal op werkbon " + w.getWorkorderNr()
+							+ " bestaat niet in Twinfield<br />";
 					factuurString = "";
 				}
 			}
 			factuurString += "</lines></salesinvoice>";
-			//If material exist
+			// If material exist
 			if (!factuurString.equals("</lines></salesinvoice>")) {
-				String resultsFactuur = (String) SoapHandler.createSOAPXML(session, cluster, factuurString, "workorderFactuur");
+				String resultsFactuur = (String) SoapHandler.createSOAPXML(session, cluster, factuurString,
+						"workorderFactuur");
 				if (resultsFactuur.equals("true")) {
 					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder", token,
 							softwareName);
@@ -383,7 +400,10 @@ public class TwinfieldHandler {
 					+ "<line type=\"QUANTITY\">" + "</line>" + "</lines></teq>";
 		} else {
 			urenError++;
-			errorMessage += "Werkbon " + w.getWorkorderNr() + " heeft geen medewerker of werktype<br />";
+			if(!w.getProjectNr().equals(oldProjectNr)){
+				errorMessage += "Werkbon " + w.getProjectNr() + " heeft een werkperiode zonder medewerker of werktype<br />";
+				oldProjectNr = w.getProjectNr();
+			}
 		}
 
 	}
