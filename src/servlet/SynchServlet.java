@@ -1,6 +1,7 @@
 package servlet;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -17,6 +18,7 @@ import org.json.JSONException;
 
 import DAO.ObjectDAO;
 import DAO.TokenDAO;
+import DBUtil.DBConnection;
 import controller.WorkOrderHandler;
 import controller.twinfield.SoapHandler;
 import controller.twinfield.TwinfieldHandler;
@@ -28,21 +30,21 @@ public class SynchServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private String errorMessage;
 	private String redirect = System.getenv("CALLBACK");
-	private String softwareName = null;
 	private String clientToken = null;
 	private String[] messageArray = null;
 	private String checkUpdate = "false";
-	private String errorDetails = null;
+	private String errorDetails = "";
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		errorMessage = "";
 		String softwareToken = req.getParameter("token");
+		String softwareName = req.getParameter("softwareName");
 		ArrayList<Token> allTokens = null;
 		clientToken = (String) req.getSession().getAttribute("clientToken");
 		// Sync data from current user
 		if (softwareToken != null) {
 			try {
-				Token t = TokenDAO.getToken(softwareToken);
+				Token t = TokenDAO.getToken(softwareToken, softwareName);
 				softwareName = t.getSoftwareName();
 				this.setSyncMethods(t, req, true);
 				if (redirect != null) {
@@ -55,7 +57,7 @@ public class SynchServlet extends HttpServlet {
 				e.printStackTrace();
 			}
 
-		// Get all users from database to Sync their data all at once
+			// Get all users from database to Sync their data all at once
 		} else {
 			try {
 				allTokens = TokenDAO.getSoftwareTokens();
@@ -96,22 +98,23 @@ public class SynchServlet extends HttpServlet {
 		String date = null;
 		String sessionID = null;
 		String cluster = null;
-//		if(req != null){
-//			sessionID = (String)req.getSession().getAttribute("session");
-//			cluster = (String)req.getSession().getAttribute("cluster");
-//		}		
-		//sessionID from session is old when sync.do has been called!!!
-		if(!loggedIn){
+		// if(req != null){
+		// sessionID = (String)req.getSession().getAttribute("session");
+		// cluster = (String)req.getSession().getAttribute("cluster");
+		// }
+		// sessionID from session is old when sync.do has been called!!!
+		if (!loggedIn) {
 			date = TokenDAO.getModifiedDate(t.getSoftwareToken());
 		}
-		String[] array = SoapHandler.getSession(t);
-		sessionID = array[0];
-		cluster = array[1];
-	
 		try {
 			switch (t.getSoftwareName()) {
 			case "Twinfield":
-				twinfieldImport(sessionID, cluster, t.getSoftwareToken(), t.getSoftwareName(), date);
+				String[] array = SoapHandler.getSession(t);
+				if (array != null) {
+					sessionID = array[0];
+					cluster = array[1];
+					twinfieldImport(sessionID, cluster, t.getSoftwareToken(), t.getSoftwareName(), date);
+				}
 				break;
 			case "WeFact":
 				weFactImport(t.getSoftwareToken(), clientToken, date);
@@ -120,70 +123,81 @@ public class SynchServlet extends HttpServlet {
 				break;
 			}
 		} catch (ServletException | IOException | JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
 	}
-	
-	public void setErrorMessage(String[] messageArray){
-		if(messageArray!= null){
+
+	public void setErrorMessage(String[] messageArray) {
+		if (messageArray != null) {
 			errorMessage += messageArray[0];
-			if(messageArray[1].equals("true")){
+			if (messageArray[1].equals("true")) {
 				checkUpdate = "true";
 			}
 		}
 	}
-	
-	public void setErrorMessageDetails(String[] messageArray){
-		if(messageArray != null){
+
+	public void setErrorMessageDetails(String[] messageArray) {
+		System.out.println("errorMessage = " + messageArray[0]);
+		System.out.println("errorDetails = " + messageArray[1]);
+		if (messageArray != null) {
 			errorMessage = messageArray[0];
-			if(messageArray[1] != null){
+			if (messageArray[1] != null) {
 				errorDetails = messageArray[1];
 			}
 		}
 	}
 
-	public void twinfieldImport(String session, String cluster, String token, String softwareName, String date) throws Exception {
+	public void twinfieldImport(String session, String cluster, String token, String softwareName, String date)
+			throws Exception {
 		TwinfieldHandler twinfield = new TwinfieldHandler();
 		Settings set = ObjectDAO.getSettings(token);
+		Connection con = DBConnection.createDatabaseConnection();
 		if (set != null) {
 			ArrayList<String> importTypes = set.getImportObjects();
 			// Import section
 			for (String type : importTypes) {
 				switch (type) {
 				case "employees":
-					messageArray = twinfield.getEmployees(set.getImportOffice(), session, cluster, token, softwareName, date);
+					messageArray = twinfield.getEmployees(set.getImportOffice(), session, cluster, token, softwareName,
+							date, con);
 					setErrorMessage(messageArray);
 					break;
 				case "projects":
-					messageArray = twinfield.getProjects(set.getImportOffice(), session, cluster, token, softwareName, date);
+					messageArray = twinfield.getProjects(set.getImportOffice(), session, cluster, token, softwareName,
+							date, con);
 					setErrorMessage(messageArray);
 					break;
 				case "materials":
-					messageArray = twinfield.getMaterials(set.getImportOffice(), session, cluster, token, softwareName, date);
+					messageArray = twinfield.getMaterials(set.getImportOffice(), session, cluster, token, softwareName,
+							date, con);
 					setErrorMessage(messageArray);
 					break;
 				case "relations":
-					messageArray = twinfield.getRelations(set.getImportOffice(), session, cluster, token, softwareName, date);
+					messageArray = twinfield.getRelations(set.getImportOffice(), session, cluster, token, softwareName,
+							date, con);
 					setErrorMessage(messageArray);
 					break;
 				case "hourtypes":
-					messageArray = twinfield.getHourTypes(set.getImportOffice(), session, cluster,  token, softwareName, date);
+					messageArray = twinfield.getHourTypes(set.getImportOffice(), session, cluster, token, softwareName,
+							date, con);
 					setErrorMessage(messageArray);
 					break;
 				}
 			}
 			// Export section
-			messageArray = twinfield.getWorkOrders(set.getExportOffice(), session, cluster, token, set.getFactuurType(), softwareName);
-			setErrorMessageDetails(messageArray);
+			String[] exportMessageArray = twinfield.getWorkOrders(set.getExportOffice(), session, cluster, token,
+					set.getFactuurType(), softwareName, set.getUser());
+			setErrorMessageDetails(exportMessageArray);
 			if (checkUpdate.equals("true")) {
 				TokenDAO.saveModifiedDate(getDate(null), token);
 			}
-			if(!errorMessage.equals("")){
-				ObjectDAO.saveLog(errorMessage, errorDetails, token);
-			}else{
-				ObjectDAO.saveLog("Niks te importeren", errorDetails, token);
+			if (!errorMessage.equals("")) {
+				ObjectDAO.saveLog(errorMessage, errorDetails, token, con);
+			} else {
+				ObjectDAO.saveLog("Niks te importeren", errorDetails, token, con);
 			}
+			con.close();
 		}
 	}
 
@@ -191,15 +205,16 @@ public class SynchServlet extends HttpServlet {
 		WeFactHandler wefact = new WeFactHandler();
 		Settings set = ObjectDAO.getSettings(token);
 		if (set != null) {
+			Connection con = DBConnection.createDatabaseConnection();
 			ArrayList<String> importTypes = set.getImportObjects();
 			// Import section
 			for (String type : importTypes) {
 				switch (type) {
 				case "materials":
-					errorMessage += wefact.getMaterials(clientToken, token, date);
+					errorMessage += wefact.getMaterials(clientToken, token, date, con);
 					break;
 				case "relations":
-					errorMessage += wefact.getRelations(clientToken, token, date);
+					errorMessage += wefact.getRelations(clientToken, token, date, con);
 					break;
 				case "hourtypes":
 					errorMessage += "hourtype";
@@ -212,7 +227,7 @@ public class SynchServlet extends HttpServlet {
 			// Export section
 			// wefact.getWorkOrders(set.getExportOffice(), session, token,
 			// set.getFactuurType());
-			ObjectDAO.saveLog(errorMessage, null,  token);
+			ObjectDAO.saveLog(errorMessage, null, token, con);
 		}
 	}
 }

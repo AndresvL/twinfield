@@ -10,7 +10,7 @@ public class TokenDAO {
 	private static Statement statement;
 	private static ResultSet output;
 
-	public static Token getToken(String token) throws SQLException {
+	public static Token getToken(String token, String name) throws SQLException {
 		Token t = null;
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
@@ -22,21 +22,28 @@ public class TokenDAO {
 			String consumerSecret = output.getString("consumerSecret");
 			String softwareToken = output.getString("softwareToken");
 			String softwareName = output.getString("softwareName");
-			t = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken, softwareName);
+			if (softwareName.equals(name)) {
+				t = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken, softwareName);
+			}
 			break;
 		}
+		statement.close();
 		con.close();
 		return t;
 	}
 
-	public static String getSoftwareToken(String softwareToken) throws SQLException {
+	public static String getSoftwareToken(String softwareToken, String name) throws SQLException {
 		String token = null;
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
 		output = statement.executeQuery("SELECT * FROM credentials WHERE softwareToken =\"" + softwareToken + "\"");
 		while (output.next()) {
-			token = output.getString("softwareToken");
+			String softwareName = output.getString("softwareName");
+			if (softwareName.equals(name)) {
+				token = output.getString("softwareToken");
+			}
 		}
+		statement.close();
 		con.close();
 		return token;
 
@@ -58,13 +65,14 @@ public class TokenDAO {
 			token = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken, softwareName);
 			allTokens.add(token);
 		}
+		statement.close();
 		con.close();
 		return allTokens;
 
 	}
 
 	public static void saveToken(Token t) throws SQLException {
-		if (getSoftwareToken(t.getSoftwareToken()) == null) {
+		if (getSoftwareToken(t.getSoftwareToken(), t.getSoftwareName()) == null) {
 			Connection con = DBConnection.createDatabaseConnection();
 			statement = con.createStatement();
 			statement.execute(
@@ -72,6 +80,7 @@ public class TokenDAO {
 							+ "VALUES ('" + t.getSoftwareToken() + "','" + t.getAccessToken() + "','"
 							+ t.getAccessSecret() + "','" + t.getConsumerToken() + "','" + t.getConsumerSecret() + "','"
 							+ t.getSoftwareName() + "')");
+			statement.close();
 			con.close();
 		}
 	}
@@ -79,18 +88,22 @@ public class TokenDAO {
 	public static void saveModifiedDate(String date, String softwareToken) throws SQLException {
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
-		statement.execute("UPDATE credentials SET modified = \"" + date + "\" WHERE softwareToken = \"" + softwareToken + "\"");
+		statement.execute(
+				"UPDATE credentials SET modified = \"" + date + "\" WHERE softwareToken = \"" + softwareToken + "\"");
+		statement.close();
 		con.close();
 	}
-	
+
 	public static String getModifiedDate(String softwareToken) throws SQLException {
 		String date = null;
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
-		output = statement.executeQuery("SELECT modified FROM credentials WHERE softwareToken =\"" + softwareToken + "\"");
+		output = statement
+				.executeQuery("SELECT modified FROM credentials WHERE softwareToken =\"" + softwareToken + "\"");
 		while (output.next()) {
 			date = output.getString("modified");
 		}
+		statement.close();
 		con.close();
 		return date;
 	}
@@ -99,6 +112,7 @@ public class TokenDAO {
 		Connection con = DBConnection.createDatabaseConnection();
 		statement = con.createStatement();
 		statement.execute("DELETE FROM credentials WHERE softwareToken =\"" + softwareToken + "\"");
+		statement.close();
 		con.close();
 	}
 }

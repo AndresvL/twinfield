@@ -26,11 +26,10 @@ public class OAuthWeFact extends Authenticate {
 			HttpServletResponse resp) throws ClientProtocolException, IOException, ServletException {
 		RequestDispatcher rd = null;
 		String softwareName = (String) req.getSession().getAttribute("softwareName");
-		// Check if user has the accessToken stored in the database
 		Token dbToken = null;
 		//Get token from database
 		try {
-			dbToken = TokenDAO.getToken(softwareToken);
+			dbToken = TokenDAO.getToken(softwareToken, softwareName);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

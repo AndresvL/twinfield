@@ -19,6 +19,7 @@ import DAO.TokenDAO;
 import controller.Authenticate;
 import object.Settings;
 import object.Token;
+import object.twinfield.Search;
 
 import java.util.Map.Entry;
 import java.util.logging.Logger;
@@ -40,7 +41,7 @@ public class OAuthTwinfield extends Authenticate {
 	public Token getTempToken(String consumerKey, String consumerSecret, String softwareToken, String softwareName)
 			throws ClientProtocolException, IOException, SQLException {
 		// Check if user has the accessToken stored in the database
-		Token accessToken = TokenDAO.getToken(softwareToken);
+		Token accessToken = TokenDAO.getToken(softwareToken, softwareName);
 		if (accessToken == null) {
 			token = new Token();
 			token.setConsumerToken(consumerKey);
@@ -192,24 +193,35 @@ public class OAuthTwinfield extends Authenticate {
 			} else {
 				String sessionID = null;
 				String cluster = null;
-//				String sessionID = (String) req.getSession().getAttribute("session");
-//				String cluster = (String) req.getSession().getAttribute("cluster");
-//				if(sessionID == null){
-					String[] array = SoapHandler.getSession(checkToken);
-					sessionID = array[0];
-					cluster = array[1];
-//				}
+				String[] array = SoapHandler.getSession(checkToken);
+				sessionID = array[0];
+				cluster = array[1];
+
 				logger.info("session= " + sessionID);
 				logger.info("WBAToken= " + softwareToken);
 				if (sessionID != null) {
 					@SuppressWarnings("unchecked")
+					//get all administrations
 					ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID, cluster,
 							"<list><type>offices</type></list>", "office");
-
+					//get all users
+					ArrayList<Map<String, String>> users = new ArrayList<Map<String, String>>();
+					Search searchObject = new Search("USR", "*", 0, 1, 100, null);
+					ArrayList<String> responseArray = SoapHandler.createSOAPFinder(sessionID, cluster, searchObject);
+					for(String s : responseArray){
+						Map<String, String> allUsers = new HashMap<String, String>();
+						String[] split = s.split(",");
+						allUsers.put("code", split[0]);
+						allUsers.put("name", split[1]);
+						users.add(allUsers);
+					}
+					
+					
 					rd = req.getRequestDispatcher("twinfield.jsp");
 					req.getSession().setAttribute("session", sessionID);
 					req.getSession().setAttribute("cluster", cluster);
 					req.getSession().setAttribute("offices", offices);
+					req.getSession().setAttribute("users", users);
 					ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
 					if (!allLogs.isEmpty() || allLogs != null) {
 						req.getSession().setAttribute("logs", allLogs);
@@ -220,6 +232,7 @@ public class OAuthTwinfield extends Authenticate {
 						req.getSession().setAttribute("exportOffice", set.getExportOffice());
 						req.getSession().setAttribute("factuur", set.getFactuurType());
 						req.getSession().setAttribute("importOffice", set.getImportOffice());
+						req.getSession().setAttribute("setUser", set.getUser());
 					}
 					// if session is null
 				} else {

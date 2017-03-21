@@ -39,17 +39,19 @@ public class SoapHandler {
 			String url = "https://login.twinfield.com/webservices/session.asmx?/";
 			SOAPMessage soapResponse = soapConnection.call(createSOAPSession(token), url);
 			SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
-			if (soapPart != null) {
+			if (soapPart != null && soapPart.getHeader().hasChildNodes()) {
 				sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
+				cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
+			}else{
+				return null;
 			}
-			cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
 			soapConnection.close();
 		} catch (Exception e) {
 			System.err.println("Error occurred while sending SOAP Request to Server");
-			
+
 			e.printStackTrace();
 		}
-		String[] sessionArray = new String[] { sessionID, cluster};
+		String[] sessionArray = new String[] { sessionID, cluster };
 		return sessionArray;
 	}
 
@@ -111,12 +113,13 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
-			
+
 			soapConnection.close();
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			soapResponse.writeTo(out);
-			String strMsg = new String(out.toByteArray());
-//			System.out.println("XMLSTRING " + xmlString + " session " + session + " SOAP " + strMsg);
+			// String strMsg = new String(out.toByteArray());
+			// System.out.println("XMLSTRING " + xmlString + " session " +
+			// session + " SOAP " + strMsg);
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
 
@@ -185,6 +188,14 @@ public class SoapHandler {
 
 	// See Finder methode from Twinfield
 	public static ArrayList<String> createSOAPFinder(String session, String cluster, Search object) {
+		return createSOAPFinder(session, cluster, object, null);
+	}
+
+	public static ArrayList<String> createSOAPFinder(String session, String cluster, Search object,
+			ArrayList<String> rows) {
+		if (rows == null) {
+			rows = new ArrayList<String>();
+		}
 		// Create SOAP Connection
 		SOAPMessage soapResponse = null;
 		SOAPConnection soapConnection = null;
@@ -211,14 +222,21 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			soapConnection.close();
 
-//			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//			soapResponse.writeTo(baos);
-//			String results = baos.toString();
-//			System.out.println("SESSIONCALL " + results);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			soapResponse.writeTo(baos);
+			String results = baos.toString();
+//			System.out.println("results " + results);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return setArrayList(soapResponse);
+		ArrayList<String> list = setArrayList(soapResponse);
+		if (list == null || (list != null && list.size() == 0)) {
+			return rows;
+		} else {
+			object.setFirstRow(object.getFirstRow() + object.getMaxRows());
+			rows.addAll(list);
+			return createSOAPFinder(session, cluster, object, rows);
+		}
 	}
 
 	private static void setFinderBody(SOAPEnvelope envelope, Search object) throws SOAPException {
@@ -309,7 +327,7 @@ public class SoapHandler {
 			// <customer>
 			debtorNumber = projects.item(4).getTextContent();
 			// active
-			
+
 			if (status.equals("active")) {
 				active = 1;
 			}
@@ -451,29 +469,32 @@ public class SoapHandler {
 				// <Columns>
 				NodeList columns = allData.item(1).getChildNodes();
 				// <Items>
-				NodeList items = allData.item(2).getChildNodes();
-				for (int i = 0; i < items.getLength(); i++) {
-					String temp = null;
-					// <ArrayOfString>
-					NodeList content = items.item(i).getChildNodes();
-					for (int j = 0; j < columns.getLength(); j++) {
-						// <string>
-						if (temp == null) {
-							temp = content.item(j).getTextContent() + ",";
-						} else if ((j + 1) != columns.getLength()) {
-							temp += content.item(j).getTextContent() + ",";
-						} else {
-							temp += content.item(j).getTextContent();
+				if (allData.item(2)!= null) {
+					NodeList items = allData.item(2).getChildNodes();
+					for (int i = 0; i < items.getLength(); i++) {
+						String temp = null;
+						// <ArrayOfString>
+						NodeList content = items.item(i).getChildNodes();
+						for (int j = 0; j < columns.getLength(); j++) {
+							// <string>
+							if (temp == null) {
+								temp = content.item(j).getTextContent() + ",";
+							} else if ((j + 1) != columns.getLength()) {
+								temp += content.item(j).getTextContent() + ",";
+							} else {
+								temp += content.item(j).getTextContent();
+							}
 						}
+						allItems.add(temp);
 					}
-					allItems.add(temp);
+				}else{
+					return null;
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return allItems;
-
 	}
 
 	public static ArrayList<Map<String, String>> getOffices(Document doc) {

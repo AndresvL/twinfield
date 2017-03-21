@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -114,9 +114,9 @@
 
 						<h4>Belangrijk</h4>
 						<b>Let op! Twinfield is leidend. <br>- De <abbr>import
-								settings</abbr> mogen alleen in Twinfield worden gewijzigd.
-						<br />
-						- Bij een <abbr>foutmelding</abbr> kan je op het bericht(log) klikken om meer details te zien. <br /><br /></b>
+								settings</abbr> mogen alleen in Twinfield worden gewijzigd. <br /> -
+							Bij een <abbr>foutmelding</abbr> kan je op het bericht(log)
+							klikken om meer details te zien. <br /> <br /></b>
 						<button type="button" id="show" class="btn btn-info">Show</button>
 						<h4>Data Mapping</h4>
 
@@ -182,8 +182,9 @@
 
 			</div>
 			<input type="hidden" value="${session}" id="session" /> <input
-				type="hidden" value="${error}" id="error" /> <input type="hidden"
-				value="${saved}" id="saved" name="saved" />
+				type="hidden" value="${error}" id="error" />  <input type="hidden"
+				value="${saved}" id="saved" /> <input type="hidden"
+				value="Twinfield" id="softwareName" />
 			<form action="settings.do" id="save">
 				<div class="panel panel-success">
 					<div class="panel-heading">Import instellingen</div>
@@ -194,7 +195,8 @@
 								<label>Administratie</label> <img src="./img/vraagteken.jpg"
 									title="Kies een administratie" height="13" width="13" /> <select
 									name="offices" class="form-control" id="officelist" required>
-									<option disabled selected value>-- Selecteer een administratie --</option>
+									<option disabled selected value>-- Selecteer een
+										administratie --</option>
 									<c:forEach items="${offices}" var="office">
 										<option value="${office.code}"
 											${office.code == importOffice ? 'selected="selected"' : ''}>
@@ -244,15 +246,27 @@
 										<option value="${office.code}"
 											${office.code == exportOffice ? 'selected="selected"' : ''}>${office.name}</option>
 									</c:forEach>
+								</select><br /> <label>Medewerker</label> <img
+									src="./img/vraagteken.jpg"
+									title="Deze medewerker wordt gekoppeld aan alle uurfacturen"
+									height="13" width="13" /> <select name="users"
+									class="form-control" id="userList" required>
+									<!-- <option disabled selected value>-- Selecteer een medewerker --</option> -->
+									<option selected value="Geen"
+										${"Geen" == setUser ? 'selected="selected"' : ''}>Geen</option>
+									<c:forEach items="${users}" var="user">
+										<option value="${user.code}"
+											${user.code == setUser ? 'selected="selected"' : ''}>
+											${user.name}</option>
+									</c:forEach>
 								</select> <input class="form-control" type="hidden" name="exportOffices"
 									id="exportOfficeValue" />
 							</div>
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Werkbontype</label> <img src="./img/vraagteken.jpg"
-									title="Kies de werkbon status"
-									height="13" width="13" /><input class="form-control"
-									type="text" disabled value="Compleet" /> <input
-									class="form-control" type="hidden" name="factuurType"
+									title="Kies de werkbon status" height="13" width="13" /><input
+									class="form-control" type="text" disabled value="Compleet" />
+								<input class="form-control" type="hidden" name="factuurType"
 									value="Compleet" />
 
 							</div>
@@ -274,6 +288,7 @@
 	<!-- this form will be validated after syncbutton is pressed  -->
 	<form action="sync.do" id="sync">
 		<input type="hidden" value="${softwareToken}" name="token" />
+		<input type="hidden" value="${softwareName}" name="softwareName" />
 	</form>
 	<div class="settings" style="display: none;">
 		<div class="panel panel-success">
@@ -290,7 +305,8 @@
 							</thead>
 							<tbody>
 								<c:forEach items="${logs}" var="log">
-									<tr class="showDetails" data-href='${fn:escapeXml(log.details)}'>
+									<tr class="showDetails"
+										data-href='${log.details})'>
 										<td>${log.timestamp}</td>
 										<td>${log.message}</td>
 									</tr>
@@ -302,6 +318,7 @@
 			</div>
 		</div>
 	</div>
+	<!-- data-href='${fn:escapeXml(log.details)}'> -->
 	<!-- jQuery -->
 	<script src="vendor/jquery/jquery.min.js"></script>
 
@@ -318,7 +335,8 @@
 
 	<!-- Theme JavaScript -->
 	<script src="js/freelancer.min.js"></script>
-	<script src="js/extra.js"></script>
+	<script type="text/javascript" src="js/vkbeautify.js"></script>
+	<script type="text/javascript" src="js/twinfield.js"></script>
 </body>
 
 </html>

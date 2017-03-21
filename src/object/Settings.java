@@ -2,20 +2,28 @@ package object;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Map;
 
 public class Settings implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private String importOffice, exportOffice, factuurType;
+	private String importOffice, exportOffice, factuurType, user;
 	private ArrayList<String> importObjects;
 	
-	public Settings(String iO, String eO, String fT,  ArrayList<String> iObj){
+	public Settings(String iO, String eO, String fT,  ArrayList<String> iObj, String sU){
 		setImportOffice(iO);
 		setExportOffice(eO);
 		setFactuurType(fT);
 		setImportObjects(iObj);
+		setUser(sU);
 	}
 
+	public void setUser(String sU) {
+		user = sU;
+	}
+	
+	public String getUser(){
+		return user;
+	}
+	
 	public String getImportOffice() {
 		return importOffice;
 	}

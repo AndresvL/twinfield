@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -16,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import DAO.ObjectDAO;
+import DBUtil.DBConnection;
 import object.workorder.Address;
 import object.workorder.Employee;
 import object.workorder.HourType;
@@ -47,7 +49,6 @@ public class WorkOrderHandler {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
-
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 			while ((output = br.readLine()) != null) {
 				JSONObject json = new JSONObject(output);
@@ -109,7 +110,6 @@ public class WorkOrderHandler {
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&status=" + stat
 					+ "&update_status=" + updateStatus;
 		}
-		System.out.println("workorder link = " + link);
 		String output = null;
 		ArrayList<WorkOrder> allData = null;
 		try {
@@ -130,8 +130,8 @@ public class WorkOrderHandler {
 						projectNr = object.getString("ProjectNr");
 						id = object.getString("id");
 						orderNr = object.getString("OrderNr");
+						//only choose recent workorders(not archieved or deleted)
 						if (object.getInt("archived") == 0) {
-							// CHANGE
 							if (projectNr.equals("")) {
 								workDate = object.getString("WorkDate");
 								customerEmailInvoice = object.getString("CustomerEmailInvoice");
@@ -165,6 +165,7 @@ public class WorkOrderHandler {
 								}
 								JSONArray materials = object.getJSONArray("materials");
 								ArrayList<Material> alleMaterials = new ArrayList<Material>();
+								Connection con = DBConnection.createDatabaseConnection();
 								for (int j = 0; j < materials.length(); j++) {
 									JSONObject material = materials.getJSONObject(j);
 									materialCode = material.getString("MaterialCode");
@@ -173,7 +174,7 @@ public class WorkOrderHandler {
 									materialName = material.getString("MaterialName");
 									materialPrice = material.getDouble("MaterialPrice");
 									// Get material code from db
-									Material sub = ObjectDAO.getMaterials(token, materialCode, materialName);
+									Material sub = ObjectDAO.getMaterials(token, materialCode, materialName, con);
 									Material m = null;
 									if (sub != null) {
 										// Check if material has subCode
@@ -191,6 +192,7 @@ public class WorkOrderHandler {
 										customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id,
 										orderNr);
 								allData.add(w);
+								con.close();
 							} else {
 								JSONArray periods = object.getJSONArray("workperiods");
 								if (periods.length() > 0) {

@@ -2,6 +2,8 @@ package servlet.twinfield;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -11,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import controller.twinfield.OAuthTwinfield;
 import controller.twinfield.SoapHandler;
 import object.Token;
+import object.twinfield.Search;
 
 public class VerifyServlet extends HttpServlet {
 
@@ -31,8 +34,20 @@ public class VerifyServlet extends HttpServlet {
 		@SuppressWarnings("unchecked")
 		ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID, cluster,
 				"<list><type>offices</type></list>", "office");
+		//get all users
+		ArrayList<Map<String, String>> users = new ArrayList<Map<String, String>>();
+		Search searchObject = new Search("USR", "*", 0, 1, 100, null);
+		ArrayList<String> responseArray = SoapHandler.createSOAPFinder(sessionID, cluster, searchObject);
+		for(String s : responseArray){
+			Map<String, String> allUsers = new HashMap<String, String>();
+			String[] split = s.split(",");
+			allUsers.put("code", split[0]);
+			allUsers.put("name", split[1]);
+			users.add(allUsers);
+		}
 		
 		req.getSession().setAttribute("offices", offices);
+		req.getSession().setAttribute("users", users);
 		req.getSession().setAttribute("softwareToken", token.getSoftwareToken());
 		req.getSession().setAttribute("session", sessionID);
 		if (redirect != null) {

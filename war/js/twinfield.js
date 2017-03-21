@@ -1,39 +1,40 @@
 $(document).ready(function() {
-			<!-- reload page every 15 - 20 sec min -->
+			<!-- reload page every 15 - 20 min -->
 			setTimeout(function(){
 				  location.reload();
 			  },880000)
-			var modal = $('#checkbox').val();
-			if ($('#session').val() == "" || $('#session').val() == null) {
-				if ($('#error').val() != null) {
-					swal({
-						title : 'Warning',
-						text : $('#error').val(),
-						type : 'error'
-					})
+				var modal = $('#checkbox').val();
+				if ($('#session').val() === "" || $('#session').val() === null) {
+					if ($('#error').val() !== null) {
+						swal({
+							title : 'Warning',
+							text : $('#error').val(),
+							type : 'error'
+						})
+					} else {
+						swal({
+							title : 'Waarchuwing',
+							text : 'Je bent niet verbonden',
+							type : 'error'
+						})
+					}
+	
 				} else {
-					swal({
-						title : 'Waarchuwing',
-						text : 'Je bent niet verbonden',
-						type : 'error'
-					})
+					$('.settings').show();
+					if ($('#saved').val() !== "") {
+						swal({
+							title : 'Success',
+							text : $('#saved').val(),
+							type : 'success'
+						})
+					}
+					$('#saved').val("false");
 				}
-
-			} else {
-				$('.settings').show();
-				if ($('#saved').val() == "true") {
-					swal({
-						title : 'Success',
-						text : 'Instellingen zijn opgelagen',
-						type : 'success'
-					})
-				}
-				$('#saved').val("false");
-			}
 			$(".showDetails").click(function() {
 				var errorDetails = $(this).data("href");
 				if(errorDetails !== null && errorDetails !== true && errorDetails !== false && errorDetails !== ""){
-					alert($(this).data("href"));
+					var nice = vkbeautify.xml(errorDetails);
+					alert(nice);
 				} 
 			});
 		});
@@ -52,19 +53,15 @@ $(document).ready(function() {
 
 			// When the user clicks anywhere outside of the modal, close it
 			window.onclick = function(event) {
-				if (event.target == modal) {
+				if (event.target === modal) {
 					modal.style.display = "none";
 				}
 			}
 		});
 		$("#save").submit(
 				function(event) {
-					/*
-					 * var text = $('#checkbox').val();
-					 * $('#oldCheckbox').val(text);
-					 */
-					if ($('#officeExportList').val() == null
-							|| $('#officelist').val() == null) {
+					if ($('#officeExportList').val() === null
+							|| $('#officelist').val() === null) {
 						event.preventDefault();
 						swal({
 							title : 'Warning',
@@ -75,8 +72,8 @@ $(document).ready(function() {
 				});
 		$("#syncbutton").click(
 				function(event) {
-					if ($('#officeExportList').val() == null
-							|| $('#officelist').val() == null) {
+					if ($('#officeExportList').val() === null
+							|| $('#officelist').val() === null) {
 						event.preventDefault();
 						swal({
 							title : 'Warning',

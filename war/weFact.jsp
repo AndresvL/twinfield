@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -43,7 +44,7 @@
 <script>
 	function checkSession() {
 		//Get the modal
-		var modal = document.getElementById('myModal');
+		var modal = document.getElementById('loginModal');
 
 		if ($('#client').val() == "" || $('#client').val() == null) {
 			modal.style.display = "block";
@@ -51,7 +52,6 @@
 	}
 </script>
 <style>
-
 .settings {
 	width: 50%;
 	height: 100%;
@@ -66,20 +66,19 @@
 </style>
 </head>
 
-<body onload="return checkSession();">
+<body>
 	<!-- Settings Section -->
-	<div id="float">
 		<div class="settings">
 			<div class="panel-group">
-				<!-- The Modal -->
-				<div id="myModal" class="modal">
+				<!-- The login Modal -->
+				<div id="loginModal" class="modal">
 					<!-- Modal content -->
 					<div class="modal-content">
 						<form action="OAuth.do">
 							<input type="hidden" value="${softwareToken}" name="token"
-								id="softwareToken" /> <input type="hidden" value="${softwareName}" name="softwareName"
 								id="softwareToken" /> <input type="hidden"
-								value="${clientToken}" id="client" />
+								value="WeFact" name="softwareName" id="softwareName" />
+							<input type="hidden" value="${clientToken}" id="client" />
 							<table>
 								<tr>
 									<td>
@@ -98,7 +97,7 @@
 								<tr>
 									<td><input type="text" class="form-control"
 										id="clientToken"
-										placeholder="example: 10b566e8fe030c6d083ebee7d043757f"
+										placeholder="example: 5a5a5fbbcecdd585aa62812119d0721e"
 										value="10b566e8fe030c6d083ebee7d043757f" name="clientToken"
 										required /></td>
 								</tr>
@@ -109,116 +108,185 @@
 					</div>
 
 				</div>
+				<!-- The Help Modal -->
+				<div id="myModal" class="modal">
+					<!-- Modal content -->
+					<div class="modal-content">
+						<div class="modal-header">
+							<span class="close">&times;</span>
+							<h2>
+								Welkom <small>bij de WeFact koppeling</small>
+							</h2>
+						</div>
+						<div class="modal-body">
+							<h4>Informatie</h4>
+							- Op deze pagina is het mogelijk om de
+							<mark>import</mark>
+							en
+							<mark>export</mark>
+							gegevens tussen WerkbonApp en WeFact in te stellen<br /> -
+							Elke 15 minuten zal er een
+							<mark>automatische synchronisatie</mark>
+							plaatsvinden aan de hand van deze instellingen.<br /> - Het is
+							mogelijk om
+							<mark>handmatig een synchronisatie uit te voeren</mark>
+							door onderaan op de knop Start Synchronisation te klikken.<br />
+							<br />
 
-				<form action="settings.do">
-				<input type="hidden" value="${softwareName}" name="softwareName" />
-					<div class="panel panel-success">
-						<div class="panel-heading">Import settings</div>
-						<div class="panel-body">
-							<div class="row control-group">
-								<div class="form-group col-xs-12 floating-label controls">
-									<label>Select objects for import</label> <img
-										src="./img/vraagteken.jpg"
-										title="Select the objects you want to import from WeFact into WorkOrderApp"
-										height="13" width="13" /><br /> Saved imports: <b> <c:forEach
-											items="${checkboxes}" var="checkboxs">${checkboxs}, 
-										</c:forEach></b>
-									<div class="checkbox">
-										<label><input type="checkbox" value="materials"
-											name="importType">Materials</label>
-									</div>
-									<div class="checkbox">
-										<label><input type="checkbox" value="relations"
-											name="importType">Relations</label>
-									</div>
-									<div class="checkbox">
-										<label><input type="checkbox" value="hourtypes"
-											name="importType">Hourtypes</label>
-									</div>
+							<h4>Belangrijk</h4>
+							<b>Let op! WeFact is leidend. <br>- De <abbr>import
+									settings</abbr> mogen alleen in WeFact worden gewijzigd. <br /> -
+								Bij een <abbr>foutmelding</abbr> kan je op het bericht(log)
+								klikken om meer details te zien. <br />
+							<br /></b>
+							<button type="button" id="show" class="btn btn-info">Show</button>
+							<h4>Data Mapping</h4>
 
-								</div>
+							<div id="mappingTable" style="display: none;">
+								<table class="table table-hover">
+									<thead>
+										<tr>
+											<th>WerkbonApp</th>
+											<th>WeFact</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<th colspan="2">Import</th>
+										</tr>
+										<tr>
+											<td>Medewerkers</td>
+											<td>Gebruikers</td>
+										</tr>
+										<tr>
+											<td>Projecten</td>
+											<td>Projecten</td>
+										</tr>
+										<tr>
+											<td>Materialen</td>
+											<td>Producten</td>
+										</tr>
+										<tr>
+											<td>Relaties</td>
+											<td>Debiteuren</td>
+										</tr>
+										<tr>
+											<td>Uursoorten</td>
+											<td>Producten</td>
+										</tr>
+										<tr>
+											<th colspan="2">Export</th>
+										</tr>
+										<tr>
+											<td>Werkbon (zonder projectNr)</td>
+											<td>Offerte</td>
+										</tr>
+										<tr>
+											<td>Werkbon (met projectNr)</td>
+											<td>Urenboeking</td>
+										</tr>
+									</tbody>
+								</table>
 							</div>
+							<br />
+						</div>
+						<div class="modal-footer">
+							<p>WorkOrderApp B.V.</p>
 						</div>
 					</div>
-					<div class="panel panel-success">
-						<div class="panel-heading">Export settings</div>
-						<div class="panel-body">
-							<div class="row control-group">
-								<div class="form-group col-xs-12 floating-label controls">
-									<label>Werkbontype</label> <img src="./img/vraagteken.jpg"
-										title="Choose the status of the workorder you want to export"
-										height="13" width="13" /> <select name="factuurType"
-										class="form-control" id="factuurlist" required>
-										<option disabled selected value>-- Select a
-											Werkbontype --</option>
-										<option value="Compleet"
-											${factuur == 'Compleet' ? 'selected="selected"' : ''}>Compleet</option>
-										<option value="Afgehandeld"
-											${factuur == 'Afgehandeld' ? 'selected="selected"' : ''}>Afgehandeld</option>
-									</select>
-								</div>
 
-							</div>
-							<br>
-							<div id="success"></div>
-							<div class="row">
-								<div class="form-group col-xs-12">
-									<input type="submit" class="btn btn-success btn-lg"
-										value="Save" name="category" />
-								</div>
-							</div>
-						</div>
-					</div>
-				</form>
-
+				</div>
+				<input
+				type="hidden" value="${error}" id="error" /> <input type="hidden"
+				value="${saved}" id="saved" name="saved" />
+				<form action="settings.do" id="saveWeFact">
 				<div class="panel panel-success">
-					<div class="panel-heading">Manually synchronize</div>
+					<div class="panel-heading">Import instellingen</div>
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
-								<div id="success"></div>
-								<div class="row">
-									<div class="form-group col-xs-12">
-										<form action="sync.do">
-											<input type="hidden" value="${softwareToken}" name="token" />
-											<input type="submit" class="btn btn-success btn-lg"
-												value="Sync" onclick="return synchMessage();" />
-										</form>
-									</div>
+								<input type="hidden" value="${softwareName}" name="softwareName" />
+								<label>Selecteer objecten om te importeren</label> <img
+									src="./img/vraagteken.jpg"
+									title="Selecteer de objecten die je wilt importeren van WeFact naar WerkbonApp"
+									height="13" width="13" /><br /> Opgeslagen objecten: <b><c:forEach
+										items="${checkboxes}" var="checkboxs">${checkboxs}, </c:forEach></b>
+								<div class="checkbox">
+									<label><input type="checkbox" value="projects"
+										name="importType" id="projects">Projecten</label>
 								</div>
+								<div class="checkbox">
+									<label><input type="checkbox" value="materials"
+										name="importType">Materialen</label>
+								</div>
+								<div class="checkbox">
+									<label><input type="checkbox" value="relations"
+										name="importType">Relaties</label>
+								</div>
+								<div class="checkbox">
+									<label><input type="checkbox" value="hourtypes"
+										name="importType">Uursoorten</label>
+								</div>
+								<button type="button" id="help" class="btn btn-info btn-lg">Help</button>
 							</div>
 						</div>
 					</div>
 				</div>
+				<div class="panel panel-success">
+					<div class="panel-heading">Export instellingen</div>
+					<div class="panel-body">
+						<div class="row control-group">
+							<div class="form-group col-xs-12 floating-label controls">
+								<label>Werkbontype</label> <img src="./img/vraagteken.jpg"
+									title="Kies de werkbon status"
+									height="13" width="13" /><input class="form-control"
+									type="text" disabled value="Compleet" /> <input
+									class="form-control" type="hidden" name="factuurType"
+									value="Compleet" />
 
-			</div>
-
-		</div>
-		<div class="log">
-			<div class="panel panel-success">
-				<div class="panel-heading">Logs</div>
-				<div class="panel-body">
-					<div class="row control-group">
-						<div class="form-group col-xs-12 floating-label controls">
-
-							<table class="table table-hover">
-								<thead>
-									<tr>
-										<th>Timestamp</th>
-										<th>Log</th>
-									</tr>
-								</thead>
-								<tbody>
-									<c:forEach items="${logs}" var="log">
-										<tr>
-											<td>${log.timestamp}</td>
-											<td>${log.message}</td>
-										</tr>
-									</c:forEach>
-
-								</tbody>
-							</table>
+							</div>
 						</div>
+						<br>
+						<div class="row">
+							<div class="form-group col-xs-12">
+								<input type="submit" class="btn btn-success btn-lg" value="Sync"
+									id="syncbutton" /> <input type="submit"
+									class="btn btn-success btn-lg" value="Save" name="category"
+									id="savebutton" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	<!-- this form will be validated after syncbutton is pressed  -->
+	<form action="sync.do" id="sync">
+		<input type="hidden" value="${softwareToken}" name="token" />
+		<input type="hidden" value="${softwareName}" name="softwareName" />
+	</form>
+	<div class="settings" >
+		<div class="panel panel-success">
+			<div class="panel-heading">Log</div>
+			<div class="panel-body">
+				<div class="row control-group">
+					<div class="form-group col-xs-12 floating-label controls">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th>Tijd</th>
+									<th>Bericht</th>
+								</tr>
+							</thead>
+							<tbody>
+								<c:forEach items="${logs}" var="log">
+									<tr class="showDetails" data-href='${fn:escapeXml(log.details)}'>
+										<td>${log.timestamp}</td>
+										<td>${log.message}</td>
+									</tr>
+								</c:forEach>
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>
@@ -240,7 +308,7 @@
 
 	<!-- Theme JavaScript -->
 	<script src="js/freelancer.min.js"></script>
-
+	<script src="js/wefact.js"></script>
 </body>
 
 </html>

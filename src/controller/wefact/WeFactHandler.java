@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
@@ -14,7 +15,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,11 +25,10 @@ import controller.WorkOrderHandler;
 import object.workorder.Address;
 import object.workorder.Material;
 import object.workorder.Relation;
-import object.workorder.WorkOrder;
 
 public class WeFactHandler {
 	private String controller, action;
-	private String array  = null;
+	private String array = null;
 	final String softwareName = "WeFact";
 
 	public HttpURLConnection getConnection(int postDataLength) throws IOException {
@@ -79,7 +78,6 @@ public class WeFactHandler {
 		} else {
 			parameters = "api_key=" + clientToken + "&controller=" + controller + "&action=" + action + array;
 		}
-		System.out.println("param " + parameters);
 		byte[] postData = parameters.getBytes(StandardCharsets.UTF_8);
 		int postDataLength = postData.length;
 		// Sets up the rest call;
@@ -94,14 +92,14 @@ public class WeFactHandler {
 		}
 		return json;
 	}
-	
-	public String getDateMinHour(String string){
+
+	public String getDateMinHour(String string) {
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = null;
 		try {
-			//String to date
+			// String to date
 			date = format.parse(string);
-			//Create Calender to edit time
+			// Create Calender to edit time
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(date);
 			cal.add(Calendar.HOUR_OF_DAY, -2);
@@ -109,60 +107,59 @@ public class WeFactHandler {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		//Date to String
+		// Date to String
 		Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String s = formatter.format(date);
-		return s ;
+		return s;
 	}
-	
+
 	public String getHourtypes(String clientToken, String softwareToken) throws Exception {
 		return softwareToken;
 	}
-	
-	//Producten
-	public String getMaterials(String clientToken, String softwareToken, String date) throws Exception {
+
+	// Producten
+	public String getMaterials(String clientToken, String softwareToken, String date, Connection con) throws Exception {
 		String errorMessage = "";
 		controller = "product";
 		action = "list";
 		int importCount = 0;
 		int editCount = 0;
 		ArrayList<Material> materials = new ArrayList<Material>();
-		Boolean hasContent =  ObjectDAO.hasContent(softwareToken, "materials");
-		if(date != null){
+		Boolean hasContent = ObjectDAO.hasContent(softwareToken, "materials");
+		System.out.println("modified is = " + date);
+		if (date != null) {
 			array = "&modified[from]=" + getDateMinHour(date);
 		}
-		if(!hasContent){
+		if (!hasContent) {
 			array = null;
 		}
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array);
 		System.out.println(jsonList);
 		String status = jsonList.getString("status");
 		int totalResults = jsonList.getInt("totalresults");
-		if (status.equals("success")&& totalResults > 0) {
+		if (status.equals("success") && totalResults > 0) {
 			JSONArray products = jsonList.getJSONArray("products");
 			// Check if request is successful
-			for (int i = 0; i < products.length(); i++) {				
+			for (int i = 0; i < products.length(); i++) {
 				JSONObject object = products.getJSONObject(i);
 				String modified = object.getString("Modified");
 				String productCode = object.getString("ProductCode");
 				String dbModified = ObjectDAO.getModifiedDate(softwareToken, null, productCode, "materials");
 				// Check if data is modified
-				if (!modified.equals(dbModified)) {
-					if (dbModified == null) {
-						importCount++;
-					} else {
-						editCount++;
-					}
-					String description = object.getString("ProductName");
-					Double price = object.getDouble("PriceExcl");
-					String unit = object.getString("NumberSuffix");
-					Material m = new Material(productCode, null, unit, description, price, null, modified);
-					materials.add(m);
+				if (dbModified == null || array == null) {
+					importCount++;
+				} else {
+					editCount++;
 				}
+				String description = object.getString("ProductName");
+				Double price = object.getDouble("PriceExcl");
+				String unit = object.getString("NumberSuffix");
+				Material m = new Material(productCode, null, unit, description, price, null, modified);
+				materials.add(m);
 			}
 		}
 		if (!materials.isEmpty()) {
-			ObjectDAO.saveMaterials(materials, softwareToken);
+			ObjectDAO.saveMaterials(materials, softwareToken, con);
 			int successAmount = WorkOrderHandler.addData(softwareToken, materials, "materials", softwareName);
 			if (successAmount > 0) {
 				errorMessage += "Success " + importCount + " materials imported<br />";
@@ -173,23 +170,23 @@ public class WeFactHandler {
 		} else {
 			errorMessage += "No materials for import<br />";
 		}
-		
+
 		return errorMessage;
 	}
 
 	// Debiteuren
-	public String getRelations(String clientToken, String softwareToken, String date) throws Exception {
+	public String getRelations(String clientToken, String softwareToken, String date, Connection con) throws Exception {
 		String errorMessage = "";
+		boolean checkModified = false;
 		Relation r = null;
 		controller = "debtor";
-		action = "list"; 
+		action = "list";
 		ArrayList<Relation> relations = new ArrayList<Relation>();
-		Boolean hasContent =  ObjectDAO.hasContent(softwareToken, "relations");
-		
-		if(date != null){
+		Boolean hasContent = ObjectDAO.hasContent(softwareToken, "relations");
+		if (date != null) {
 			array = "&modified[from]=" + getDateMinHour(date);
 		}
-		if(!hasContent){
+		if (!hasContent) {
 			array = null;
 		}
 		// Get all debtorCodes in WeFact
@@ -199,14 +196,14 @@ public class WeFactHandler {
 		int totalResults = jsonList.getInt("totalresults");
 		String status = jsonList.getString("status");
 		System.out.println("jsonList " + jsonList);
-		if (status.equals("success")&& totalResults > 0) {
+		if (status.equals("success") && totalResults > 0) {
 			JSONArray debtors = jsonList.getJSONArray("debtors");
 			for (int i = 0; i < debtors.length(); i++) {
 				JSONObject object = debtors.getJSONObject(i);
 				String debtorCode = object.getString("DebtorCode");
 				action = "show";
-				String array = "&DebtorCode=" + debtorCode;
-				JSONObject jsonShow = getJsonResponse(clientToken, controller, action, array);
+				String debtorArray = "&DebtorCode=" + debtorCode;
+				JSONObject jsonShow = getJsonResponse(clientToken, controller, action, debtorArray);
 				ArrayList<Address> address = new ArrayList<Address>();
 				String statusShow = jsonShow.getString("status");
 				// Check if request is successful
@@ -216,101 +213,98 @@ public class WeFactHandler {
 					String debtorNr = debtorDetails.getString("DebtorCode");
 					String dbModified = ObjectDAO.getModifiedDate(softwareToken, "postal", debtorNr, "relations");
 					// Check if data is modified
-					if (!modified.equals(dbModified)) {
-						if (dbModified == null) {
-							importCount++;
-						} else {
-							editCount++;
-						}
-
-						// Postal
-						String firstName = debtorDetails.getString("Initials");
-						String lastName = debtorDetails.getString("SurName");
-						String companyName = debtorDetails.getString("CompanyName");
-						String contact = firstName + " " + lastName;
-						String mobileNr = debtorDetails.getString("MobileNumber");
-						String phoneNr = debtorDetails.getString("PhoneNumber");
-						if (phoneNr.equals("")) {
-							phoneNr = mobileNr;
-						}
-						String email = debtorDetails.getString("EmailAddress");
-						if (email.equals("")) {
-							email = "leeg";
-						}
-						String houseNumber = "";
-						String street = "";
-						String streetNumber[] = debtorDetails.getString("Address").split("\\s+");
-						for (int j = 0; j < streetNumber.length; j++) {
-							if (j == streetNumber.length - 1) {
-								houseNumber = streetNumber[j];
-							} else if (j == streetNumber.length - 2) {
-								street += streetNumber[j];
-							} else {
-								street += streetNumber[j] + " ";
-							}
-						}
-						if (street.equals("")) {
-							street = "leeg";
-						}
-						String postalCode = debtorDetails.getString("ZipCode");
-						if (postalCode.equals("")) {
-							postalCode = "leeg";
-						}
-						String city = debtorDetails.getString("City");
-						if (city.equals("")) {
-							city = "leeg";
-						}
-						String remark = debtorDetails.getString("Comment");
-
-						Address postal = new Address(contact, phoneNr, email, street, houseNumber, postalCode, city,
-								remark, "postal", 2);
-						// Invoice
-						String invoiceFirstName = debtorDetails.getString("InvoiceInitials");
-						String invoiceLastName = debtorDetails.getString("InvoiceSurName");
-						String invoiceContact = invoiceFirstName + " " + invoiceLastName;
-						String invoiceCompanyName = debtorDetails.getString("InvoiceCompanyName");
-
-						String invoiceEmail = debtorDetails.getString("InvoiceEmailAddress");
-						if (invoiceEmail.equals("")) {
-							invoiceEmail = email;
-						}
-						String invoicehouseNumber = "";
-						String invoicestreet = "";
-						String invoicestreetNumber[] = debtorDetails.getString("InvoiceAddress").split("\\s+");
-						for (int j = 0; j < invoicestreetNumber.length; j++) {
-							if (j == invoicestreetNumber.length - 1) {
-								invoicehouseNumber = invoicestreetNumber[j];
-							} else if (j == invoicestreetNumber.length - 2) {
-								invoicestreet += invoicestreetNumber[j];
-							} else {
-								invoicestreet += invoicestreetNumber[j] + " ";
-							}
-						}
-						if (invoicestreet.equals("")) {
-							invoicestreet = "leeg";
-						}
-						String invoicepostalCode = debtorDetails.getString("InvoiceZipCode");
-						if (invoicepostalCode.equals("")) {
-							invoicepostalCode = "leeg";
-						}
-						String invoicecity = debtorDetails.getString("InvoiceCity");
-						if (invoicecity.equals("")) {
-							invoicecity = "leeg";
-						}
-						if (!invoicecity.equals("leeg")) {
-							Address invoice = new Address(invoiceContact, phoneNr, invoiceEmail, invoicestreet,
-									invoicehouseNumber, invoicepostalCode, invoicecity, remark, "invoice", 1);
-							address.add(invoice);
-						}
-						address.add(postal);
-						r = new Relation(companyName, debtorNr, contact, invoiceEmail, address, modified);
-						relations.add(r);
+					if (dbModified == null || array == null) {
+						importCount++;
+					} else {
+						editCount++;
 					}
+					// Postal
+					String firstName = debtorDetails.getString("Initials");
+					String lastName = debtorDetails.getString("SurName");
+					String companyName = debtorDetails.getString("CompanyName");
+					String contact = firstName + " " + lastName;
+					String mobileNr = debtorDetails.getString("MobileNumber");
+					String phoneNr = debtorDetails.getString("PhoneNumber");
+					if (phoneNr.equals("")) {
+						phoneNr = mobileNr;
+					}
+					String email = debtorDetails.getString("EmailAddress");
+					if (email.equals("")) {
+						email = "leeg";
+					}
+					String houseNumber = "";
+					String street = "";
+					String streetNumber[] = debtorDetails.getString("Address").split("\\s+");
+					for (int j = 0; j < streetNumber.length; j++) {
+						if (j == streetNumber.length - 1) {
+							houseNumber = streetNumber[j];
+						} else if (j == streetNumber.length - 2) {
+							street += streetNumber[j];
+						} else {
+							street += streetNumber[j] + " ";
+						}
+					}
+					if (street.equals("")) {
+						street = "leeg";
+					}
+					String postalCode = debtorDetails.getString("ZipCode");
+					if (postalCode.equals("")) {
+						postalCode = "leeg";
+					}
+					String city = debtorDetails.getString("City");
+					if (city.equals("")) {
+						city = "leeg";
+					}
+					String remark = debtorDetails.getString("Comment");
+
+					Address postal = new Address(contact, phoneNr, email, street, houseNumber, postalCode, city, remark,
+							"postal", 2);
+					// Invoice
+					String invoiceFirstName = debtorDetails.getString("InvoiceInitials");
+					String invoiceLastName = debtorDetails.getString("InvoiceSurName");
+					String invoiceContact = invoiceFirstName + " " + invoiceLastName;
+					String invoiceCompanyName = debtorDetails.getString("InvoiceCompanyName");
+
+					String invoiceEmail = debtorDetails.getString("InvoiceEmailAddress");
+					if (invoiceEmail.equals("")) {
+						invoiceEmail = email;
+					}
+					String invoicehouseNumber = "";
+					String invoicestreet = "";
+					String invoicestreetNumber[] = debtorDetails.getString("InvoiceAddress").split("\\s+");
+					for (int j = 0; j < invoicestreetNumber.length; j++) {
+						if (j == invoicestreetNumber.length - 1) {
+							invoicehouseNumber = invoicestreetNumber[j];
+						} else if (j == invoicestreetNumber.length - 2) {
+							invoicestreet += invoicestreetNumber[j];
+						} else {
+							invoicestreet += invoicestreetNumber[j] + " ";
+						}
+					}
+					if (invoicestreet.equals("")) {
+						invoicestreet = "leeg";
+					}
+					String invoicepostalCode = debtorDetails.getString("InvoiceZipCode");
+					if (invoicepostalCode.equals("")) {
+						invoicepostalCode = "leeg";
+					}
+					String invoicecity = debtorDetails.getString("InvoiceCity");
+					if (invoicecity.equals("")) {
+						invoicecity = "leeg";
+					}
+					if (!invoicecity.equals("leeg")) {
+						Address invoice = new Address(invoiceContact, phoneNr, invoiceEmail, invoicestreet,
+								invoicehouseNumber, invoicepostalCode, invoicecity, remark, "invoice", 1);
+						address.add(invoice);
+					}
+					address.add(postal);
+					r = new Relation(companyName, debtorNr, contact, invoiceEmail, address, modified);
+					relations.add(r);
 				}
 			}
 		}
 		if (!relations.isEmpty()) {
-			ObjectDAO.saveRelations(relations, softwareToken);
+			ObjectDAO.saveRelations(relations, softwareToken, con);
 			int successAmount = WorkOrderHandler.addData(softwareToken, relations, "relations", softwareName);
 			if (successAmount > 0) {
 				errorMessage += "Success " + importCount + " relations imported<br />";
@@ -323,19 +317,20 @@ public class WeFactHandler {
 		}
 		return errorMessage;
 	}
-	//Workorder -- offerte
-	public String getOfferte(String clientToken, String softwareToken, String date)throws Exception{
+
+	// Workorder -- offerte
+	public String getOfferte(String clientToken, String softwareToken, String date) throws Exception {
 		String errorMessage = "";
-//		Offerte o = null;
+		// Offerte o = null;
 		controller = "pricequote";
-		action = "list"; 
+		action = "list";
 		ArrayList<Relation> relations = new ArrayList<Relation>();
-		Boolean hasContent =  ObjectDAO.hasContent(softwareToken, "relations");
-		
-		if(date != null){
+		Boolean hasContent = ObjectDAO.hasContent(softwareToken, "relations");
+
+		if (date != null) {
 			array = "&modified[from]=" + getDateMinHour(date);
 		}
-		if(!hasContent){
+		if (!hasContent) {
 			array = null;
 		}
 		// Get all debtorCodes in WeFact
@@ -345,7 +340,7 @@ public class WeFactHandler {
 		int totalResults = jsonList.getInt("totalresults");
 		String status = jsonList.getString("status");
 		System.out.println("jsonList " + jsonList);
-		if (status.equals("success")&& totalResults > 0) {
+		if (status.equals("success") && totalResults > 0) {
 			JSONArray debtors = jsonList.getJSONArray("debtors");
 			for (int i = 0; i < debtors.length(); i++) {
 				JSONObject object = debtors.getJSONObject(i);
