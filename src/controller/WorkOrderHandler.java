@@ -25,10 +25,11 @@ import object.workorder.Material;
 import object.workorder.Project;
 import object.workorder.Relation;
 import object.workorder.WorkOrder;
+import object.workorder.WorkPeriod;
 
 //In this class you'll find all the methodes that are used to communicate with WBA
 public class WorkOrderHandler {
-	private static String version = "7";
+	private static String version = "8";
 	// WorkOrder Api key
 	// Env variable!
 	final static String softwareToken = "622a8ef3a712344ef07a4427550ae1e2b38e5342";
@@ -89,14 +90,19 @@ public class WorkOrderHandler {
 
 	}
 
-	public static ArrayList<WorkOrder>getData(String token, String type, String stat, boolean updateStatus,
+	public static ArrayList<WorkOrder> getData(String token, String type, String stat, boolean updateStatus,
 			String softwareName) {
 		// Header
 		// ProjectNr, performancedate, invoiceaddressnumber,
 		// deliveraddressnumber, customercode, status, paymentmethod(cash, bank,
 		// cheque, cashondelivery, da)
+		// all content from getWorkorder
 		String projectNr, workDate = null, customerEmailInvoice, customerEmail, customerDebtorNr, status, paymentMethod,
-				creationDate, id, orderNr;
+				creationDate, id, orderNr, workTime, workEndDate, workEndTime, externProjectNr, customerName,
+				customerStreet, customerStreetNo, customerZIP, customerCity, customerContactPerson, customerPhone,
+				customerRemark, customerNameInvoice, customerDebtorNrInvoice, customerStreetInvoice,
+				customerStreetNoInvoice, customerZIPInvoice, customerContactPersonInvoice, customerPhoneInvoice,
+				customerRemarkInvoice, typeOfWork, workDescription, beginTime, endTime, customerCityInvoice;
 		String employeeNr = null, hourType = null, description = null, duration = null;
 		// line
 		String materialCode, materialNr, materialUnit, materialName;
@@ -124,91 +130,151 @@ public class WorkOrderHandler {
 				JSONObject json = new JSONObject(output);
 				if (json.getInt("code") == 200) {
 					allData = new ArrayList<WorkOrder>();
-					JSONArray array = json.getJSONArray("object");
+					JSONArray array = json.getJSONArray("response");
 					for (int i = 0; i < array.length(); i++) {
+						// only choose recent workorders(not archieved or
+						// deleted)
 						JSONObject object = array.getJSONObject(i);
-						projectNr = object.getString("ProjectNr");
-						id = object.getString("id");
-						orderNr = object.getString("OrderNr");
-						//only choose recent workorders(not archieved or deleted)
-						if (object.getInt("archived") == 0) {
-							if (projectNr.equals("")) {
-								workDate = object.getString("WorkDate");
-								customerEmailInvoice = object.getString("CustomerEmailInvoice");
-								customerEmail = object.getString("CustomerEmail");
-								customerDebtorNr = object.getString("CustomerDebtorNr");
-								employeeNr = object.getString("EmployeeNr");
-								status = object.getString("status");
-								creationDate = object.getString("CreationDate");
-								switch (status) {
-								case "Afgehandeld":
-									status = "final";
-									break;
-								case "Klaargezet":
-									status = "concept";
-									break;
-								default:
-									status = "concept";
-									break;
-								}
-								paymentMethod = object.getString("PaymentMethod");
-								switch (paymentMethod) {
-								case "pin betaling":
-									paymentMethod = "bank";
-									break;
-								case "contant voldaan":
-									paymentMethod = "cash";
-									break;
-								default:
-									paymentMethod = "bank";
-									break;
-								}
-								JSONArray materials = object.getJSONArray("materials");
-								ArrayList<Material> alleMaterials = new ArrayList<Material>();
-								Connection con = DBConnection.createDatabaseConnection();
-								for (int j = 0; j < materials.length(); j++) {
-									JSONObject material = materials.getJSONObject(j);
-									materialCode = material.getString("MaterialCode");
-									materialNr = material.getString("MaterialNr");
-									materialUnit = material.getString("MaterialUnit");
-									materialName = material.getString("MaterialName");
-									materialPrice = material.getDouble("MaterialPrice");
-									// Get material code from db
-									Material sub = ObjectDAO.getMaterials(token, materialCode, materialName, con);
-									Material m = null;
-									if (sub != null) {
-										// Check if material has subCode
-										if (sub.getSubCode() != null) {
-											m = new Material(sub.getCode(), materialCode, materialUnit, materialName,
-													materialPrice, materialNr, null);
-										} else {
-											m = new Material(materialCode, null, materialUnit, materialName,
-													materialPrice, materialNr, null);
-										}
-									}
-									alleMaterials.add(m);
-								}
-								w = new WorkOrder(projectNr, workDate, customerEmailInvoice, customerEmail,
-										customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id,
-										orderNr);
-								allData.add(w);
-								con.close();
-							} else {
-								JSONArray periods = object.getJSONArray("workperiods");
-								if (periods.length() > 0) {
-									for (int j = 0; j < periods.length(); j++) {
-										JSONObject period = periods.getJSONObject(j);
-										employeeNr = period.getString("EmployeeNr");
-										hourType = period.getString("HourType");
-										workDate = period.getString("WorkDate");
-										description = period.getString("WorkRemark");
-										duration = period.getString("TotalTime");
-										w = new WorkOrder(employeeNr, hourType, workDate, projectNr, description,
-												duration, id);
-										allData.add(w);
-									}
+						if (object.getInt("Archived") == 0) {
+							id = object.getString("id");
+							orderNr = object.getString("OrderNr");
+							workDate = object.getString("WorkDate");
+							workTime = object.getString("WorkTime");
+							workEndDate = object.getString("WorkEndDate");
+							workEndTime = object.getString("WorkEndTime");
+							projectNr = object.getString("ProjectNr");
+							externProjectNr = object.getString("ExternProjectNr");
+							customerName = object.getString("CustomerName");
+							customerDebtorNr = object.getString("CustomerDebtorNr");
+							customerStreet = object.getString("CustomerStreet");
+							customerStreetNo = object.getString("CustomerStreetNo");
+							customerEmail = object.getString("CustomerEmail");
+							customerZIP = object.getString("CustomerZIP");
+							customerCity = object.getString("CustomerCity");
+							customerContactPerson = object.getString("CustomerContactPerson");
+							customerPhone = object.getString("CustomerPhone");
+							customerRemark = object.getString("CustomerRemark");
+							customerNameInvoice = object.getString("CustomerNameInvoice");
+							customerDebtorNrInvoice = object.getString("CustomerDebtorNrInvoice");
+							customerStreetInvoice = object.getString("CustomerStreetInvoice");
+							customerStreetNoInvoice = object.getString("CustomerStreetNoInvoice");
+							customerEmailInvoice = object.getString("CustomerEmailInvoice");
+							customerZIPInvoice = object.getString("CustomerZIPInvoice");
+							customerCityInvoice = object.getString("CustomerCityInvoice");
+							customerContactPersonInvoice = object.getString("CustomerContactPersonInvoice");
+							customerPhoneInvoice = object.getString("CustomerPhoneInvoice");
+							customerRemarkInvoice = object.getString("CustomerRemarkInvoice");
+							typeOfWork = object.getString("TypeOfWork");
+							workDescription = object.getString("WorkDescription");
+							paymentMethod = object.getString("PaymentMethod");
+							creationDate = object.getString("CreationDate");
+							employeeNr = object.getString("EmployeeNr");
+							status = object.getString("status");
+							creationDate = object.getString("CreationDate");
+							switch (status) {
+							case "Afgehandeld":
+								status = "final";
+								break;
+							case "Klaargezet":
+								status = "concept";
+								break;
+							default:
+								status = "concept";
+								break;
+							}
+							switch (paymentMethod) {
+							case "pin betaling":
+								paymentMethod = "bank";
+								break;
+							case "contant voldaan":
+								paymentMethod = "cash";
+								break;
+							default:
+								paymentMethod = "bank";
+								break;
+							}
+
+							// Set postal and invoice relation
+							ArrayList<Relation> allRelations = new ArrayList<Relation>();
+							ArrayList<Address> invoiceAddress = new ArrayList<Address>();
+							// id 1 is invoice
+							Address invoice = new Address(customerContactPersonInvoice, customerPhoneInvoice,
+									customerEmailInvoice, customerStreetInvoice, customerStreetNoInvoice,
+									customerZIPInvoice, customerCityInvoice, customerRemarkInvoice, "invoice", 1);
+							invoiceAddress.add(invoice);
+							Relation customerRelationInvoice = new Relation(customerNameInvoice,
+									customerDebtorNrInvoice, customerContactPersonInvoice, customerEmailInvoice,
+									invoiceAddress, null);
+
+							ArrayList<Address> postaleAddress = new ArrayList<Address>();
+							// id 2 is postal
+							Address postal = new Address(customerContactPerson, customerPhone, customerEmail,
+									customerStreet, customerStreetNo, customerZIP, customerCity, customerRemark,
+									"postal", 2);
+							postaleAddress.add(postal);
+							Relation customerRelationPostal = new Relation(customerName, customerDebtorNr,
+									customerContactPerson, customerEmail, postaleAddress, null);
+							// add Relations to ArrayList
+							allRelations.add(customerRelationInvoice);
+							allRelations.add(customerRelationPostal);
+
+							// workperiods
+							ArrayList<WorkPeriod> allWorkPeriods = new ArrayList<WorkPeriod>();
+							JSONArray periods = object.getJSONArray("Workperiods");
+							if (periods.length() > 0) {
+								for (int j = 0; j < periods.length(); j++) {
+									WorkPeriod work = null;
+									JSONObject period = periods.getJSONObject(j);
+									beginTime = period.getString("BeginTime");
+									duration = period.getString("TotalTime");
+									description = period.getString("WorkRemark");
+									workDate = period.getString("WorkDate");
+									endTime = period.getString("EndTime");
+									// travel = period.getString("Travel");
+									employeeNr = period.getString("EmployeeNr");
+									hourType = period.getString("HourType");
+									work = new WorkPeriod(employeeNr, hourType, workDate, projectNr, description,
+											duration, id, beginTime, endTime);
+									allWorkPeriods.add(work);
 								}
 							}
+							// materials
+							JSONArray materials = object.getJSONArray("Materials");
+							ArrayList<Material> alleMaterials = new ArrayList<Material>();
+							Connection con = DBConnection.createDatabaseConnection();
+							for (int j = 0; j < materials.length(); j++) {
+								JSONObject material = materials.getJSONObject(j);
+								materialCode = material.getString("MaterialCode");
+								materialNr = material.getString("MaterialNr");
+								materialUnit = material.getString("MaterialUnit");
+								materialName = material.getString("MaterialName");
+								materialPrice = material.getDouble("MaterialPrice");
+								// Get material from db
+								Material sub = ObjectDAO.getMaterials(token, materialCode, materialName);
+								Material m = null;
+								if (sub != null) {
+									// Check if material has subCode
+									if (sub.getSubCode() != null) {
+										m = new Material(sub.getCode(), materialCode, materialUnit, materialName,
+												materialPrice, materialNr, null);
+									} else {
+										m = new Material(materialCode, null, materialUnit, materialName, materialPrice,
+												materialNr, null);
+									}
+								}else{
+									m = new Material(materialCode, null, materialUnit, materialName, materialPrice,
+											materialNr, null);
+								}
+								
+								alleMaterials.add(m);
+							}
+
+							w = new WorkOrder(projectNr, workDate, customerEmailInvoice, customerEmail,
+									customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id, orderNr,
+									allWorkPeriods, allRelations, workTime, workEndDate, workEndTime, externProjectNr,
+									typeOfWork, workDescription, null);
+							allData.add(w);
+							con.close();
 						}
 					}
 				}
@@ -220,9 +286,9 @@ public class WorkOrderHandler {
 
 	}
 
-	public static int addData(String token, Object array, String type, String softwareName)
+	public static Object addData(String token, Object array, String type, String softwareName, String clientToken)
 			throws ServletException, IOException {
-		int b = 0;
+		Object amount = null;
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken;
 		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
@@ -252,7 +318,7 @@ public class WorkOrderHandler {
 		case "hourtypes":
 			input = hourtypeInput(array);
 			break;
-		case "workorder":
+		case "PostWorkorders":
 			input = workorderInput(array);
 			break;
 		}
@@ -265,16 +331,23 @@ public class WorkOrderHandler {
 		System.out.println("Output from Server .... \n");
 
 		while ((output = br.readLine()) != null) {
-			System.out.println("OUTPUT" + output);
+			System.out.println("OUTPUT " + output + " type "+ type);
 			try {
 				JSONObject json = new JSONObject(output);
-				b = json.getInt("object");
+				if(!json.isNull("response")){
+					//Check if array exist
+					if(json.optJSONArray("response") != null){
+						amount = json.getJSONArray("response");
+					} else {
+						amount = json.getInt("response");
+					}
+				}
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 		conn.disconnect();
-		return b;
+		return amount;
 
 	}
 
@@ -333,14 +406,14 @@ public class WorkOrderHandler {
 			for (Address a : r.getAddressess()) {
 				j++;
 				if (i == array.size() && j == r.getAddressess().size()) {
-					input += "{\"name\":\"" + r.getName() + "\",\"debtor_number\":\"" + r.getDebtorNumber()
+					input += "{\"name\":\"" + r.getCompanyName() + "\",\"debtor_number\":\"" + r.getDebtorNumber()
 							+ "\",\"contact\":\"" + a.getName() + "\",\"phone_number\":\"" + a.getPhoneNumber()
 							+ "\",\"email\":\"" + a.getEmail() + "\",\"email_workorder\":\"" + r.getEmailWorkorder()
 							+ "\",\"street\":\"" + a.getStreet() + "\",\"house_number\":\"" + a.getHouseNumber()
 							+ "\",\"postal_code\":\"" + a.getPostalCode() + "\",\"city\":\"" + a.getCity()
 							+ "\",\"remark\":\"" + a.getRemark() + "\"}";
 				} else {
-					input += "{\"name\":\"" + r.getName() + "\",\"debtor_number\":\"" + r.getDebtorNumber()
+					input += "{\"name\":\"" + r.getCompanyName() + "\",\"debtor_number\":\"" + r.getDebtorNumber()
 							+ "\",\"contact\":\"" + a.getName() + "\",\"phone_number\":\"" + a.getPhoneNumber()
 							+ "\",\"email\":\"" + a.getEmail() + "\",\"email_workorder\":\"" + r.getEmailWorkorder()
 							+ "\",\"street\":\"" + a.getStreet() + "\",\"house_number\":\"" + a.getHouseNumber()
@@ -398,22 +471,77 @@ public class WorkOrderHandler {
 		}
 		return input += "]";
 	}
+
 	public static String workorderInput(Object obj) {
-		return version;
-//		@SuppressWarnings("unchecked")
-//		ArrayList<WorkOrder> array = (ArrayList<WorkOrder>) obj;
-//		String input = "[";
-//		int i = 1;
-//		for (WorkOrder w : array) {
-//			if (i == array.size()) {
-//				input += "{\"firstname\":\"" + e.getFirstName() + "\",\"lastname\":\"" + e.getLastName()
-//						+ "\",\"number\":\"" + e.getCode() + "\"}";
-//			} else {
-//				i++;
-//				input += "{\"firstname\":\"" + e.getFirstName() + "\",\"lastname\":\"" + e.getLastName()
-//						+ "\",\"number\":\"" + e.getCode() + "\"},";
-//			}
-//		}
-//		return input += "]";
+		@SuppressWarnings("unchecked")
+		ArrayList<WorkOrder> allWorkorders = (ArrayList<WorkOrder>) obj;
+		String input = "[";
+		int i = 0;
+		for (WorkOrder w : allWorkorders) {
+			i++;
+			Relation r = w.getRelations().get(0);
+			Address a = r.getAddressess().get(0);
+			if (i == allWorkorders.size()) {
+				input += "{\"WorkorderNo\":\"" + w.getWorkorderNr() + "\",\"ProjectNr\":\"" + ""
+						+ "\",\"ExternProjectNr\":\"" + w.getExternProjectNr() + "\",\"CustomerName\":\"" + r.getCompanyName()
+						+ "\",\"CustomerDebtorNr\":\"" + w.getCustomerDebtorNr() + "\",\"CustomerStreet\":\""
+						+ a.getStreet() + "\",\"CustomerEmail\":\"" + w.getCustomerEmail() + "\",\"CustomerZIP\":\""
+						+ a.getPostalCode() + "\",\"CustomerCity\":\"" + a.getCity() + "\",\"CustomerContactPerson\":\""
+						+ r.getContact() + "\",\"CustomerPhone\":\"" + a.getPhoneNumber() + "\",\"CustomerRemark\":\""
+						+ a.getRemark() + "\",\"CustomerNameInvoice\":\"" + r.getCompanyName()
+						+ "\",\"CustomerDebtorNrInvoice\":\"" + r.getDebtorNumber() + "\",\"CustomerStreetInvoice\":\""
+						+ a.getStreet() + "\",\"CustomerEmailInvoice\":\"" + w.getCustomerEmail()
+						+ "\",\"CustomerZIPInvoice\":\"" + a.getPostalCode() + "\",\"CustomerCityInvoice\":\""
+						+ a.getCity() + "\",\"CustomerContactPersonInvoice\":\"" + r.getContact()
+						+ "\",\"CustomerPhoneInvoice\":\"" + a.getPhoneNumber() + "\",\"CustomerRemarkInvoice\":\""
+						+ a.getRemark() + "\",\"TypeOfWork\":\"" + w.getTypeOfWork() + "\",\"WorkDescription\":\""
+						+ w.getWorkDescription() + "\",\"PaymentMethod\":\"" + w.getPaymentMethod() + "\",\"WorkDate\":\"" + w.getWorkDate() + "\",\"Materials\": [";
+				int j = 1;
+				for (Material m : w.getMaterials()) {
+					if (j == w.getMaterials().size()) {
+						input += "{\"MaterialCode\":\"" + m.getCode() + "\",\"MaterialNr\":\"" + m.getQuantity()
+								+ "\",\"MaterialPrice\":\"" + m.getPrice() + "\",\"MaterialName\":\""
+								+ m.getDescription() + "\",\"MaterialUnit\":\"" + m.getUnit() + "\"}";
+					} else {
+						j++;
+						input += "{\"MaterialCode\":\"" + m.getCode() + "\",\"MaterialNr\":\"" + m.getQuantity()
+								+ "\",\"MaterialPrice\":\"" + m.getPrice() + "\",\"MaterialName\":\""
+								+ m.getDescription() + "\",\"MaterialUnit\":\"" + m.getUnit() + "\"},";
+					}
+				}
+				input += "]}";
+			} else {
+				input += "{\"WorkorderNo\":\"" + w.getWorkorderNr() + "\",\"ProjectNr\":\"" + ""
+						+ "\",\"ExternProjectNr\":\"" + w.getExternProjectNr() + "\",\"CustomerName\":\"" + r.getCompanyName()
+						+ "\",\"CustomerDebtorNr\":\"" + w.getCustomerDebtorNr() + "\",\"CustomerStreet\":\""
+						+ a.getStreet() + "\",\"CustomerEmail\":\"" + w.getCustomerEmail() + "\",\"CustomerZIP\":\""
+						+ a.getPostalCode() + "\",\"CustomerCity\":\"" + a.getCity() + "\",\"CustomerContactPerson\":\""
+						+ r.getContact() + "\",\"CustomerPhone\":\"" + a.getPhoneNumber() + "\",\"CustomerRemark\":\""
+						+ a.getRemark() + "\",\"CustomerNameInvoice\":\"" + r.getCompanyName()
+						+ "\",\"CustomerDebtorNrInvoice\":\"" + r.getDebtorNumber() + "\",\"CustomerStreetInvoice\":\""
+						+ a.getStreet() + "\",\"CustomerEmailInvoice\":\"" + w.getCustomerEmail()
+						+ "\",\"CustomerZIPInvoice\":\"" + a.getPostalCode() + "\",\"CustomerCityInvoice\":\""
+						+ a.getCity() + "\",\"CustomerContactPersonInvoice\":\"" + r.getContact()
+						+ "\",\"CustomerPhoneInvoice\":\"" + a.getPhoneNumber() + "\",\"CustomerRemarkInvoice\":\""
+						+ a.getRemark() + "\",\"TypeOfWork\":\"" + w.getTypeOfWork() + "\",\"WorkDescription\":\""
+						+ w.getWorkDescription() + "\",\"PaymentMethod\":\"" + w.getPaymentMethod() + "\",\"WorkDate\":\"" + w.getWorkDate() + "\",\"Materials\": [";
+				int j = 1;
+				for (Material m : w.getMaterials()) {
+					if (j == w.getMaterials().size()) {
+						input += "{\"MaterialCode\":\"" + m.getCode() + "\",\"MaterialNr\":\"" + m.getQuantity()
+								+ "\",\"MaterialPrice\":\"" + m.getPrice() + "\",\"MaterialName\":\""
+								+ m.getDescription() + "\",\"MaterialUnit\":\"" + m.getUnit() + "\"}";
+					} else {
+						j++;
+						input += "{\"MaterialCode\":\"" + m.getCode() + "\",\"MaterialNr\":\"" + m.getQuantity()
+								+ "\",\"MaterialPrice\":\"" + m.getPrice() + "\",\"MaterialName\":\""
+								+ m.getDescription() + "\",\"MaterialUnit\":\"" + m.getUnit() + "\"},";
+					}
+				}
+				input += "]},";
+
+			}
+		}
+		return input += "]";
 	}
 }

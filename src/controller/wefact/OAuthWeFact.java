@@ -3,6 +3,7 @@ package controller.wefact;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.RequestDispatcher;
@@ -22,22 +23,23 @@ public class OAuthWeFact extends Authenticate {
 	private Token tokenObject;
 
 	@Override
-	public void authenticate(String softwareToken, HttpServletRequest req,
-			HttpServletResponse resp) throws ClientProtocolException, IOException, ServletException {
+	public void authenticate(String softwareToken, HttpServletRequest req, HttpServletResponse resp)
+			throws ClientProtocolException, IOException, ServletException {
 		RequestDispatcher rd = null;
 		String softwareName = (String) req.getSession().getAttribute("softwareName");
 		Token dbToken = null;
-		//Get token from database
+		// Get token from database
 		try {
 			dbToken = TokenDAO.getToken(softwareToken, softwareName);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
 		if (dbToken == null) {
 			if (!req.getParameterMap().containsKey("clientToken")) {
 				// Login page
 				rd = req.getRequestDispatcher("weFact.jsp");
-				rd.forward(req, resp);
+				req.getSession().setAttribute("clientToken", null);
 				// If clientToken is filled in
 			} else {
 				// Settings page
@@ -48,7 +50,7 @@ public class OAuthWeFact extends Authenticate {
 					tokenObject.setAccessToken(clientToken);
 					tokenObject.setSoftwareName(softwareName);
 					tokenObject.setSoftwareToken(softwareToken);
-					//Save token to database
+					// Save token to database
 					try {
 						TokenDAO.saveToken(tokenObject);
 					} catch (SQLException e1) {
@@ -64,9 +66,11 @@ public class OAuthWeFact extends Authenticate {
 					req.getSession().setAttribute("errorMessage", "Security code invalid!");
 					req.getSession().setAttribute("clientToken", null);
 				}
-				rd.forward(req, resp);
 			}
-		}else{
+		} else if (dbToken.getAccessSecret().equals("invalid")) {
+			rd = req.getRequestDispatcher("weFact.jsp");
+			req.getSession().setAttribute("errorMessage", "softwareToken is al in gebruik door " + dbToken.getSoftwareName());
+		} else {
 			req.getSession().setAttribute("clientToken", dbToken.getAccessToken());
 			ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
 			if (!allLogs.isEmpty() || allLogs != null) {
@@ -75,13 +79,21 @@ public class OAuthWeFact extends Authenticate {
 			}
 			Settings set = ObjectDAO.getSettings(softwareToken);
 			if (set != null) {
-				req.getSession().setAttribute("checkboxes", set.getImportObjects());
+				Map<String, String> allImports = new HashMap<String, String>();
+				for(String s : set.getImportObjects()){
+					allImports.put(s, "selected");
+				}
+				Map<String, String> exportWerkbonType = new HashMap<String, String>();
+				exportWerkbonType.put(set.getExportWerkbontype(), "selected");
+				
+				req.getSession().setAttribute("checkboxes", allImports);
+				req.getSession().setAttribute("exportWerkbonType", exportWerkbonType);
 				req.getSession().setAttribute("factuur", set.getFactuurType());
 			}
 			rd = req.getRequestDispatcher("weFact.jsp");
-			rd.forward(req, resp);
 		}
-		
+		rd.forward(req, resp);
+
 	}
 
 }

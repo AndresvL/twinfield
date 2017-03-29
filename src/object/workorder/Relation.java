@@ -3,25 +3,25 @@ package object.workorder;
 import java.util.ArrayList;
 
 public class Relation {
-	private String name, debtorNumber, contact, emailWorkorder, modified;
+	private String companyName, debtorNumber, contact, emailWorkorder, modified;
 	private ArrayList<Address> addresses;
 
-	public Relation(String name, String debtorNumber, String contact, String emailWorkorder,
+	public Relation(String companyName, String debtorNumber, String contact, String emailWorkorder,
 			ArrayList<Address> addresses, String modified) {
-		this.name = name;
+		this.companyName = companyName;
 		this.debtorNumber = debtorNumber;
 		this.contact = contact;
 		this.emailWorkorder = emailWorkorder;
 		this.setAddresses(addresses);
 		this.setModified(modified);
 	}
-
-	public String getName() {
-		return name;
+	//CompanyName
+	public String getCompanyName() {
+		return companyName;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setCompanyName(String name) {
+		this.companyName = name;
 	}
 
 	public String getDebtorNumber() {

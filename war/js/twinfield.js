@@ -1,4 +1,5 @@
 $(document).ready(function() {
+		$('[data-toggle="tooltip"]').tooltip(); 
 			<!-- reload page every 15 - 20 min -->
 			setTimeout(function(){
 				  location.reload();

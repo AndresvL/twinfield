@@ -5,15 +5,17 @@ public class HourType {
 	private int costBooking, saleBooking;
 	private double costPrice, salePrice;
 	private int active;
+	private String modified;
 	
-	public HourType(String c, String n, int cB, int sB, double cP, double sP, int a){
+	public HourType(String c, String n, int cB, int sB, double cP, double sP, int a, String m){
 		this.code = c;
 		this.name = n;
 		this.costBooking = cB;
 		this.saleBooking = sB;
-		this.salePrice = sP;
 		this.costPrice = cP;
+		this.salePrice = sP;
 		this.active = a;
+		this.setModified(m);
 	}
 	public String getCode() {
 		return code;
@@ -56,5 +58,11 @@ public class HourType {
 	}
 	public void setActive(int active) {
 		this.active = active;
+	}
+	public String getModified() {
+		return modified;
+	}
+	public void setModified(String modified) {
+		this.modified = modified;
 	}
 }

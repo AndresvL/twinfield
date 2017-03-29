@@ -39,18 +39,22 @@ public class SoapHandler {
 			String url = "https://login.twinfield.com/webservices/session.asmx?/";
 			SOAPMessage soapResponse = soapConnection.call(createSOAPSession(token), url);
 			SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
-			if (soapPart != null && soapPart.getHeader().hasChildNodes()) {
+			if (soapPart != null && soapPart.getHeader() != null) {
 				sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
 				cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
-			}else{
+			} else {
 				return null;
 			}
+//			ByteArrayOutputStream out = new ByteArrayOutputStream();
+//			soapResponse.writeTo(out);
+//			String strMsg = new String(out.toByteArray());
+//			System.out.println(" SOAPResponse " + strMsg);
 			soapConnection.close();
 		} catch (Exception e) {
 			System.err.println("Error occurred while sending SOAP Request to Server");
-
 			e.printStackTrace();
 		}
+
 		String[] sessionArray = new String[] { sessionID, cluster };
 		return sessionArray;
 	}
@@ -113,13 +117,11 @@ public class SoapHandler {
 			soapResponse = soapConnection.call(soapMessage, url);
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
-
 			soapConnection.close();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			soapResponse.writeTo(out);
-			// String strMsg = new String(out.toByteArray());
-			// System.out.println("XMLSTRING " + xmlString + " session " +
-			// session + " SOAP " + strMsg);
+//			ByteArrayOutputStream out = new ByteArrayOutputStream();
+//			soapResponse.writeTo(out);
+//			String strMsg = new String(out.toByteArray());
+//		    System.out.println(" SOAPRESPONSE " + strMsg);
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
 
@@ -128,7 +130,6 @@ public class SoapHandler {
 		}
 		int result = Integer
 				.parseInt(doc.getChildNodes().item(0).getAttributes().getNamedItem("result").getNodeValue());
-
 		if (type.equals("workorder")) {
 			logger.info("UrenboekingRequest " + data);
 			logger.info("UrenboekingResponse " + xmlString);
@@ -225,7 +226,7 @@ public class SoapHandler {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			soapResponse.writeTo(baos);
 			String results = baos.toString();
-//			System.out.println("results " + results);
+			// System.out.println("results " + results);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -447,7 +448,7 @@ public class SoapHandler {
 		String name = allData.item(4).getTextContent();
 		// h = new HourType(code, name, costBooking, saleBooking, costPrice,
 		// salePrice, active);
-		h = new HourType(code, name, 0, 0, 0.0, 0.0, 1);
+		h = new HourType(code, name, 0, 0, 0.0, 0.0, 1, null);
 		return h;
 	}
 
@@ -469,7 +470,7 @@ public class SoapHandler {
 				// <Columns>
 				NodeList columns = allData.item(1).getChildNodes();
 				// <Items>
-				if (allData.item(2)!= null) {
+				if (allData.item(2) != null) {
 					NodeList items = allData.item(2).getChildNodes();
 					for (int i = 0; i < items.getLength(); i++) {
 						String temp = null;
@@ -487,7 +488,7 @@ public class SoapHandler {
 						}
 						allItems.add(temp);
 					}
-				}else{
+				} else {
 					return null;
 				}
 			}

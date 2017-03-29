@@ -20,7 +20,7 @@ public class OAuthServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String softwareToken = req.getParameter("token");
 		String softwareName = req.getParameter("softwareName");
-		//Get checkSaved from session every time oauth is called
+		//Get checkSaved from session every time oauth is called		
 		String checkSaved = (String) req.getSession().getAttribute("checkSaved");
 		if(checkSaved != null){
 			req.getSession().setAttribute("saved", checkSaved);

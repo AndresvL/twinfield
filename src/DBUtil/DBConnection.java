@@ -17,7 +17,9 @@ public class DBConnection {
 		}
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
-			con = (Connection) DriverManager.getConnection(url, user, password);
+			if(con == null || con.isClosed()){
+				con = (Connection) DriverManager.getConnection(url, user, password);
+			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}

@@ -1,4 +1,6 @@
 $(document).ready(function() {
+	  		$('[data-toggle="tooltip"]').tooltip(); 
+	  		
 			<!-- reload page every 15 - 20 min -->
 			setTimeout(function(){
 				  location.reload();
@@ -17,11 +19,11 @@ $(document).ready(function() {
 				}
 				$('#saved').val("false");
 			}
-		$(".showDetails").click(function() {
-			var errorDetails = $(this).data("href");
-			if(errorDetails !== null && errorDetails !== true && errorDetails !== false && errorDetails !== ""){
-				alert($(this).data("href"));
-			} 
+			$(".showDetails").click(function() {
+				var errorDetails = $(this).data("href");
+				if(errorDetails !== null && errorDetails !== true && errorDetails !== false && errorDetails !== ""){
+					alert(errorDetails);
+				} 
 			});
 		});
 		$("#show").click(function() {

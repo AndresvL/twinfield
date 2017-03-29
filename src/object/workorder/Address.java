@@ -9,6 +9,7 @@ public class Address {
 	}
 	public Address(String name, String phoneNumber, String email, String street, String houseNumber, String postalCode,
 			String city, String remark, String type, int addressId) {
+		//contact
 		this.name = name;
 		this.phoneNumber = phoneNumber;
 		this.email = email;
