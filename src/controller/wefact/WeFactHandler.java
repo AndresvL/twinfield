@@ -113,7 +113,7 @@ public class WeFactHandler {
 			// Create Calender to edit time
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(date);
-			cal.add(Calendar.HOUR_OF_DAY, -2);
+			cal.add(Calendar.HOUR_OF_DAY, -1);
 			date = cal.getTime();
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -140,6 +140,7 @@ public class WeFactHandler {
 			array = null;
 		}
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, null);
+		System.out.println("JSONLIST " + jsonList);
 		String status = jsonList.getString("status");
 		int totalResults = jsonList.getInt("totalresults");
 		if (status.equals("success") && totalResults > 0) {
@@ -271,7 +272,7 @@ public class WeFactHandler {
 					String invoiceLastName = debtorDetails.getString("InvoiceSurName");
 					String invoiceContact = invoiceFirstName + " " + invoiceLastName;
 					String invoiceCompanyName = debtorDetails.getString("InvoiceCompanyName");
-					if(!invoiceCompanyName.equals("")){
+					if (!invoiceCompanyName.equals("")) {
 						companyName = invoiceCompanyName;
 					}
 					String invoiceEmail = debtorDetails.getString("InvoiceEmailAddress");
@@ -640,8 +641,14 @@ public class WeFactHandler {
 						softwareName);
 			} else {
 				errorAmount++;
-				errorDetails = jsonList + "";
+				JSONArray array = jsonList.getJSONArray("errors");
+				for (int i = 0; i < array.length(); i++) {
+					Object obj = array.get(i);
+					errorDetails += obj + "<br>";
+				}
+
 			}
+
 			System.out.println("JSON_REQUEST_FACTUUR " + jsonRequest);
 		}
 		if (errorAmount > 0) {
@@ -662,12 +669,12 @@ public class WeFactHandler {
 		// Get WorkOrders
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,
 				softwareName);
+		System.out.println("TEST");
 		for (WorkOrder w : allData) {
 			exportAmount++;
 			for (Relation r : w.getRelations()) {
 				Address a = r.getAddressess().get(0);
 				if (a.getType().equals("invoice")) {
-
 					// Map date
 					String workDate = null;
 					try {
@@ -678,68 +685,76 @@ public class WeFactHandler {
 					} catch (ParseException e) {
 						e.printStackTrace();
 					}
-					jsonRequest = "{\"api_key\":\"" + clientToken + "\"," + "\"controller\":\"" + controller + "\","
-							+ "\"action\":\"" + action + "\"," + "\"PriceQuoteCode\":\"" + w.getExternProjectNr()
-							+ "\"," + "\"DebtorCode\":\"" + w.getCustomerDebtorNr() + "\"," + "\"Date\":\"" + workDate
-							+ "\"," + "\"CompanyName\":\"" + r.getCompanyName() + "\"," + "\"Initials\":\""
-							+ a.getName() + "\"," + "\"Address\":\"" + a.getStreet() + "\"," + "\"ZipCode\":\""
-							+ a.getPostalCode() + "\"," + "\"City\":\"" + a.getCity() + "\"," + "\"EmailAddress\":\""
-							+ a.getEmail() + "\"," + "\"Description\":\""
-							+ w.getWorkDescription().replaceAll("[\\t\\n\\r]+", " ") + "\","
-							+ "\"CustomFields[typeofwork]\":\"" + w.getTypeOfWork() + "\","
-							+ "\"CustomFields[paymentmethod]\":\"" + w.getPaymentMethod() + "\","
-							+ "\"InvoiceLines\":[";
-					int i = 0;
-					for (Material m : w.getMaterials()) {
-						i++;
-						if (i == w.getMaterials().size()) {
-							jsonRequest += "{\"ProductCode\":\"" + m.getCode() + "\"," + "\"Number\":\""
-									+ m.getQuantity() + "\"}";
-						} else {
-							jsonRequest += "{\"ProductCode\":\"" + m.getCode() + "\"," + "\"Number\":\""
-									+ m.getQuantity() + "\"},";
-						}
+					if(w.getExternProjectNr() != null){
+						action = "edit";
 					}
-					i = 0;
-					for (WorkPeriod p : w.getWorkPeriods()) {
-						i++;
-						double number = p.getDuration();
-						System.out.println("NUMMER " + number);
-						double quantity = (number / 60);
-						System.out.println("NUMMER " + quantity);
-						if (w.getMaterials().size() != 0) {
-							if (i == w.getWorkPeriods().size()) {
-								jsonRequest += ",{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
-										+ quantity + "\"}";
+						jsonRequest = "{\"api_key\":\"" + clientToken + "\"," + "\"controller\":\"" + controller + "\","
+								+ "\"action\":\"" + action + "\"," + "\"PriceQuoteCode\":\"" + w.getExternProjectNr()
+								+ "\"," + "\"DebtorCode\":\"" + w.getCustomerDebtorNr() + "\"," + "\"Date\":\""
+								+ workDate + "\"," + "\"CompanyName\":\"" + r.getCompanyName() + "\","
+								+ "\"Initials\":\"" + a.getName() + "\"," + "\"Address\":\"" + a.getStreet() + "\","
+								+ "\"ZipCode\":\"" + a.getPostalCode() + "\"," + "\"City\":\"" + a.getCity() + "\","
+								+ "\"EmailAddress\":\"" + a.getEmail() + "\"," + "\"Description\":\""
+								+ w.getWorkDescription().replaceAll("[\\t\\n\\r]+", " ") + "\","
+								+ "\"CustomFields[typeofwork]\":\"" + w.getTypeOfWork() + "\","
+								+ "\"CustomFields[paymentmethod]\":\"" + w.getPaymentMethod() + "\","
+								+ "\"PriceQuoteLines\":[";
+						int i = 0;
+						for (Material m : w.getMaterials()) {
+							i++;
+							if (i == w.getMaterials().size()) {
+								jsonRequest += "{\"ProductCode\":\"" + m.getCode() + "\"," + "\"Number\":\""
+										+ m.getQuantity() + "\"}";
 							} else {
-								jsonRequest += ",{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
-										+ quantity + "\"},";
-							}
-						} else {
-							if (i == w.getWorkPeriods().size()) {
-								jsonRequest += "{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
-										+ quantity + "\"}";
-							} else {
-								jsonRequest += "{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
-										+ quantity + "\"},";
+								jsonRequest += "{\"ProductCode\":\"" + m.getCode() + "\"," + "\"Number\":\""
+										+ m.getQuantity() + "\"},";
 							}
 						}
-					}
-					jsonRequest += "]}";
+						i = 0;
+						for (WorkPeriod p : w.getWorkPeriods()) {
+							i++;
+							double number = p.getDuration();
+							double quantity = (number / 60);
+							if (w.getMaterials().size() != 0) {
+								if (i == w.getWorkPeriods().size()) {
+									jsonRequest += ",{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
+											+ quantity + "\"}";
+								} else {
+									jsonRequest += ",{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
+											+ quantity + "\"},";
+								}
+							} else {
+								if (i == w.getWorkPeriods().size()) {
+									jsonRequest += "{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
+											+ quantity + "\"}";
+								} else {
+									jsonRequest += "{\"ProductCode\":\"" + p.getHourType() + "\"," + "\"Number\":\""
+											+ quantity + "\"},";
+								}
+							}
+						}
+						jsonRequest += "]}";
+					//If offerte is created in WBA
+//				
 				}
 
 			}
+			System.out.println("JSON_REQUEST_OFFERTE " + jsonRequest);
 			JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, jsonRequest);
 			String status = jsonList.getString("status");
 			if (status.equals("success")) {
 				successAmount++;
-				//Set status to afgehandeld
+				// Set status to afgehandeld
 				WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder", token,
 						softwareName);
 			} else {
 				errorAmount++;
-				errorDetails += jsonList + "";
-				System.out.println("JSON_REQUEST_OFFERTE " + jsonRequest);
+				JSONArray array = jsonList.getJSONArray("errors");
+				for (int i = 0; i < array.length(); i++) {
+					Object obj = array.get(i);
+					errorDetails = obj + "<br>";
+				}
+
 			}
 		}
 		if (errorAmount > 0) {

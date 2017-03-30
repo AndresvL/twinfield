@@ -101,6 +101,7 @@ public class SynchServlet extends HttpServlet {
 		String cluster = null;
 		if (!loggedIn) {
 			date = TokenDAO.getModifiedDate(t.getSoftwareToken());
+			System.out.println("DATE " + date);
 		}
 		try {
 			switch (t.getSoftwareName()) {
@@ -140,7 +141,7 @@ public class SynchServlet extends HttpServlet {
 		if (messageArray != null) {
 			errorMessage += messageArray[0];
 			if (messageArray[1] != null) {
-				errorDetails += messageArray[1];
+				errorDetails = messageArray[1];
 			}
 		}
 	}
@@ -197,7 +198,7 @@ public class SynchServlet extends HttpServlet {
 	}
 
 	public void weFactImport(String token, String clientToken, String date) throws Exception {
-		System.out.println("wefactimport token " + token);
+		errorMessage = "";
 		WeFactHandler wefact = new WeFactHandler();
 		Settings set = ObjectDAO.getSettings(token);
 		if (set != null) {
@@ -223,16 +224,12 @@ public class SynchServlet extends HttpServlet {
 					break;
 				}
 			}
-			if (errorMessage.startsWith("Success")) {
-				TokenDAO.saveModifiedDate(getDate(null), token);
-			}
 			// Export section
 			String[] exportMessageArray = null;
-			System.out.println("SOFTWARETOKEN = " + token);
 			// Type is factuur
 			if (set.getExportWerkbontype().equals("factuur")) {
 				exportMessageArray = wefact.setFactuur(clientToken, token, set.getFactuurType());
-				// Type is offerte
+			// Type is offerte
 			} else {
 				exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType());
 			}
@@ -245,7 +242,6 @@ public class SynchServlet extends HttpServlet {
 			} else {
 				ObjectDAO.saveLog("Niks te importeren", errorDetails, token);
 			}
-			ObjectDAO.saveLog(errorMessage, null, token);
 		}
 	}
 }

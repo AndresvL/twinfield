@@ -60,7 +60,7 @@ public class OAuthServlet extends HttpServlet {
 				break;
 			case "WeFact":
 				rd = req.getRequestDispatcher("weFact.jsp");
-//				req.getSession().setAttribute("logs", null);
+				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("error", "Token is invalid");
 				break;
 			default:

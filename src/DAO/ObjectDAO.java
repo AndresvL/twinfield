@@ -399,8 +399,7 @@ public class ObjectDAO {
 				long difference = currentTime.getTime() - oldTime.getTime();
 				// Miliseconds
 				if (difference >= 3600000) {
-					statement.execute("DELETE FROM log WHERE softwareToken =\"" + token + "\" AND timestamp =\""
-							+ timestamp + "\"");
+					statement.execute("DELETE FROM log WHERE softwareToken =\"" + token + "\" AND timestamp =\"" + timestamp + "\"");
 				}
 			}
 			statement.close();

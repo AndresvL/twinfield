@@ -164,6 +164,10 @@
 										<td>Werkbon</td>
 										<td>Offerte</td>
 									</tr>
+									<tr>
+										<td>Werkbon</td>
+										<td>Factuur</td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
@@ -279,7 +283,7 @@
 							</thead>
 							<tbody>
 								<c:forEach items="${logs}" var="log">
-									<tr class="showDetails" data-href='${log.details}'>
+										<tr class="showDetails" data-href='${log.details}'>
 										<td>${log.timestamp}</td>
 										<td>${log.message}</td>
 									</tr>
