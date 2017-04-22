@@ -90,7 +90,7 @@ $(document).ready(function() {
 							  imageWidth: 250,
 							  imageHeight: 220,
 							  showConfirmButton: false,
-							  timer: 500
+							  timer: 1000
 							  
 							}).then(
 							  function () {

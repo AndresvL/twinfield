@@ -148,7 +148,7 @@
 						<h4>Gebruikersrollen</h4>
 						In Twinfield <abbr>moet</abbr> de volgende gebruikersrol worden toegevoegd.<br> <br>
 						<div class="image">
-							<img src="./img/rol.png" width="100%" height="100%"
+							<img src="./img/rol.png" width="100%" height="100%" data-toggle="tooltip"
 								title="Ga naar Projecten > Uren & onkosten > Tarieven & toegang" />
 						</div>
 					</div>
@@ -170,8 +170,9 @@
 								<input type="hidden" value="${softwareName}" name="softwareName" />
 								<input type="hidden" value="${softwareToken}" name="softwareToken" />
 								<label>Administratie</label>
-								<img src="./img/vraagteken.jpg" title="Kies een administratie" height="13"
-									width="13" />
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+										title="Kies een administratie waaruit de objecten geimporteerd moeten worden"
+										height="13" width="13" />
 								<select name="offices" class="form-control" id="officelist" required>
 									<option disabled selected value>-- Selecteer een administratie --</option>
 									<c:forEach items="${offices}" var="office">
@@ -181,13 +182,9 @@
 									</c:forEach>
 								</select><br>
 								<label>Selecteer objecten om te importeren</label>
-								<img src="./img/vraagteken.jpg"
-									title="Selecteer de objecten die je wilt importeren van Twinfield naar WerkbonApp"
-									height="13" width="13" />
-								<br> Opgeslagen objecten:
-								<b>
-									<c:forEach items="${checkboxes}" var="checkboxs">${checkboxs}, </c:forEach>
-								</b>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+										title="Selecteer de objecten die je wilt importeren van Twinfield naar WerkbonApp"
+										height="13" width="13" />
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" value="employees"
@@ -236,7 +233,7 @@
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Administratie</label>
-								<img src="./img/vraagteken.jpg" title="Choose an administration" height="13"
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip" title="Export administratie is hetzelfde als import administratie" height="13"
 									width="13" />
 								<select name="exportOffices" class="form-control" id="officeExportList" disabled>
 									<option>-- Selecteer een administratie --</option>
@@ -247,8 +244,8 @@
 									</c:forEach>
 								</select><br>
 								<label>Medewerker</label>
-								<img src="./img/vraagteken.jpg"
-									title="Deze medewerker wordt gekoppeld aan alle uurfacturen" height="13" width="13" />
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="Deze medewerker wordt gekoppeld aan alle uurboekingen" height="13" width="13" />
 								<select name="users" class="form-control" id="userList" required>
 									<!-- <option disabled selected value>-- Selecteer een medewerker --</option> -->
 									<option selected value="Geen" ${"Geen" == setUser ? 'selected="selected"' : ''}>Geen</option>
@@ -262,8 +259,8 @@
 							</div>
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Werkbonstatus</label>
-								<img src="./img/vraagteken.jpg"
-									title="De werkbonnen met aangegeven status worden opgehaald" height="13" width="13" />
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="De werkbonnen met status compleet worden opgehaald" height="13" width="13" />
 								<input class="form-control" type="text" disabled value="Compleet" />
 								<input class="form-control" type="hidden" name="factuurType" value="Compleet" />
 							</div>

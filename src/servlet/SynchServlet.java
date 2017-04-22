@@ -83,9 +83,7 @@ public class SynchServlet extends HttpServlet {
 
 	public String getDate(String date) {
 		String timestamp;
-		LocalDateTime a = LocalDateTime.now();
-		ZoneId zone = ZoneId.of("Europe/Paris");
-		ZonedDateTime za = ZonedDateTime.of(a, zone).plusHours(1);
+		ZonedDateTime za = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		if (date != null) {
 			timestamp = date;
@@ -101,7 +99,6 @@ public class SynchServlet extends HttpServlet {
 		String cluster = null;
 		if (!loggedIn) {
 			date = TokenDAO.getModifiedDate(t.getSoftwareToken());
-			System.out.println("DATE " + date);
 		}
 		try {
 			switch (t.getSoftwareName()) {
@@ -111,7 +108,6 @@ public class SynchServlet extends HttpServlet {
 					sessionID = array[0];
 					cluster = array[1];
 					twinfieldImport(sessionID, cluster, t.getSoftwareToken(), t.getSoftwareName(), date);
-					
 				}
 				DBConnection.createDatabaseConnection().close();
 				break;
@@ -127,7 +123,7 @@ public class SynchServlet extends HttpServlet {
 		}
 
 	}
-
+	//Twinfield
 	public void setErrorMessage(String[] messageArray) {
 		if (messageArray != null) {
 			errorMessage += messageArray[0];
@@ -136,8 +132,27 @@ public class SynchServlet extends HttpServlet {
 			}
 		}
 	}
-
+	//Twinfield
 	public void setErrorMessageDetails(String[] messageArray) {
+		if (messageArray != null) {
+			errorMessage += messageArray[0];
+			if (messageArray[1] != null) {
+				errorDetails = messageArray[1];
+			}
+		}
+	}
+	//WeFact
+	public void setErrorMessageWeFact(String[] messageArray) {
+		if (messageArray != null) {
+			errorMessage += messageArray[0];
+			if (messageArray[1].equals("true")) {
+				checkUpdate = "true";
+			}
+		}
+	}
+	
+	//WeFact
+	public void setErrorMessageDetailsWeFact(String[] messageArray) {
 		if (messageArray != null) {
 			errorMessage += messageArray[0];
 			if (messageArray[1] != null) {
@@ -180,6 +195,7 @@ public class SynchServlet extends HttpServlet {
 							date);
 					setErrorMessage(messageArray);
 					break;
+					
 				}
 			}
 			// Export section
@@ -208,19 +224,19 @@ public class SynchServlet extends HttpServlet {
 				switch (type) {
 				case "materials":
 					messageArray = wefact.getMaterials(clientToken, token, date);
-					setErrorMessage(messageArray);
+					setErrorMessageWeFact(messageArray);
 					break;
 				case "relations":
 					messageArray = wefact.getRelations(clientToken, token, date);
-					setErrorMessage(messageArray);
+					setErrorMessageWeFact(messageArray);
 					break;
 				case "hourtypes":
 					messageArray = wefact.getHourTypes(clientToken, token, date);
-					setErrorMessage(messageArray);
+					setErrorMessageWeFact(messageArray);
 					break;
 				case "offertes":
 					messageArray = wefact.getOffertes(clientToken, token, date);
-					setErrorMessage(messageArray);
+					setErrorMessageWeFact(messageArray);
 					break;
 				}
 			}
@@ -228,12 +244,12 @@ public class SynchServlet extends HttpServlet {
 			String[] exportMessageArray = null;
 			// Type is factuur
 			if (set.getExportWerkbontype().equals("factuur")) {
-				exportMessageArray = wefact.setFactuur(clientToken, token, set.getFactuurType());
+				exportMessageArray = wefact.setFactuur(clientToken, token, set.getFactuurType(), set.getRoundedHours());
 			// Type is offerte
 			} else {
-				exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType());
+				exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType(), set.getRoundedHours());
 			}
-			setErrorMessageDetails(exportMessageArray);
+			setErrorMessageDetailsWeFact(exportMessageArray);
 			if (checkUpdate.equals("true")) {
 				TokenDAO.saveModifiedDate(getDate(null), token);
 			}

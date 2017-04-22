@@ -1,4 +1,4 @@
-package controller.wefact;
+package controller.accountview;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -12,18 +12,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.client.ClientProtocolException;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import DAO.ObjectDAO;
 import DAO.TokenDAO;
 import controller.Authenticate;
-import controller.WorkOrderHandler;
 import object.Settings;
 import object.Token;
 
-public class OAuthWeFact extends Authenticate {
+public class OAuthAccountView extends Authenticate {
 	private Token tokenObject;
 
 	@Override
@@ -40,7 +36,7 @@ public class OAuthWeFact extends Authenticate {
 		}
 		
 		if (dbToken == null) {
-			WeFactHandler we = new WeFactHandler();
+			AccountViewHandler we = new AccountViewHandler();
 			if (!req.getParameterMap().containsKey("clientToken")) {
 				rd = req.getRequestDispatcher("weFact.jsp");
 				req.getSession().setAttribute("clientToken", null);
@@ -64,39 +60,6 @@ public class OAuthWeFact extends Authenticate {
 					rd = req.getRequestDispatcher("weFact.jsp");
 					req.getSession().setAttribute("clientToken", clientToken);
 					req.getSession().setAttribute("errorMessage", "true");
-					//Set workstatusses once in WorkOrdeApp
-					JSONArray JSONArray = new JSONArray();
-					JSONObject JSONObject = null;
-					try {
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "0");
-						JSONObject.put("sta_name", "Concept factuur");
-						JSONArray.put(JSONObject);
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "2");
-						JSONObject.put("sta_name", "Verzonden");
-						JSONArray.put(JSONObject);
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "3");
-						JSONObject.put("sta_name", "Deels betaald");
-						JSONArray.put(JSONObject);
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "4");
-						JSONObject.put("sta_name", "Betaald");
-						JSONArray.put(JSONObject);
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "8");
-						JSONObject.put("sta_name", "Creditfactuur");
-						JSONArray.put(JSONObject);
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "9");
-						JSONObject.put("sta_name", "Betaald");
-						JSONArray.put(JSONObject);
-						System.out.println("JSONARRAY " + JSONArray);
-						WorkOrderHandler.addData(softwareToken, JSONArray, "workstatusses", softwareName, clientToken);
-					} catch (JSONException e) {
-						e.printStackTrace();
-					}
 				} else {
 					// Login page
 					rd = req.getRequestDispatcher("weFact.jsp");
@@ -125,10 +88,8 @@ public class OAuthWeFact extends Authenticate {
 				Map<String, String> exportWerkbonType = new HashMap<String, String>();
 				exportWerkbonType.put(set.getExportWerkbontype(), "selected");
 				
-				
 				req.getSession().setAttribute("checkboxes", allImports);
 				req.getSession().setAttribute("exportWerkbonType", exportWerkbonType);
-				req.getSession().setAttribute("roundedHours", set.getRoundedHours());
 				req.getSession().setAttribute("factuur", set.getFactuurType());
 			}
 			rd = req.getRequestDispatcher("weFact.jsp");

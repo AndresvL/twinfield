@@ -7,14 +7,16 @@ public class Settings implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private String importOffice, exportOffice, factuurType, user, exportWerkbontype;
 	private ArrayList<String> importObjects;
+	private int roundedHours;
 
-	public Settings(String iO, String eO, String fT, ArrayList<String> iObj, String sU, String eWT) {
+	public Settings(String iO, String eO, String fT, ArrayList<String> iObj, String sU, String eWT, int rH) {
 		setImportOffice(iO);
 		setExportOffice(eO);
 		setFactuurType(fT);
 		setImportObjects(iObj);
 		setUser(sU);
 		setExportWerkbontype(eWT);
+		setRoundedHours(rH);
 	}
 
 	public void setUser(String sU) {
@@ -63,5 +65,13 @@ public class Settings implements Serializable {
 
 	public void setExportWerkbontype(String exportWerkbontype) {
 		this.exportWerkbontype = exportWerkbontype;
+	}
+
+	public int getRoundedHours() {
+		return roundedHours;
+	}
+
+	public void setRoundedHours(int roundedHours) {
+		this.roundedHours = roundedHours;
 	}
 }

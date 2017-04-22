@@ -30,6 +30,10 @@
 		        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 		    <![endif]-->
 <style type="text/css">
+#loginContent {
+	width: 400px;
+}
+
 .settings {
 	width: 50%;
 	height: 100%;
@@ -41,6 +45,7 @@
 	height: 100%;
 	float: right;
 }
+
 #help {
 	float: right;
 }
@@ -67,36 +72,29 @@
 			<!-- The login Modal -->
 			<div id="loginModal" class="modal">
 				<!-- Modal content -->
-				<div class="modal-content">
+				<div class="modal-content" id="loginContent">
 					<form action="OAuth.do">
 						<input type="hidden" value="${softwareToken}" name="token" id="softwareToken" />
 						<input type="hidden" value="WeFact" name="softwareName" id="softwareName" />
 						<input type="hidden" value="${clientToken}" id="client" />
 						<table>
 							<tr>
-								<td>
+								<th>
 									<h2>Authentication</h2>
-								</td>
+								</th>
 							</tr>
 							<tr>
-								<td>
-									<label>${errorMessage}</label>
-								</td>
+								<td><label>${errorMessage}</label></td>
 							</tr>
 							<tr>
-								<td>
-									<label>Securitycode WeFact</label>
-									<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+								<td><label>Securitycode WeFact</label> <img src="./img/vraagteken.jpg"
+										data-toggle="tooltip"
 										title="Login bij WeFact en navigeer naar Instellingen - API - beveiligingscode"
-										height="13" width="13" />
-								</td>
+										height="13" width="13" /></td>
 							</tr>
 							<tr>
-								<td>
-									<input type="text" class="form-control" id="clientToken"
-										placeholder="example: 5a5a5fbbcecdd585aa62812119d0721e"
-										value="10b566e8fe030c6d083ebee7d043757f" name="clientToken" required />
-								</td>
+								<td><input type="text" class="form-control" id="clientToken"
+										placeholder="5a5a5fbbcecdd585aa62812119d0721e" name="clientToken" required /></td>
 							</tr>
 						</table>
 						<br>
@@ -151,7 +149,7 @@
 									</tr>
 									<tr>
 										<td>Uursoorten</td>
-										<td>Producten(uren)</td>
+										<td>Producten(Uursoorten)</td>
 									</tr>
 									<tr>
 										<td>Offertes</td>
@@ -178,7 +176,7 @@
 					</div>
 				</div>
 			</div>
-			<input type="hidden" value="${error}" id="error" />
+			<input type="hidden" value="${errorMessage}" id="error" />
 			<input type="hidden" value="${saved}" id="saved" name="saved" />
 			<form action="settings.do" id="saveWeFact">
 				<div class="panel panel-success">
@@ -239,15 +237,25 @@
 								<br>
 								<label>Werkbon type</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="De werkbon wordt als factuur of offerte verstuurd naar WeFact"
-									height="13" width="13" />
+									title="De werkbon wordt als factuur of offerte verstuurd naar WeFact" height="13"
+									width="13" />
 								<br>
 								<input type="radio" name="exportWerkbon" value="factuur"
 									${"selected" == exportWerkbonType.factuur  ? 'checked' : ''} checked>
 								Factuur<br>
 								<input type="radio" name="exportWerkbon" value="offerte"
 									${"selected" == exportWerkbonType.offerte  ? 'checked' : ''}>
-								Offerte<br>
+								Offerte<br> <br>
+								<label>Afronding uren</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="Selecteer het aantal minuten waarop de gewerkte uren moeten worden afgerond"
+									height="13" width="13" />
+								<br> <select name="roundedHours" class="form-control" id="uren" required>
+									<option selected value="1" ${"1" == roundedHours ? 'selected="selected"' : ''}>Geen afronding</option>
+									<option value ="5" ${"5" == roundedHours ? 'selected="selected"' : ''}>5 minuten</option>
+									<option value ="15" ${"15" == roundedHours ? 'selected="selected"' : ''}>15 minuten</option>
+									<option value ="30" ${"30" == roundedHours ? 'selected="selected"' : ''}>30 minuten</option>
+								</select><br>
 							</div>
 						</div>
 					</div>
@@ -283,7 +291,7 @@
 							</thead>
 							<tbody>
 								<c:forEach items="${logs}" var="log">
-										<tr class="showDetails" data-href='${log.details}'>
+									<tr class="showDetails" data-href='${log.details}'>
 										<td>${log.timestamp}</td>
 										<td>${log.message}</td>
 									</tr>

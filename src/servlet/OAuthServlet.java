@@ -31,7 +31,8 @@ public class OAuthServlet extends HttpServlet {
 		
 		RequestDispatcher rd = null;
 		// Set session with software name and token
-		if (WorkOrderHandler.checkWorkOrderToken(softwareToken, softwareName) == 200 ) {
+		int code = WorkOrderHandler.checkWorkOrderToken(softwareToken, softwareName);
+		if (code == 200) {
 			req.getSession().setAttribute("softwareToken", softwareToken);
 			req.getSession().setAttribute("softwareName", softwareName);
 			req.getSession().setAttribute("checkboxes", null);
@@ -59,14 +60,16 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("error", "Token is invalid");
 				break;
 			case "WeFact":
-				rd = req.getRequestDispatcher("weFact.jsp");
+				req.getSession().setAttribute("softwareToken", softwareToken);			
 				req.getSession().setAttribute("logs", null);
-				req.getSession().setAttribute("error", "Token is invalid");
+				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				rd = req.getRequestDispatcher("weFact.jsp");
 				break;
 			default:
 				break;
 			}
 			rd.forward(req, resp);
 		}
+		
 	}
 }

@@ -7,9 +7,18 @@ $(document).ready(function() {
 			  },880000)
 		
 			var modal = document.getElementById('loginModal');
-			if ($('#client').val() == "" || $('#client').val() == null) {
+			if ($('#client').val() === "" || $('#client').val() === null) {
 				modal.style.display = "block";
 			}else {
+				
+				if($('#error').val() === "true"){
+					swal({
+						title : 'Success',
+						text : "Je bent ingelogd",
+						type : 'success'
+					})
+					$('#error').val("");
+				}
 				if ($('#saved').val() !== "") {
 					swal({
 						title : 'Success',
@@ -57,7 +66,7 @@ $(document).ready(function() {
 					  imageWidth: 250,
 					  imageHeight: 220,
 					  showConfirmButton: false,
-					  timer: 500
+					  timer: 1000
 					  
 					}).then(
 					  function () {

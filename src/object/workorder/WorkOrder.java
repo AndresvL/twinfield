@@ -10,7 +10,7 @@ public class WorkOrder {
 	// cheque, cashondelivery, da)
 	private String id, workorderNr, projectNr, workDate, customerEmailInvoice, customerEmail, customerDebtorNr, status,
 			paymentMethod, creationDate, workTime, workEndDate, workEndTime, externProjectNr, typeOfWork,
-			workDescription, modified;
+			workDescription, modified, pdfUrl, workStatus;
 	// line
 	private ArrayList<Material> materials;
 	private ArrayList<WorkPeriod> workPeriods;
@@ -20,7 +20,7 @@ public class WorkOrder {
 	public WorkOrder(String projectNr, String workDate, String customerEmailInvoice, String customerEmail,
 			String customerDebtorNr, String status, String paymentMethod, ArrayList<Material> m, String creationDate,
 			String id, String workorderNr, ArrayList<WorkPeriod> work, ArrayList<Relation> relation, String workTime,
-			String workEndDate, String workEndTime, String externProjectNr, String typeOfWork, String workDescription, String modified) {
+			String workEndDate, String workEndTime, String externProjectNr, String typeOfWork, String workDescription, String modified, String pdfUrl, String workStatus) {
 		this.projectNr = projectNr; // priceQuote
 		this.setWorkDate(workDate); // date
 		this.customerEmailInvoice = customerEmailInvoice; // EmailAddress
@@ -41,6 +41,8 @@ public class WorkOrder {
 		this.typeOfWork = typeOfWork;
 		this.workDescription = workDescription;
 		this.setModified(modified);
+		this.setPdfUrl(pdfUrl);
+		this.setWorkStatus(workStatus);
 	}
 
 	public String getProjectNr() {
@@ -207,6 +209,22 @@ public class WorkOrder {
 
 	public void setModified(String modified) {
 		this.modified = modified;
+	}
+
+	public String getPdfUrl() {
+		return pdfUrl;
+	}
+
+	public void setPdfUrl(String pdfUrl) {
+		this.pdfUrl = pdfUrl;
+	}
+
+	public String getWorkStatus() {
+		return workStatus;
+	}
+
+	public void setWorkStatus(String workStatus) {
+		this.workStatus = workStatus;
 	}
 
 }

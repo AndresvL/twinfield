@@ -17,6 +17,9 @@ public class Relation {
 	}
 	//CompanyName
 	public String getCompanyName() {
+		if(companyName.equals("") || companyName== null){
+			companyName = contact;
+		}
 		return companyName;
 	}
 

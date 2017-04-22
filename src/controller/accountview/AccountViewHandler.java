@@ -1,4 +1,4 @@
-package controller.wefact;
+package controller.accountview;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -7,8 +7,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.*;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -37,32 +39,58 @@ import object.workorder.Relation;
 import object.workorder.WorkOrder;
 import object.workorder.WorkPeriod;
 
-public class WeFactHandler {
+public class AccountViewHandler {
 	private String controller, action;
 	private String array = null;
 	final String softwareName = "WeFact";
 	private Boolean checkUpdate = false;
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
-	private int successAmount = 0, errorAmount = 0;
-	private String errorDetails = "", errorMessage = "";
 
 	public HttpURLConnection getConnection(int postDataLength, String jsonRequest) throws IOException {
-		URL url = new URL("https://www.mijnwefact.nl/apiv2/api.php");
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		String contentType;
+		URL proxyUrl = null;
+		if (System.getenv("QUOTAGUARDSTATIC_URL") != null) {
+			proxyUrl = new URL(System.getenv("QUOTAGUARDSTATIC_URL"));
+		} else {
+			proxyUrl = new URL("http://quotaguard9873:dd601d82a5cc@us-east-1-static.quotaguard.com:9293");
+		}
+		String userInfo = proxyUrl.getUserInfo();
+		String user = userInfo.substring(0, userInfo.indexOf(':'));
+		String password = userInfo.substring(userInfo.indexOf(':') + 1);
+
+		HttpURLConnection conn = null;
+		System.setProperty("http.proxyHost", proxyUrl.getHost());
+		System.setProperty("http.proxyPort", Integer.toString(proxyUrl.getPort()));
+
+		Authenticator.setDefault(new Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(user, password.toCharArray());
+			}
+		});
+		URL url = new URL("http://ip.quotaguard.com");
+		conn = (HttpURLConnection) url.openConnection();
+		BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+
+		String inputLine;
+		while ((inputLine = in.readLine()) != null)
+			System.out.println(inputLine);
+
+		in.close();
+
+		String contentType = null;
+		url = new URL("https://www.mijnwefact.nl/apiv2/api.php");
 		if (jsonRequest == null) {
 			contentType = "application/x-www-form-urlencoded";
 		} else {
 			contentType = "application/json";
 		}
 		conn = (HttpURLConnection) url.openConnection();
-		conn.setRequestMethod("POST");
 		conn.setDoOutput(true);
-		conn.setInstanceFollowRedirects(true);
+		conn.setInstanceFollowRedirects(false);
+		conn.setRequestMethod("POST");
 		conn.setRequestProperty("Content-Type", contentType);
 		conn.setRequestProperty("charset", "utf-8");
 		conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
-		conn.setUseCaches(true);
+		conn.setUseCaches(false);
 		conn.connect();
 		return conn;
 	}
@@ -105,21 +133,18 @@ public class WeFactHandler {
 		} else {
 			parameters = "api_key=" + clientToken + "&controller=" + controller + "&action=" + action + array;
 		}
-		// jsonRequest is filled when a 'set' Method is called;
+		// jsonRequest is filled when a set Method is called;
 		if (jsonRequest != null) {
 			parameters = jsonRequest;
 		}
-
 		byte[] postData = parameters.getBytes(StandardCharsets.UTF_8);
 		int postDataLength = postData.length;
 		// Sets up the rest call;
-		HttpURLConnection con = getConnection(postDataLength, jsonRequest);
-		// Send request to WeFact
-
-		try (DataOutputStream wr = new DataOutputStream(con.getOutputStream())) {
+		HttpURLConnection conn = getConnection(postDataLength, jsonRequest);
+		try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
 			wr.write(postData);
 		}
-		BufferedReader br = new BufferedReader(new InputStreamReader((con.getInputStream()), StandardCharsets.UTF_8));
+		BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()), StandardCharsets.UTF_8));
 		JSONObject json = null;
 		while ((jsonString = br.readLine()) != null) {
 			json = new JSONObject(jsonString);
@@ -615,7 +640,7 @@ public class WeFactHandler {
 			for (int i = 0; i < responseArray.length(); i++) {
 				JSONObject object = responseArray.getJSONObject(i);
 				int id = object.getInt("workorder_no");
-				WeFactHandler wf = new WeFactHandler();
+				AccountViewHandler wf = new AccountViewHandler();
 				wf.setOfferteStatus(clientToken, id, true);
 			}
 			int successAmount = responseArray.length();
@@ -631,18 +656,121 @@ public class WeFactHandler {
 		return new String[] { errorMessage, checkUpdate + "" };
 	}
 
-	// Set new invoice
-	public String[] setFactuur(String clientToken, String token, String factuurType, int roundedHours)
-			throws IOException, JSONException {
-		int exportAmount = 0;
-
+	public String[] setFactuur(String clientToken, String token, String factuurType) throws IOException, JSONException {
+		String errorMessage = "", errorDetails = "";
+		String jsonRequest = null;
+		JSONArray JSONArray = null;
+		JSONObject JSONObject = null;
+		int exportAmount = 0, successAmount = 0, errorAmount = 0;
+		controller = "invoice";
+		action = "add";
 		// Get WorkOrders
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,
 				softwareName);
 		for (WorkOrder w : allData) {
 			exportAmount++;
-			// Send invoice
-			sendFactuur(w, clientToken, roundedHours, token);
+			for (Relation r : w.getRelations()) {
+				Address a = r.getAddressess().get(0);
+				if (a.getType().equals("invoice")) {
+					JSONArray = new JSONArray();
+					// Map date
+					String workDate = null;
+					try {
+						SimpleDateFormat dt = new SimpleDateFormat("dd-MM-yyyy");
+						Date formatDate = dt.parse(w.getWorkDate());
+						SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd");
+						workDate = dt1.format(formatDate);
+					} catch (ParseException e) {
+						e.printStackTrace();
+					}
+					JSONObject = new JSONObject();
+					String reference = w.getWorkorderNr() + " - " + w.getExternProjectNr();
+					try {
+						JSONObject.put("api_key", clientToken);
+						JSONObject.put("controller", controller);
+						JSONObject.put("action", action);
+						JSONObject.put("InvoiceCode", w.getId());
+						JSONObject.put("DebtorCode", w.getCustomerDebtorNr());
+						JSONObject.put("Date", workDate);
+						JSONObject.put("ReferenceNumber", reference);
+						JSONObject.put("CompanyName", r.getCompanyName());
+						JSONObject.put("Initials", a.getName());
+						JSONObject.put("Address", a.getStreet());
+						JSONObject.put("ZipCode", a.getPostalCode());
+						JSONObject.put("City", a.getCity());
+						JSONObject.put("EmailAddress", a.getEmail());
+						JSONObject.put("Description", w.getWorkDescription());
+						// CHANGE
+//						JSONObject.put("Status", 0);
+						
+						JSONObject JSONObjectCustom = new JSONObject();
+						JSONObjectCustom.put("werkbontype", w.getTypeOfWork());
+						JSONObjectCustom.put("paymentmethod", w.getPaymentMethod());
+						JSONObject.put("CustomFields", JSONObjectCustom);
+						JSONObject JSONObjectMaterial = null;
+						for (Material m : w.getMaterials()) {
+							JSONObjectMaterial = new JSONObject();
+							JSONObjectMaterial.put("ProductCode", m.getCode());
+							JSONObjectMaterial.put("Number", m.getQuantity());
+							JSONArray.put(JSONObjectMaterial);
+						}
+						JSONObject JSONObjectWorkPeriod = null;
+						for (WorkPeriod p : w.getWorkPeriods()) {
+							double number = p.getDuration();
+							double urenInteger = (number % 15);
+							if (urenInteger < 8) {
+								number = number - urenInteger;
+							} else {
+								number = number - urenInteger + 15;
+							}
+							double quantity = (number / 60);
+							JSONObjectWorkPeriod = new JSONObject();
+							JSONObjectWorkPeriod.put("ProductCode", p.getHourType());
+							JSONObjectWorkPeriod.put("Number", quantity);
+							JSONArray.put(JSONObjectWorkPeriod);
+						}
+						JSONObject.put("InvoiceLines", JSONArray);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+				}
+
+			}
+			logger.info("factuur request " + JSONObject);
+			JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
+			String status = jsonList.getString("status");
+			if (status.equals("success")) {
+				Boolean b = null;
+				try {
+					b = setAttachement(clientToken,w.getId(), w.getPdfUrl());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				System.out.println("setAttachement = " + b);
+				successAmount++;
+				// Set status to afgehandeld
+				WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder", token,
+						softwareName);
+			} else {
+				errorAmount++;
+				JSONArray array = jsonList.getJSONArray("errors");
+				for (int i = 0; i < array.length(); i++) {
+					String projectNr = "";
+					if (!w.getWorkorderNr().equals("")) {
+						projectNr = w.getWorkorderNr();
+					} else if (!w.getProjectNr().equals("")) {
+						projectNr = w.getProjectNr();
+					} else if (!w.getExternProjectNr().equals("")) {
+						projectNr = w.getExternProjectNr();
+					} else {
+						projectNr = "<leeg>";
+					}
+					Object obj = array.get(i);
+					errorDetails += obj + " for WorkOrder " + projectNr + " with relation " + w.getCustomerDebtorNr()
+							+ " \n";
+				}
+			}
 		}
 		if (errorAmount > 0) {
 			errorMessage += errorAmount + " out of " + exportAmount + " workorders(factuur) have errors<br>";
@@ -653,250 +781,9 @@ public class WeFactHandler {
 		return new String[] { errorMessage, errorDetails };
 	}
 
-	private boolean sendFactuur(WorkOrder w, String clientToken, int roundedHours, String token)
-			throws IOException, JSONException {
-		int relationAmount = 0, materialAmount = 0;
-		Boolean added = false;
-		JSONObject JSONObject = null;
-		// Get JSONObject
-		JSONObject = factuurJSON(w, clientToken, roundedHours);
-		logger.info("factuur request " + JSONObject);
-		JSONObject jsonList = getJsonResponse(clientToken, controller, action, null, JSONObject + "");
-		System.out.println("JSONLIST sendfactuur " + jsonList);
-		String status = jsonList.getString("status");
-		if (status.equals("success")) {
-			JSONObject invoice = jsonList.getJSONObject("invoice");
-			String invoiceCode = invoice.getString("InvoiceCode");
-			Boolean b = null;
-			try {
-				b = setAttachement(clientToken, invoiceCode, w.getPdfUrl());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			System.out.println("setAttachement = " + b);
-			successAmount++;
-			// Set status to afgehandeld
-			WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder", token,
-					softwareName);
-			added = true;
-		} else {
-			JSONArray array = jsonList.getJSONArray("errors");
-			String[] material = null;
-			String relation = null;
-			for (int i = 0; i < array.length(); i++) {
-				String projectNr = "";
-				if (!w.getWorkorderNr().equals("")) {
-					projectNr = w.getWorkorderNr();
-				} else if (!w.getProjectNr().equals("")) {
-					projectNr = w.getProjectNr();
-				} else if (!w.getExternProjectNr().equals("")) {
-					projectNr = w.getExternProjectNr();
-				} else {
-					projectNr = "<leeg>";
-				}
-				Object obj = array.get(i);
-				System.out.println("OBJ " + obj);
-
-				if (String.valueOf(obj).equals("Ongeldig debiteurkenmerk") && relationAmount == 0
-						|| String.valueOf(obj).equals("Debiteur  niet gevonden")) {
-					// Create new relation in WeFact
-					relation = setRelation(w, clientToken);
-					if (relation != null) {
-						w.setCustomerDebtorNr(relation);
-						errorDetails += "Debtor " + relation + " added in WeFact<br>";
-						obj = null;
-						relationAmount++;
-					}
-				}
-				if (String.valueOf(obj).equals("Product 0 niet gevonden") && materialAmount == 0) {
-					// Create new material in WeFact
-					errorDetails = "";
-					ArrayList<Material> allMaterials = new ArrayList<Material>();
-					for (Material m : w.getMaterials()) {
-						material = setMaterial(m, clientToken, obj);
-						if (material[0] != null) {
-							errorDetails += "Material " + material + " added in WeFact<br>";
-							obj = null;
-							materialAmount++;
-							if (material[1].equals(m.getDescription())) {
-								m.setCode(material[0]);
-								m.setDescription(material[1]);
-								m.setPrice(m.getPrice());
-								m.setUnit(m.getUnit());
-								allMaterials.add(m);
-							}
-						}
-					}
-					w.setMaterials(allMaterials);
-					System.out.println("allMaterials " + allMaterials);
-				}
-			}
-			if (relation != null || material != null) {
-				return sendFactuur(w, clientToken, roundedHours, token);
-			} else {
-				errorMessage += "Something went wrong with sending an invoice" + " <br>";
-				errorDetails += array + "\n";
-			}
-		}
-		return added;
-	}
-
-	public JSONObject factuurJSON(WorkOrder w, String clientToken, int roundedHours) {
-		controller = "invoice";
-		action = "add";
-		JSONArray JSONArray = null;
-		JSONObject JSONObject = null;
-		for (Relation r : w.getRelations()) {
-			Address a = r.getAddressess().get(0);
-			if (a.getType().equals("invoice")) {
-				JSONArray = new JSONArray();
-				// Map date
-				String workDate = null;
-				try {
-					SimpleDateFormat dt = new SimpleDateFormat("dd-MM-yyyy");
-					Date formatDate = dt.parse(w.getWorkDate());
-					SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd");
-					workDate = dt1.format(formatDate);
-				} catch (ParseException e) {
-					e.printStackTrace();
-				}
-				JSONObject = new JSONObject();
-				String reference = w.getWorkorderNr() + " - " + w.getExternProjectNr();
-				try {
-					JSONObject.put("api_key", clientToken);
-					JSONObject.put("controller", controller);
-					JSONObject.put("action", action);
-					JSONObject.put("DebtorCode", w.getCustomerDebtorNr());
-					JSONObject.put("Date", workDate);
-					JSONObject.put("ReferenceNumber", reference);
-					JSONObject.put("CompanyName", r.getCompanyName());
-					JSONObject.put("Initials", a.getName());
-					JSONObject.put("Address", a.getStreet());
-					JSONObject.put("ZipCode", a.getPostalCode());
-					JSONObject.put("City", a.getCity());
-					JSONObject.put("EmailAddress", a.getEmail());
-					JSONObject.put("Description", w.getWorkDescription());
-					// CHANGE
-					String workStatus = w.getWorkStatus();
-					if (workStatus.equals("") || workStatus == null) {
-						workStatus = "0";
-					}
-					JSONObject.put("Status", workStatus);
-
-					JSONObject JSONObjectCustom = new JSONObject();
-					JSONObjectCustom.put("werkbontype", w.getTypeOfWork());
-					JSONObjectCustom.put("paymentmethod", w.getPaymentMethod());
-					JSONObject.put("CustomFields", JSONObjectCustom);
-					JSONObject JSONObjectMaterial = null;
-					for (Material m : w.getMaterials()) {
-						JSONObjectMaterial = new JSONObject();
-						JSONObjectMaterial.put("ProductCode", m.getCode());
-						JSONObjectMaterial.put("Number", m.getQuantity());
-						JSONArray.put(JSONObjectMaterial);
-					}
-					JSONObject JSONObjectWorkPeriod = null;
-					for (WorkPeriod p : w.getWorkPeriods()) {
-						double number = p.getDuration();
-						double hours = roundedHours;
-						double urenInteger = (number % hours);
-						if (urenInteger < (hours / 2)) {
-							number = number - urenInteger;
-						} else {
-							number = number - urenInteger + hours;
-						}
-						double quantity = (number / 60);
-						JSONObjectWorkPeriod = new JSONObject();
-						JSONObjectWorkPeriod.put("ProductCode", p.getHourType());
-						JSONObjectWorkPeriod.put("Number", quantity);
-						JSONArray.put(JSONObjectWorkPeriod);
-					}
-					JSONObject.put("InvoiceLines", JSONArray);
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return JSONObject;
-	}
-
-	private String setRelation(WorkOrder w, String clientToken) {
-		String debtorCode = null;
-		controller = "debtor";
-		action = "add";
-		for (Relation r : w.getRelations()) {
-			Address a = r.getAddressess().get(0);
-			if (a.getType().equals("invoice")) {
-				JSONObject JSONObject = new JSONObject();
-				try {
-					JSONObject.put("api_key", clientToken);
-					JSONObject.put("controller", controller);
-					JSONObject.put("action", action);
-
-					JSONObject.put("DebtorCode", w.getCustomerDebtorNr());
-					JSONObject.put("CompanyName", r.getCompanyName());
-					JSONObject.put("Initials", a.getName());
-					JSONObject.put("Address", a.getStreet());
-					JSONObject.put("ZipCode", a.getPostalCode());
-					JSONObject.put("City", a.getCity());
-					JSONObject.put("EmailAddress", a.getEmail());
-					JSONObject.put("PhoneNumber", a.getPhoneNumber());
-					JSONObject.put("Description", w.getWorkDescription());
-					JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
-					String status = jsonList.getString("status");
-					if (status.equals("success")) {
-						JSONObject debtorDetails = jsonList.getJSONObject("debtor");
-						debtorCode = debtorDetails.getString("DebtorCode");
-					} else {
-						errorDetails += "Error while adding relation\n";
-					}
-				} catch (JSONException | IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return debtorCode;
-	}
-
-	private String[] setMaterial(Material m, String clientToken, Object obj) {
-		String materialCode = null, description = null;
-		controller = "product";
-		action = "add";
-		JSONObject JSONObject = new JSONObject();
-		try {
-			JSONObject.put("api_key", clientToken);
-			JSONObject.put("controller", controller);
-			JSONObject.put("action", action);
-			JSONObject.put("ProductCode", m.getCode());
-			JSONObject.put("ProductName", m.getDescription());
-			JSONObject.put("ProductKeyPhrase", m.getDescription());
-			JSONObject.put("NumberSuffix", m.getUnit());
-			JSONObject.put("PriceExcl", m.getPrice());
-			JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
-			String status = jsonList.getString("status");
-			if (status.equals("success")) {
-				JSONObject materialDetails = jsonList.getJSONObject("product");
-				materialCode = materialDetails.getString("ProductCode");
-				description = materialDetails.getString("ProductName");
-			} else {
-				if (String.valueOf(obj).startsWith("Productcode " + m.getCode())) {
-					materialCode = null;
-					description = null;
-				} else {
-					errorDetails += "Error while adding new material\n";
-				}
-			}
-			System.out.println("JSONLIST setMaterial" + jsonList);
-			System.out.println("JSONObject " + JSONObject);
-		} catch (JSONException | IOException e) {
-			e.printStackTrace();
-		}
-
-		return new String[] { materialCode, description };
-	}
-
 	private String encodeFileToBase64Binary(String pdfUrl) throws IOException {
 		URL url = new URL(pdfUrl);
+		System.out.println("pdfURL " + pdfUrl);
 		InputStream in = url.openStream();
 		Files.copy(in, Paths.get("Werkbon.pdf"), StandardCopyOption.REPLACE_EXISTING);
 		in.close();
@@ -904,6 +791,7 @@ public class WeFactHandler {
 		byte[] bytes = loadFile(file);
 		byte[] encoded = Base64.encodeBase64(bytes);
 		String encodedString = new String(encoded);
+		System.out.println("encodedString " + encodedString);
 		return encodedString;
 	}
 
@@ -929,7 +817,6 @@ public class WeFactHandler {
 		is.close();
 		return bytes;
 	}
-
 	public Boolean setAttachement(String clientToken, String id, String url) throws Exception {
 		JSONObject JSONObject = new JSONObject();
 		controller = "attachment";
@@ -942,13 +829,16 @@ public class WeFactHandler {
 			JSONObject.put("action", action);
 			JSONObject.put("InvoiceCode", id);
 			JSONObject.put("Type", "invoice");
-			JSONObject.put("Filename", "Werkbon_" + id + ".pdf");
+			JSONObject.put("Filename", "Werkbon_"+id+".pdf");
 			JSONObject.put("Base64", base64);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
-		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
+		
+		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject+"");
+		System.out.println("--------------");
+		System.out.println(base64);
+		System.out.println("--------------");	
 		logger.info("Attachement response " + jsonList);
 		String status = jsonList.getString("status");
 		if (status.equals("success")) {
@@ -958,11 +848,10 @@ public class WeFactHandler {
 		}
 		return b;
 	}
-
-	public String[] setOfferte(String clientToken, String token, String factuurType, int roundedHours)
-			throws IOException, JSONException {
+	
+	public String[] setOfferte(String clientToken, String token, String factuurType) throws IOException, JSONException {
 		String errorMessage = "", errorDetails = "";
-		// String jsonRequest = null;
+		String jsonRequest = null;
 		JSONArray JSONArray = null;
 		JSONObject JSONObject = null;
 		int exportAmount = 0, successAmount = 0, errorAmount = 0;
@@ -1001,7 +890,6 @@ public class WeFactHandler {
 						JSONObject.put("api_key", clientToken);
 						JSONObject.put("controller", controller);
 						JSONObject.put("action", action);
-						JSONObject.put("DebtorCode", w.getCustomerDebtorNr());
 						JSONObject.put("PriceQuoteCode", w.getExternProjectNr());
 						JSONObject.put("Date", workDate);
 						JSONObject.put("ReferenceNumber", "");
@@ -1027,13 +915,11 @@ public class WeFactHandler {
 						JSONObject JSONObjectWorkPeriod = null;
 						for (WorkPeriod p : w.getWorkPeriods()) {
 							double number = p.getDuration();
-							double hours = roundedHours;
-
-							double urenInteger = (number % hours);
-							if (urenInteger < (hours / 2)) {
+							double urenInteger = (number % 15);
+							if (urenInteger < 8) {
 								number = number - urenInteger;
 							} else {
-								number = number - urenInteger + hours;
+								number = number - urenInteger + 15;
 							}
 							double quantity = (number / 60);
 							JSONObjectWorkPeriod = new JSONObject();

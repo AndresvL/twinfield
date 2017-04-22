@@ -275,18 +275,17 @@ public class ObjectDAO {
 		try {
 			con = DBConnection.createDatabaseConnection();
 			stmt = con.prepareStatement(
-					"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, softwareToken) values (?, ?, ?, ?, ?, ?, ?)");
+					"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?)");
 			stmt.setString(1, set.getImportOffice());
 			stmt.setString(2, set.getExportOffice());
 			stmt.setString(3, set.getFactuurType());
 			stmt.setString(4, set.getImportObjects()+"");
 			stmt.setString(5, set.getUser());
 			stmt.setString(6, set.getExportWerkbontype());
-			stmt.setString(7, token);
+			stmt.setInt(7, set.getRoundedHours());
+			stmt.setString(8, token);
 			stmt.executeUpdate();
 			stmt.close();
-			
-			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -310,7 +309,8 @@ public class ObjectDAO {
 				ArrayList<String> allTypes = new ArrayList<String>(Arrays.asList(strValues));
 				String user = output.getString("user");
 				String exportWerkbonType = output.getString("werkbon_type");
-				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType);
+				int roundedHours = output.getInt("rounded_hours");
+				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType, roundedHours);
 			}
 			statement.close();
 			
@@ -352,10 +352,7 @@ public class ObjectDAO {
 
 	public static void saveLog(String log, String details, String token) {
 		// sys date
-		
-		LocalDateTime a = LocalDateTime.now();
-		ZoneId zone = ZoneId.of("Europe/Paris");
-		ZonedDateTime za = ZonedDateTime.of(a, zone).plusHours(1);
+		ZonedDateTime za = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 		String timestamp = za.format(formatter);
 
@@ -382,9 +379,7 @@ public class ObjectDAO {
 	public static void deleteLog(String token) {
 		ArrayList<Map<String, String>> allLogs = getLogs(token);
 		// sys date
-		LocalDateTime a = LocalDateTime.now();
-		ZoneId zone = ZoneId.of("Europe/Paris");
-		ZonedDateTime za = ZonedDateTime.of(a, zone).plusHours(1);
+		ZonedDateTime za = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
 		SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 		Date currentTime;

@@ -36,7 +36,7 @@ public class SoapHandler {
 			SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
 			SOAPConnection soapConnection = soapConnectionFactory.createConnection();
 			// Send SOAP Message to SOAP Server
-			String url = "https://login.twinfield.com/webservices/session.asmx?/";
+			String url = "https://login.twinfield.com/webservices/session.asmx?wsdl";
 			SOAPMessage soapResponse = soapConnection.call(createSOAPSession(token), url);
 			SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
 			if (soapPart != null && soapPart.getHeader() != null) {
@@ -118,18 +118,24 @@ public class SoapHandler {
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
 			soapConnection.close();
-//			ByteArrayOutputStream out = new ByteArrayOutputStream();
-//			soapResponse.writeTo(out);
-//			String strMsg = new String(out.toByteArray());
-//		    System.out.println(" SOAPRESPONSE " + strMsg);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			soapMessage.writeTo(out);
+			String strMsg = new String(out.toByteArray());
+			System.out.println("SOAPREQUEST " + xmlString);
+		    System.out.println("SOAPRESPONSE " + strMsg);
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
 
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		int result = Integer
+		}	int result = 0;
+		
+		if(doc.getChildNodes().item(0).hasAttributes()){
+			result = Integer
 				.parseInt(doc.getChildNodes().item(0).getAttributes().getNamedItem("result").getNodeValue());
+		}else{
+			
+		}
 		if (type.equals("workorder")) {
 			logger.info("UrenboekingRequest " + data);
 			logger.info("UrenboekingResponse " + xmlString);
@@ -394,7 +400,7 @@ public class SoapHandler {
 			phoneNumber = address.item(4).getTextContent();
 			email = address.item(6).getTextContent();
 			if (email.equals("")) {
-				email = "leeg";
+				email = "<leeg>";
 			}
 			String streetArray = address.item(9).getTextContent();
 			String[] streetNumber = null;
@@ -411,21 +417,21 @@ public class SoapHandler {
 					}
 				}
 				if (street.equals("")) {
-					street = "leeg";
+					street = "<leeg>";
 				}
 			}
 			houseNumber = streetNumber[streetNumber.length - 1];
 			postalCode = address.item(3).getTextContent();
 			if (postalCode.equals("")) {
-				postalCode = "leeg";
+				postalCode = "<leeg>";
 			}
 			city = address.item(2).getTextContent();
 			if (city.equals("")) {
-				city = "leeg";
+				city = "<leeg>";
 			}
 			remark = address.item(8).getTextContent();
 			if (remark.equals("")) {
-				remark = "leeg";
+				remark = "<leeg>";
 			}
 			Address a = new Address(name, phoneNumber, email, street, houseNumber, postalCode, city, remark, type,
 					addressId);
