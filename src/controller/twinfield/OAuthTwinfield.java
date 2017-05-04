@@ -245,7 +245,7 @@ public class OAuthTwinfield extends Authenticate {
 					Settings set = ObjectDAO.getSettings(softwareToken);
 					if (set != null) {
 						Map<String, String> allImports = new HashMap<String, String>();
-						for(String s : set.getImportObjects()){
+						for (String s : set.getImportObjects()) {
 							allImports.put(s, "selected");
 						}
 						req.getSession().setAttribute("checkboxes", allImports);

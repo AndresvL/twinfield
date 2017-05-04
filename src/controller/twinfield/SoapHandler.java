@@ -301,7 +301,7 @@ public class SoapHandler {
 		// <code>
 		String code = allData.item(2).getTextContent();
 		// <uid>
-		String code_ext = "Onbekend";
+		String code_ext = "";
 		// <name>
 		String name = allData.item(4).getTextContent();
 		// <dimension status>

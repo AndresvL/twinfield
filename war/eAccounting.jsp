@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="author" content="">
-<title>WeFact Connection</title>
+<title>eAccounting Connection</title>
 <!-- Bootstrap Core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <!-- Theme CSS -->
@@ -33,9 +33,6 @@
 		        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 		    <![endif]-->
 <style type="text/css">
-#loginContent {
-	width: 400px;
-}
 
 .settings {
 	width: 50%;
@@ -72,41 +69,6 @@
 	<!-- Settings Section -->
 	<div class="settings">
 		<div class="panel-group">
-			<!-- The login Modal -->
-			<div id="loginModal" class="modal">
-				<!-- Modal content -->
-				<div class="modal-content" id="loginContent">
-					<form action="OAuth.do">
-						<input type="hidden" value="${softwareToken}" name="token"
-							id="softwareToken" /> <input type="hidden" value="WeFact"
-							name="softwareName" id="softwareName" /> <input type="hidden"
-							value="${clientToken}" id="client" />
-						<table>
-							<tr>
-								<th>
-									<h2>Authentication</h2>
-								</th>
-							</tr>
-							<tr>
-								<td><label>${errorMessage}</label></td>
-							</tr>
-							<tr>
-								<td><label>Securitycode WeFact</label> <img
-									src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Login bij WeFact en navigeer naar Instellingen - API - beveiligingscode"
-									height="13" width="13" /></td>
-							</tr>
-							<tr>
-								<td><input type="text" class="form-control"
-									id="clientToken" placeholder="5a5a5fbbcecdd585aa62812119d0721e"
-									name="clientToken" required /></td>
-							</tr>
-						</table>
-						<br> <input type="submit" value="Submit"
-							class="btn btn-success btn-lg" />
-					</form>
-				</div>
-			</div>
 			<!-- The Help Modal -->
 			<div id="myModal" class="modal">
 				<!-- Modal content -->
@@ -114,7 +76,7 @@
 					<div class="modal-header">
 						<span class="close">&times;</span>
 						<h2>
-							Welkom <small>bij de WeFact koppeling</small>
+							Welkom <small>bij de eAccounting koppeling</small>
 						</h2>
 					</div>
 					<div class="modal-body">
@@ -124,7 +86,7 @@
 							<li>Bij het aanschaffen van deze koppeling is het verstandig
 								om alle werkbonnen die in WerkbonApp staan op status afgehandeld
 								te zetten</li>
-							<li>De <abbr>import settings</abbr> mogen alleen in WeFact
+							<li>De <abbr>import settings</abbr> mogen alleen in eAccounting
 								worden gewijzigd.
 							</li>
 							<li>Bij een <abbr>foutmelding</abbr> kan je op het
@@ -133,14 +95,14 @@
 								kan je op het bericht(log) klikken om meer details te zien.
 							</li>
 							<li>(Nieuwe) Relaties en materialen op een werkbon worden
-								geëxporteerd naar WeFact.</li>
+								geëxporteerd naar eAccounting.</li>
 						</ul>
 						<br>
 
 						<h4>Informatie</h4>
 						<ul>
 							<li>Op deze pagina is het mogelijk om de <mark>import</mark>
-								en <mark>export</mark> gegevens tussen WerkbonApp en WeFact in
+								en <mark>export</mark> gegevens tussen WerkbonApp en eAccounting in
 								te stellen.
 							</li>
 							<li>Elke 15 minuten zal er een <mark>automatische
@@ -157,14 +119,14 @@
 						<ul>
 							<li><abbr>Producten, debiteuren, offertes en
 									producten in productengroep Uursoorten</abbr> worden geimporteerd
-								vanuit WeFact.</li>
+								vanuit eAccounting.</li>
 							<li><abbr>Werkbonnen met nieuwe relaties en/of
 									materialen</abbr> zullen geexporteerd worden, hierbij worden nieuwe
-								relaties en/of materialen aangemaakt binnen WeFact voordat de
+								relaties en/of materialen aangemaakt binnen eAccounting voordat de
 								werkbon opgestuurd wordt.</li>
 							<li>Bij het openen van een werkbon kan de <abbr>werkstatus</abbr>
 								aangepast worden. Deze werkstatus komt overeen met de status van
-								de factuur in WeFact.
+								de factuur in eAccounting.
 							</li>
 						</ul>
 						<br>
@@ -175,7 +137,7 @@
 								<thead>
 									<tr>
 										<th>WerkbonApp</th>
-										<th>WeFact</th>
+										<th>eAccounting</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -221,7 +183,7 @@
 			</div>
 			<input type="hidden" value="${errorMessage}" id="error" /> <input
 				type="hidden" value="${saved}" id="saved" name="saved" />
-			<form action="settings.do" id="saveWeFact">
+			<form action="settings.do" id="saveeAccounting">
 				<div class="panel panel-success">
 					<div class="panel-heading">Import instellingen</div>
 					<div class="panel-body">
@@ -232,7 +194,7 @@
 									name="softwareToken" /> <label>Selecteer objecten om
 									te importeren</label> <img src="./img/vraagteken.jpg"
 									data-toggle="tooltip"
-									title="Selecteer de objecten die je wilt importeren van WeFact naar WerkbonApp"
+									title="Selecteer de objecten die je wilt importeren van eAccounting naar WerkbonApp"
 									height="13" width="13" />
 								<div class="checkbox">
 									<label> <input type="checkbox" value="materials"
@@ -275,7 +237,7 @@
 								<input class="form-control" type="hidden" name="factuurType"
 									value="Compleet" /> <br> <label>Werkbon type</label> <img
 									src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="De werkbon wordt als factuur of offerte verstuurd naar WeFact"
+									title="De werkbon wordt als factuur of offerte verstuurd naar eAccounting"
 									height="13" width="13" /> <br> <input type="radio"
 									name="exportWerkbon" value="factuur"
 									${"selected" == exportWerkbonType.factuur  ? 'checked' : ''}
@@ -363,6 +325,6 @@
 	<!-- Theme JavaScript -->
 	<script src="js/freelancer.min.js" type="text/javascript"></script>
 	<script type="text/javascript" src="js/vkbeautify.js"></script>
-	<script type="text/javascript" src="js/wefact.js"></script>
+	<script type="text/javascript" src="js/eaccounting.js"></script>
 </body>
 </html>

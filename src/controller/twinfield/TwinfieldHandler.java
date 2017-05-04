@@ -40,6 +40,7 @@ public class TwinfieldHandler {
 	private String errorUrenDetails = "";
 	private int urenError = 0;
 	private String oldProjectNr = null;
+	
 
 	public String getDateMinHour(String string) {
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

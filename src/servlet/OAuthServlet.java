@@ -1,18 +1,17 @@
 package servlet;
 
+import controller.WorkOrderHandler;
+import controller.eaccouting.OAuthEAccounting;
+import controller.twinfield.OAuthTwinfield;
+import controller.wefact.OAuthWeFact;
 import java.io.IOException;
-
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import DAO.ObjectDAO;
-import DAO.TokenDAO;
-import controller.WorkOrderHandler;
-import controller.twinfield.OAuthTwinfield;
-import controller.wefact.OAuthWeFact;
+
 
 public class OAuthServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -32,23 +31,27 @@ public class OAuthServlet extends HttpServlet {
 		RequestDispatcher rd = null;
 		// Set session with software name and token
 		int code = WorkOrderHandler.checkWorkOrderToken(softwareToken, softwareName);
+		System.out.println("WEB code " + code);
 		if (code == 200) {
 			req.getSession().setAttribute("softwareToken", softwareToken);
 			req.getSession().setAttribute("softwareName", softwareName);
 			req.getSession().setAttribute("checkboxes", null);
 			req.getSession().setAttribute("logs", null);
-			req.getSession().setAttribute("offices", null);
-			req.getSession().setAttribute("users", null);
+
 			switch (softwareName) {
 			case "Twinfield":
 				OAuthTwinfield oauth = new OAuthTwinfield();
-				oauth.authenticate(softwareToken, req, resp);				
+				oauth.authenticate(softwareToken, req, resp);	
+				req.getSession().setAttribute("offices", null);
+				req.getSession().setAttribute("users", null);
 				break;
 			case "WeFact":
 				OAuthWeFact oauth2 = new OAuthWeFact();
 				oauth2.authenticate(softwareToken, req, resp);
 				break;
-			default:
+			case "EAccounting":
+				OAuthEAccounting oauth3 = new OAuthEAccounting();
+				oauth3.authenticate(softwareToken, req, resp);
 				break;
 			}
 		}else{
@@ -64,6 +67,12 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
 				rd = req.getRequestDispatcher("weFact.jsp");
+				break;
+			case "EAccounting":
+				req.getSession().setAttribute("softwareToken", softwareToken);			
+				req.getSession().setAttribute("logs", null);
+				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				rd = req.getRequestDispatcher("eAccounting.jsp");
 				break;
 			default:
 				break;

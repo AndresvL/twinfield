@@ -56,8 +56,6 @@ public class WorkOrderHandler {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
-			System.setProperty("https.proxyHost", "");
-			System.setProperty("https.proxyPort", "");
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 			while ((output = br.readLine()) != null) {
 				JSONObject json = new JSONObject(output);

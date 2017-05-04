@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,17 +38,17 @@ public class ObjectDAO {
 				stmt.setString(2, e.getFirstName());
 				stmt.setString(3, e.getLastName());
 				stmt.setString(4, token);
-				stmt.executeUpdate();			    
+				stmt.executeUpdate();
 			}
 			
-		    stmt.close(); 
+			stmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
 			
 		}
 	}
-
+	
 	public static void saveMaterials(ArrayList<Material> mat, String token) {
 		PreparedStatement stmt = null;
 		try {
@@ -78,7 +77,7 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static Material getMaterials(String softwareToken, String subCode, String desc) throws SQLException {
 		Material m = null;
 		PreparedStatement stmt = null;
@@ -88,7 +87,7 @@ public class ObjectDAO {
 			stmt = con.prepareStatement(selectSQL);
 			stmt.setString(1, softwareToken);
 			stmt.setString(2, subCode);
-			ResultSet output = stmt.executeQuery();		
+			ResultSet output = stmt.executeQuery();
 			// Check if subCode exists
 			while (output.next()) {
 				String code = output.getString("code");
@@ -118,7 +117,7 @@ public class ObjectDAO {
 		}
 		return m;
 	}
-
+	
 	public static void saveProjects(ArrayList<Project> projects, String token) {
 		PreparedStatement stmt = null;
 		try {
@@ -137,7 +136,7 @@ public class ObjectDAO {
 				stmt.setString(9, p.getDate_end());
 				stmt.setInt(10, p.getActive());
 				stmt.setString(11, token);
-
+				
 				stmt.executeUpdate();
 			}
 			stmt.close();
@@ -146,7 +145,7 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static void saveRelations(ArrayList<Relation> relations, String token) {
 		PreparedStatement stmt = null;
 		try {
@@ -170,7 +169,7 @@ public class ObjectDAO {
 					stmt.setInt(13, a.getAddressId());
 					stmt.setString(14, r.getModified());
 					stmt.setString(15, token);
-
+					
 					stmt.executeUpdate();
 				}
 				stmt.close();
@@ -194,14 +193,14 @@ public class ObjectDAO {
 			stmt.setString(1, softwareToken);
 			stmt.setString(2, debtorCode);
 			stmt.setString(3, type);
-			ResultSet output = stmt.executeQuery();		
+			ResultSet output = stmt.executeQuery();
 			while (output.next()) {
 				allAddresses = new ArrayList<Address>();
 				companyName = output.getString("name");
 				contact = output.getString("contact");
 				emailWorkorder = output.getString("email_workorder");
 				modified = output.getString("modified");
-				//Address
+				// Address
 				String email = output.getString("email");
 				String street = output.getString("street");
 				String houseNumber = output.getString("house_number");
@@ -210,8 +209,8 @@ public class ObjectDAO {
 				String phoneNumber = output.getString("phone_number");
 				String remark = output.getString("remark");
 				int addressId = output.getInt("addressId");
-				adr = new Address(contact, phoneNumber, email, street, houseNumber, postalCode,
-						city, remark, type, addressId);
+				adr = new Address(contact, phoneNumber, email, street, houseNumber, postalCode, city, remark, type,
+						addressId);
 				allAddresses.add(adr);
 				r = new Relation(companyName, debtorCode, contact, emailWorkorder, allAddresses, modified);
 			}
@@ -222,7 +221,7 @@ public class ObjectDAO {
 		}
 		return r;
 	}
-
+	
 	public static void saveHourTypes(ArrayList<HourType> hourtypes, String token) {
 		PreparedStatement stmt = null;
 		try {
@@ -247,7 +246,7 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static Address getAddressID(String softwareToken, String addressType, String codeString) {
 		Address a = null;
 		try {
@@ -266,38 +265,42 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 		return a;
-
+		
 	}
-
+	
 	public static void saveSettings(Settings set, String token) {
+		System.out.println("SaveSettings TEST " + token);
 		PreparedStatement stmt = null;
 		Connection con = null;
-		try {
-			con = DBConnection.createDatabaseConnection();
-			stmt = con.prepareStatement(
-					"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?)");
-			stmt.setString(1, set.getImportOffice());
-			stmt.setString(2, set.getExportOffice());
-			stmt.setString(3, set.getFactuurType());
-			stmt.setString(4, set.getImportObjects()+"");
-			stmt.setString(5, set.getUser());
-			stmt.setString(6, set.getExportWerkbontype());
-			stmt.setInt(7, set.getRoundedHours());
-			stmt.setString(8, token);
-			stmt.executeUpdate();
-			stmt.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
+		if (set != null) {
+			try {
+				con = DBConnection.createDatabaseConnection();
+				stmt = con.prepareStatement(
+						"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?)");
+				stmt.setString(1, set.getImportOffice());
+				stmt.setString(2, set.getExportOffice());
+				stmt.setString(3, set.getFactuurType());
+				stmt.setString(4, set.getImportObjects() + "");
+				stmt.setString(5, set.getUser());
+				stmt.setString(6, set.getExportWerkbontype());
+				stmt.setInt(7, set.getRoundedHours());
+				stmt.setString(8, token);
+				stmt.executeUpdate();
+				stmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
-
+	
 	public static Settings getSettings(String softwareToken) {
 		Settings set = null;
 		Connection con = null;
 		try {
 			con = DBConnection.createDatabaseConnection();
 			Statement statement = con.createStatement();
-			ResultSet output = statement.executeQuery("SELECT * FROM settings WHERE softwareToken =\"" + softwareToken + "\"");
+			ResultSet output = statement
+					.executeQuery("SELECT * FROM settings WHERE softwareToken =\"" + softwareToken + "\"");
 			if (output.next()) {
 				String importOffice = output.getString("import_office");
 				String exportOffice = output.getString("export_office");
@@ -310,17 +313,17 @@ public class ObjectDAO {
 				String user = output.getString("user");
 				String exportWerkbonType = output.getString("werkbon_type");
 				int roundedHours = output.getInt("rounded_hours");
-				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType, roundedHours);
+				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType,
+						roundedHours);
 			}
 			statement.close();
-			
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return set;
 	}
-
+	
 	public static ArrayList<Map<String, String>> getLogs(String softwareToken) {
 		ArrayList<Map<String, String>> allLogs = null;
 		Connection con = null;
@@ -328,7 +331,8 @@ public class ObjectDAO {
 			con = DBConnection.createDatabaseConnection();
 			allLogs = new ArrayList<Map<String, String>>();
 			Statement statement = con.createStatement();
-			ResultSet output = statement.executeQuery("SELECT * FROM log WHERE softwareToken =\"" + softwareToken + "\"");
+			ResultSet output = statement
+					.executeQuery("SELECT * FROM log WHERE softwareToken =\"" + softwareToken + "\"");
 			while (output.next()) {
 				String timestamp = output.getString("timestamp");
 				String messageString = output.getString("message");
@@ -341,27 +345,27 @@ public class ObjectDAO {
 			}
 			statement.close();
 			
-			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		Collections.reverse(allLogs);
-
+		
 		return allLogs;
 	}
-
+	
 	public static void saveLog(String log, String details, String token) {
 		// sys date
 		ZonedDateTime za = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 		String timestamp = za.format(formatter);
-
+		
 		// delete old logs
 		deleteLog(token);
 		PreparedStatement stmt = null;
 		try {
 			Connection con = DBConnection.createDatabaseConnection();
-			stmt = con.prepareStatement("REPLACE INTO log (message, details, timestamp, softwareToken) values (?, ?, ?, ?)");
+			stmt = con.prepareStatement(
+					"REPLACE INTO log (message, details, timestamp, softwareToken) values (?, ?, ?, ?)");
 			stmt.setString(1, log);
 			stmt.setString(2, details);
 			stmt.setString(3, timestamp);
@@ -370,12 +374,11 @@ public class ObjectDAO {
 			
 			stmt.close();
 			
-			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static void deleteLog(String token) {
 		ArrayList<Map<String, String>> allLogs = getLogs(token);
 		// sys date
@@ -394,18 +397,18 @@ public class ObjectDAO {
 				long difference = currentTime.getTime() - oldTime.getTime();
 				// Miliseconds
 				if (difference >= 3600000) {
-					statement.execute("DELETE FROM log WHERE softwareToken =\"" + token + "\" AND timestamp =\"" + timestamp + "\"");
+					statement.execute("DELETE FROM log WHERE softwareToken =\"" + token + "\" AND timestamp =\""
+							+ timestamp + "\"");
 				}
 			}
 			statement.close();
-			
 			
 		} catch (ParseException | SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static Boolean hasContent(String softwareToken, String table) throws SQLException {
 		Boolean b = false;
 		Connection con = DBConnection.createDatabaseConnection();
@@ -419,7 +422,7 @@ public class ObjectDAO {
 		
 		return b;
 	}
-
+	
 	public static String getModifiedDate(String softwareToken, String type, String code, String table)
 			throws SQLException {
 		String modified = null;
@@ -429,6 +432,8 @@ public class ObjectDAO {
 		switch (table) {
 		case "materials":
 			output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
+					+ "\" AND code =\"" + code + "\"");
+			System.out.println("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
 					+ "\" AND code =\"" + code + "\"");
 			break;
 		case "relations":

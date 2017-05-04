@@ -24,14 +24,15 @@ public class TokenDAO {
 			String softwareName = output.getString("softwareName");
 			if (softwareName.equals(name)) {
 				t = new Token(consumerToken, consumerSecret, accessToken, accessSecret, softwareToken, softwareName);
-			}else{
-				//Set invalid when softwareToken is found in database with another softwareName
+			} else {
+				// Set invalid when softwareToken is found in database with
+				// another softwareName
 				t = new Token("invalid", "invalid", "invalid", "invalid", softwareToken, softwareName);
 			}
 			break;
 		}
 		statement.close();
-		
+
 		return t;
 	}
 
@@ -48,7 +49,7 @@ public class TokenDAO {
 			}
 		}
 		statement.close();
-		
+
 		return token;
 
 	}
@@ -71,8 +72,21 @@ public class TokenDAO {
 			allTokens.add(token);
 		}
 		statement.close();
-		
+
 		return allTokens;
+
+	}
+
+	public static void replaceToken(Token t) throws SQLException {
+		Statement statement;
+		Connection con = DBConnection.createDatabaseConnection();
+		statement = con.createStatement();
+		statement.execute(
+				"REPLACE INTO credentials (softwareToken, accessToken, accessSecret, consumerToken, consumerSecret, softwareName)"
+						+ "VALUES ('" + t.getSoftwareToken() + "','" + t.getAccessToken() + "','" + t.getAccessSecret()
+						+ "','" + t.getConsumerToken() + "','" + t.getConsumerSecret() + "','" + t.getSoftwareName()
+						+ "')");
+		statement.close();
 
 	}
 
@@ -87,7 +101,7 @@ public class TokenDAO {
 							+ t.getAccessSecret() + "','" + t.getConsumerToken() + "','" + t.getConsumerSecret() + "','"
 							+ t.getSoftwareName() + "')");
 			statement.close();
-			
+
 		}
 	}
 
@@ -98,7 +112,7 @@ public class TokenDAO {
 		statement.execute(
 				"UPDATE credentials SET modified = \"" + date + "\" WHERE softwareToken = \"" + softwareToken + "\"");
 		statement.close();
-		
+
 	}
 
 	public static String getModifiedDate(String softwareToken) throws SQLException {
@@ -112,7 +126,7 @@ public class TokenDAO {
 			date = output.getString("modified");
 		}
 		statement.close();
-		
+
 		return date;
 	}
 
@@ -122,6 +136,6 @@ public class TokenDAO {
 		statement = con.createStatement();
 		statement.execute("DELETE FROM credentials WHERE softwareToken =\"" + softwareToken + "\"");
 		statement.close();
-		
+
 	}
 }

@@ -2,7 +2,6 @@ package servlet;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
@@ -34,6 +33,11 @@ public class SettingsServlet extends HttpServlet {
 		case "WeFact":
 			exportWerkbonType = req.getParameter("exportWerkbon");
 			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
+			break;
+		case "EAccounting":
+			exportWerkbonType = req.getParameter("exportWerkbon");
+			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
+			req.getSession().setAttribute("errorMessage", "");
 			break;
 		}
 		
@@ -91,7 +95,7 @@ public class SettingsServlet extends HttpServlet {
 				resp.sendRedirect(redirect + "OAuth.do?token=" + token + "&softwareName=" + softwareName);
 			} else {
 				resp.sendRedirect(
-						"http://localhost:8080/connect/OAuth.do?token=" + token + "&softwareName=" + softwareName);
+						"https://localhost:8080/connect/OAuth.do?token=" + token + "&softwareName=" + softwareName);
 			}
 		}
 	}

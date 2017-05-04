@@ -20,6 +20,8 @@ import DAO.ObjectDAO;
 import DAO.TokenDAO;
 import DBUtil.DBConnection;
 import controller.WorkOrderHandler;
+import controller.eaccouting.EAccountingHandler;
+import controller.eaccouting.OAuthEAccounting;
 import controller.twinfield.SoapHandler;
 import controller.twinfield.TwinfieldHandler;
 import controller.wefact.WeFactHandler;
@@ -45,12 +47,13 @@ public class SynchServlet extends HttpServlet {
 				Token t = TokenDAO.getToken(softwareToken, softwareName);
 				if (t != null && !t.getAccessSecret().equals("invalid")) {
 					softwareName = t.getSoftwareName();
+					// setSync(true) because user is online
 					this.setSyncMethods(t, req, true);
 					if (redirect != null) {
 						resp.sendRedirect(
 								redirect + "OAuth.do?token=" + softwareToken + "&softwareName=" + softwareName);
 					} else {
-						resp.sendRedirect("http://localhost:8080/connect/OAuth.do?token=" + softwareToken
+						resp.sendRedirect("https://localhost:8080/connect/OAuth.do?token=" + softwareToken
 								+ "&softwareName=" + softwareName);
 					}
 				}
@@ -58,7 +61,7 @@ public class SynchServlet extends HttpServlet {
 				e.printStackTrace();
 			}
 
-		// Get all users from database to Sync their data all at once
+			// Get all users from database to Sync their data all at once
 		} else {
 			try {
 				allTokens = TokenDAO.getSoftwareTokens();
@@ -107,12 +110,16 @@ public class SynchServlet extends HttpServlet {
 				if (array != null) {
 					sessionID = array[0];
 					cluster = array[1];
-					twinfieldImport(sessionID, cluster, t.getSoftwareToken(), t.getSoftwareName(), date);
+					twinfieldSyncHandler(sessionID, cluster, t.getSoftwareToken(), t.getSoftwareName(), date);
 				}
 				DBConnection.createDatabaseConnection().close();
 				break;
 			case "WeFact":
-				weFactImport(t.getSoftwareToken(), t.getAccessToken(), date);
+				weFactSyncHandler(t.getSoftwareToken(), t.getAccessToken(), date);
+				DBConnection.createDatabaseConnection().close();
+				break;
+			case "EAccounting":
+				eAccountingSyncHandler(t, date);
 				DBConnection.createDatabaseConnection().close();
 				break;
 			default:
@@ -123,16 +130,19 @@ public class SynchServlet extends HttpServlet {
 		}
 
 	}
-	//Twinfield
+
+	// Twinfield
 	public void setErrorMessage(String[] messageArray) {
 		if (messageArray != null) {
 			errorMessage += messageArray[0];
+			System.out.println("MESSAGEARRAY " + messageArray[0]);
 			if (messageArray[1].equals("true")) {
 				checkUpdate = "true";
 			}
 		}
 	}
-	//Twinfield
+
+	// Twinfield
 	public void setErrorMessageDetails(String[] messageArray) {
 		if (messageArray != null) {
 			errorMessage += messageArray[0];
@@ -141,27 +151,8 @@ public class SynchServlet extends HttpServlet {
 			}
 		}
 	}
-	//WeFact
-	public void setErrorMessageWeFact(String[] messageArray) {
-		if (messageArray != null) {
-			errorMessage += messageArray[0];
-			if (messageArray[1].equals("true")) {
-				checkUpdate = "true";
-			}
-		}
-	}
-	
-	//WeFact
-	public void setErrorMessageDetailsWeFact(String[] messageArray) {
-		if (messageArray != null) {
-			errorMessage += messageArray[0];
-			if (messageArray[1] != null) {
-				errorDetails = messageArray[1];
-			}
-		}
-	}
 
-	public void twinfieldImport(String session, String cluster, String token, String softwareName, String date)
+	public void twinfieldSyncHandler(String session, String cluster, String token, String softwareName, String date)
 			throws Exception {
 		TwinfieldHandler twinfield = new TwinfieldHandler();
 		Settings set = ObjectDAO.getSettings(token);
@@ -195,7 +186,7 @@ public class SynchServlet extends HttpServlet {
 							date);
 					setErrorMessage(messageArray);
 					break;
-					
+
 				}
 			}
 			// Export section
@@ -213,7 +204,7 @@ public class SynchServlet extends HttpServlet {
 		}
 	}
 
-	public void weFactImport(String token, String clientToken, String date) throws Exception {
+	public void weFactSyncHandler(String token, String clientToken, String date) throws Exception {
 		errorMessage = "";
 		WeFactHandler wefact = new WeFactHandler();
 		Settings set = ObjectDAO.getSettings(token);
@@ -224,19 +215,19 @@ public class SynchServlet extends HttpServlet {
 				switch (type) {
 				case "materials":
 					messageArray = wefact.getMaterials(clientToken, token, date);
-					setErrorMessageWeFact(messageArray);
+					setErrorMessage(messageArray);
 					break;
 				case "relations":
 					messageArray = wefact.getRelations(clientToken, token, date);
-					setErrorMessageWeFact(messageArray);
+					setErrorMessage(messageArray);
 					break;
 				case "hourtypes":
 					messageArray = wefact.getHourTypes(clientToken, token, date);
-					setErrorMessageWeFact(messageArray);
+					setErrorMessage(messageArray);
 					break;
 				case "offertes":
 					messageArray = wefact.getOffertes(clientToken, token, date);
-					setErrorMessageWeFact(messageArray);
+					setErrorMessage(messageArray);
 					break;
 				}
 			}
@@ -245,11 +236,11 @@ public class SynchServlet extends HttpServlet {
 			// Type is factuur
 			if (set.getExportWerkbontype().equals("factuur")) {
 				exportMessageArray = wefact.setFactuur(clientToken, token, set.getFactuurType(), set.getRoundedHours());
-			// Type is offerte
+				// Type is offerte
 			} else {
 				exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType(), set.getRoundedHours());
 			}
-			setErrorMessageDetailsWeFact(exportMessageArray);
+			setErrorMessageDetails(exportMessageArray);
 			if (checkUpdate.equals("true")) {
 				TokenDAO.saveModifiedDate(getDate(null), token);
 			}
@@ -257,6 +248,56 @@ public class SynchServlet extends HttpServlet {
 				ObjectDAO.saveLog(errorMessage, errorDetails, token);
 			} else {
 				ObjectDAO.saveLog("Niks te importeren", errorDetails, token);
+			}
+		}
+	}
+
+	public void eAccountingSyncHandler(Token t, String date) throws Exception {
+		EAccountingHandler eaccounting = new EAccountingHandler();
+		errorMessage = "";
+		// check if accessToken is still valid
+		if (t.getAccessSecret() != null && !eaccounting.checkAccessToken(t.getAccessToken())) {
+			// Get accessToken with refreshToken
+			t = OAuthEAccounting.getAccessToken(null, t.getAccessSecret(), t.getSoftwareName(), t.getSoftwareToken());
+		}		
+		Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
+		System.out.println("TOKEN " + t.getSoftwareToken());
+		if (set != null) {
+			ArrayList<String> importTypes = set.getImportObjects();
+			// Import section
+			for (String type : importTypes) {
+				switch (type) {
+				case "materials":
+					messageArray = eaccounting.getMaterials(t, date);
+					setErrorMessage(messageArray);
+					break;
+				case "relations":
+					messageArray = eaccounting.getRelations(t, date);
+					setErrorMessage(messageArray);
+					break;
+//				case "offertes":
+//					messageArray = wefact.getOffertes(clientToken, token, date);
+//					setErrorMessageWeFact(messageArray);
+//					break;
+				}
+			}
+			// Export section
+//			String[] exportMessageArray = null;
+//			// Type is factuur
+//			if (set.getExportWerkbontype().equals("factuur")) {
+//				exportMessageArray = wefact.setFactuur(clientToken, token, set.getFactuurType(), set.getRoundedHours());
+//				// Type is offerte
+//			} else {
+//				exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType(), set.getRoundedHours());
+//			}
+//			setErrorMessageDetailsWeFact(exportMessageArray);
+			if (checkUpdate.equals("true")) {
+				TokenDAO.saveModifiedDate(getDate(null), t.getSoftwareToken());
+			}
+			if (!errorMessage.equals("")) {
+				ObjectDAO.saveLog(errorMessage, errorDetails, t.getSoftwareToken());
+			} else {
+				ObjectDAO.saveLog("Niks te importeren", errorDetails, t.getSoftwareToken());
 			}
 		}
 	}

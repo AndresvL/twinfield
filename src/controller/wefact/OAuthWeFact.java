@@ -44,7 +44,7 @@ public class OAuthWeFact extends Authenticate {
 			if (!req.getParameterMap().containsKey("clientToken")) {
 				rd = req.getRequestDispatcher("weFact.jsp");
 				req.getSession().setAttribute("clientToken", null);
-			// If clientToken is filled in
+			// If clientToken is filled
 			} else {
 				String clientToken = req.getParameter("clientToken");
 				Object obj = we.checkClientToken(clientToken);
@@ -63,6 +63,7 @@ public class OAuthWeFact extends Authenticate {
 					}
 					rd = req.getRequestDispatcher("weFact.jsp");
 					req.getSession().setAttribute("clientToken", clientToken);
+					System.out.println("Session clientToken " + clientToken);
 					req.getSession().setAttribute("errorMessage", "true");
 					//Set workstatusses once in WorkOrdeApp
 					JSONArray JSONArray = new JSONArray();

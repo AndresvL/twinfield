@@ -6,27 +6,23 @@ $(document).ready(function() {
 				  location.reload();
 			  },880000)
 		
-			var modal = document.getElementById('loginModal');
-			if ($('#client').val() === "" || $('#client').val() === null) {
-				modal.style.display = "block";
-			}else {
-				if($('#error').val() === "true"){
-					swal({
-						title : 'Success',
-						text : "Je bent ingelogd",
-						type : 'success'
-					})
-					$('#error').val("");
-				}
-				if ($('#saved').val() !== "") {
-					swal({
-						title : 'Success',
-						text : $('#saved').val(),
-						type : 'success'
-					})
-				}
-				$('#saved').val("false");
+			if($('#error').val() === "true"){
+				swal({
+					title : 'Success',
+					text : "Je bent ingelogd",
+					type : 'success'
+				})
+				$('#error').val("");
 			}
+			if ($('#saved').val() !== "") {
+				swal({
+					title : 'Success',
+					text : $('#saved').val(),
+					type : 'success'
+				})
+			}
+			$('#saved').val("false");
+			
 			$(".showDetails").click(function() {
 				var errorDetails = $(this).data("href");
 				if(errorDetails !== null && errorDetails !== true && errorDetails !== false && errorDetails !== ""){
