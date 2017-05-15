@@ -45,9 +45,10 @@ public class WeFactHandler {
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
 	private int successAmount = 0, errorAmount = 0;
 	private String errorDetails = "", errorMessage = "";
-
+	
 	public HttpURLConnection getConnection(int postDataLength, String jsonRequest) throws IOException {
-		URL url = new URL("https://office.werkbonapp.nl/lib/proxy/proxy.php?token=i3IzWcUPzQySBNU27o4caQEuhWWJU98yUNRk0mBX2zDTlogR0EKytrUpa95X3Js0Rt7xwkx004qusJ6jZqzO2ZMiO3vLoPgDz6MGF4oJ1t4vErsIsEnmHdukeEGnGWqNrUiG7R4qZm3miQyfuCFLdeWz5s4sbauB9neelhzMJRmfxTTDMA8LPf9NbOldfqJKt3YTbn1pSLXOcVCgXOn30PjHmTS15Z14wWSqAwZQeJdCdWBfCGuxyZAiFbiV0mY9");
+		URL url = new URL(
+				"https://office.werkbonapp.nl/lib/proxy/proxy.php?token=i3IzWcUPzQySBNU27o4caQEuhWWJU98yUNRk0mBX2zDTlogR0EKytrUpa95X3Js0Rt7xwkx004qusJ6jZqzO2ZMiO3vLoPgDz6MGF4oJ1t4vErsIsEnmHdukeEGnGWqNrUiG7R4qZm3miQyfuCFLdeWz5s4sbauB9neelhzMJRmfxTTDMA8LPf9NbOldfqJKt3YTbn1pSLXOcVCgXOn30PjHmTS15Z14wWSqAwZQeJdCdWBfCGuxyZAiFbiV0mY9");
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		String contentType;
 		if (jsonRequest == null) {
@@ -67,7 +68,7 @@ public class WeFactHandler {
 		// conn.connect();
 		return conn;
 	}
-
+	
 	public Object checkClientToken(String clientToken) throws IOException {
 		String status;
 		Boolean b = false;
@@ -90,13 +91,13 @@ public class WeFactHandler {
 				}
 				return errorMessage;
 			}
-
+			
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		return b;
 	}
-
+	
 	public JSONObject getJsonResponse(String clientToken, String controller, String action, String array,
 			String jsonRequest) throws IOException, JSONException {
 		String jsonString;
@@ -117,7 +118,7 @@ public class WeFactHandler {
 		// Sets up the rest call;
 		HttpURLConnection con = getConnection(postDataLength, jsonRequest);
 		// Send request to WeFact
-
+		
 		try (DataOutputStream wr = new DataOutputStream(con.getOutputStream())) {
 			wr.write(postData);
 		}
@@ -128,9 +129,9 @@ public class WeFactHandler {
 		}
 		return json;
 	}
-
+	
 	public String getDateMinHour(String string) {
-		System.out.println("TIME "  + string);
+		System.out.println("TIME " + string);
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		Date date = null;
 		try {
@@ -147,10 +148,10 @@ public class WeFactHandler {
 		// Date to String
 		Format formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		String s = formatter.format(date);
-		System.out.println("TIME S "  + s);
+		System.out.println("TIME S " + s);
 		return s;
 	}
-
+	
 	// Producten
 	public String[] getMaterials(String clientToken, String softwareToken, String date) throws Exception {
 		String errorMessage = "";
@@ -160,22 +161,14 @@ public class WeFactHandler {
 		int editCount = 0;
 		ArrayList<Material> materials = new ArrayList<Material>();
 		Boolean hasContent = ObjectDAO.hasContent(softwareToken, "materials");
-		// if (date != null) {
-		// array = "&modified[from]=" + getDateMinHour(date);
-		// }
-		// if (!hasContent) {
-		// array = null;
-		// }
 		JSONObject JSONObject = new JSONObject();
 		try {
 			JSONObject.put("api_key", clientToken);
 			JSONObject.put("controller", controller);
 			JSONObject.put("action", action);
-//			JSONArray modifiedFromArray = new JSONArray();
 			JSONObject modifiedFrom = new JSONObject();
 			if (date != null && hasContent) {
 				modifiedFrom.put("from", date);
-//				modifiedFromArray.put(modifiedFrom);
 				JSONObject.put("modified", modifiedFrom);
 			}
 		} catch (JSONException e) {
@@ -196,10 +189,14 @@ public class WeFactHandler {
 					String productCode = object.getString("ProductCode");
 					String dbModified = ObjectDAO.getModifiedDate(softwareToken, null, productCode, "materials");
 					// Check if data is modified
-					if (dbModified == null || array == null) {
+					if (hasContent) {
+						if (dbModified == null || array == null) {
+							importCount++;
+						} else {
+							editCount++;
+						}
+					}else{
 						importCount++;
-					} else {
-						editCount++;
 					}
 					String description = object.getString("ProductName");
 					// if(description.equals("")){
@@ -234,10 +231,10 @@ public class WeFactHandler {
 		} else {
 			errorMessage += "No materials for import<br>";
 		}
-
+		
 		return new String[] { errorMessage, checkUpdate + "" };
 	}
-
+	
 	// Debiteuren
 	public String[] getRelations(String clientToken, String softwareToken, String date) throws Exception {
 		String errorMessage = "";
@@ -246,22 +243,16 @@ public class WeFactHandler {
 		action = "list";
 		ArrayList<Relation> relations = new ArrayList<Relation>();
 		Boolean hasContent = ObjectDAO.hasContent(softwareToken, "relations");
-		// if (date != null) {
-		// array = "&modified[from]=" + getDateMinHour(date);
-		// }
-		// if (!hasContent) {
-		// array = null;
-		// }
 		JSONObject JSONObject = new JSONObject();
 		try {
 			JSONObject.put("api_key", clientToken);
 			JSONObject.put("controller", controller);
 			JSONObject.put("action", action);
-//			JSONArray modifiedFromArray = new JSONArray();
+			// JSONArray modifiedFromArray = new JSONArray();
 			JSONObject modifiedFrom = new JSONObject();
 			if (date != null && hasContent) {
 				modifiedFrom.put("from", date);
-//				modifiedFromArray.put(modifiedFrom);
+				// modifiedFromArray.put(modifiedFrom);
 				JSONObject.put("modified", modifiedFrom);
 			}
 		} catch (JSONException e) {
@@ -281,7 +272,7 @@ public class WeFactHandler {
 					String debtorCode = object.getString("DebtorCode");
 					action = "show";
 					String debtorArray = "&DebtorCode=" + debtorCode;
-					//Request debtorDetails
+					// Request debtorDetails
 					JSONObject jsonShow = getJsonResponse(clientToken, controller, action, debtorArray, null);
 					logger.info("relation response " + jsonShow);
 					ArrayList<Address> address = new ArrayList<Address>();
@@ -336,7 +327,7 @@ public class WeFactHandler {
 							city = "<leeg>";
 						}
 						String remark = debtorDetails.getString("Comment");
-
+						
 						Address postal = new Address(contact, phoneNr, email, street, houseNumber, postalCode, city,
 								remark, "postal", 2);
 						address.add(postal);
@@ -380,7 +371,7 @@ public class WeFactHandler {
 									invoicehouseNumber, invoicepostalCode, invoicecity, remark, "invoice", 1);
 							address.add(invoice);
 						}
-
+						
 						r = new Relation(companyName, debtorNr, contact, invoiceEmail, address, modified);
 						relations.add(r);
 					}
@@ -409,7 +400,7 @@ public class WeFactHandler {
 		}
 		return new String[] { errorMessage, checkUpdate + "" };
 	}
-
+	
 	// Productengroep uren
 	public String[] getHourTypes(String clientToken, String softwareToken, String date) throws Exception {
 		String errorMessage = "";
@@ -425,7 +416,7 @@ public class WeFactHandler {
 			JSONObject.put("controller", controller);
 			JSONObject.put("action", action);
 			JSONObject.put("type", "product");
-
+			
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -452,17 +443,17 @@ public class WeFactHandler {
 							JSONObjectList.put("controller", controller);
 							JSONObjectList.put("action", action);
 							JSONObjectList.put("group", id);
-//							JSONArray modifiedFromArray = new JSONArray();
+							// JSONArray modifiedFromArray = new JSONArray();
 							JSONObject modifiedFrom = new JSONObject();
 							if (date != null && hasContent) {
 								modifiedFrom.put("from", date);
-//								modifiedFromArray.put(modifiedFrom);
+								// modifiedFromArray.put(modifiedFrom);
 								JSONObjectList.put("modified", modifiedFrom);
 							}
 						} catch (JSONException e) {
 							e.printStackTrace();
 						}
-						jsonList = getJsonResponse(clientToken, controller, action, array, JSONObjectList+"");
+						jsonList = getJsonResponse(clientToken, controller, action, array, JSONObjectList + "");
 						logger.info("hourtype response " + jsonList);
 						String productStatus = jsonList.getString("status");
 						totalResults = jsonList.getInt("totalresults");
@@ -506,7 +497,7 @@ public class WeFactHandler {
 				errorMessage += obj + "<br>";
 			}
 		}
-
+		
 		if (!hourtypes.isEmpty()) {
 			// Send to WorkOrderApp
 			int successAmount = (int) WorkOrderHandler.addData(softwareToken, hourtypes, "hourtypes", softwareName,
@@ -525,12 +516,13 @@ public class WeFactHandler {
 		}
 		return new String[] { errorMessage, checkUpdate + "" };
 	}
-
+	
 	// Workorder -- offerte
 	public String[] getOffertes(String clientToken, String softwareToken, String date) throws Exception {
 		String errorMessage = "";
 		controller = "pricequote";
-		action = "list";;
+		action = "list";
+		;
 		// int importCount = 0;
 		// int editCount = 0;
 		ArrayList<WorkOrder> offertes = new ArrayList<WorkOrder>();
@@ -540,19 +532,21 @@ public class WeFactHandler {
 			JSONObject.put("controller", controller);
 			JSONObject.put("action", action);
 			JSONObject.put("status", 3);
-//			JSONArray modifiedFromArray = new JSONArray();
+			// JSONArray modifiedFromArray = new JSONArray();
 			JSONObject modifiedFrom = new JSONObject();
 			if (date != null) {
 				modifiedFrom.put("from", date);
-//				modifiedFromArray.put(modifiedFrom);
+				// modifiedFromArray.put(modifiedFrom);
 				JSONObject.put("modified", modifiedFrom);
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
+		System.out.println("JSONOBJECT" + JSONObject);
+		System.out.println("JSONLIST" + jsonList);
 		String status = jsonList.getString("status");
-
+		
 		// Check if ListRequest is successful
 		if (status.equals("success")) {
 			int totalResults = jsonList.getInt("totalresults");
@@ -579,7 +573,10 @@ public class WeFactHandler {
 					// 3 is geaccepteerd
 					int offerteStatus = offerteDetails.getInt("Status");
 					// if customField werkbonapp is set to yes
+					System.out.println("STATUSSHOW " + statusShow);
+					System.out.println("OFFERTESTATUS " + offerteStatus);
 					if (statusShow.equals("success") && werkbonApp == 1 && werkbonAppAdded == 0) {
+						System.out.println("OFFERTESTATUS " + offerteStatus);
 						String modified = offerteDetails.getString("Modified");
 						offerteNr = offerteDetails.getString("PriceQuoteCode");
 						String debtorCode = offerteDetails.getString("DebtorCode");
@@ -628,7 +625,7 @@ public class WeFactHandler {
 							dbRelation.setDebtorNumber(debtorCode);
 							dbRelation.setContact(contact);
 							dbRelation.setEmailWorkorder(email);
-
+							
 							ArrayList<Address> address = dbRelation.getAddressess();
 							ArrayList<Address> offerteAddress = new ArrayList<Address>();
 							// Always one address in array
@@ -641,7 +638,7 @@ public class WeFactHandler {
 							dbRelation.setAddresses(offerteAddress);
 							ArrayList<Relation> allRelations = new ArrayList<Relation>();
 							allRelations.add(dbRelation);
-
+							
 							JSONArray lines = offerteDetails.getJSONArray("PriceQuoteLines");
 							ArrayList<Material> allMaterials = new ArrayList<Material>();
 							for (int j = 0; j < lines.length(); j++) {
@@ -654,11 +651,26 @@ public class WeFactHandler {
 								Material m = new Material(code, null, unit, materialDescription, price, quantity, null);
 								allMaterials.add(m);
 							}
-
+							
+							// public WorkOrder(String projectNr, String
+							// workDate, String
+							// customerEmailInvoice, String customerEmail,
+							// String customerDebtorNr, String status, String
+							// paymentMethod,
+							// ArrayList<Material> m, String creationDate,
+							// String id, String workorderNr,
+							// ArrayList<WorkPeriod> work,
+							// ArrayList<Relation> relation, String workTime,
+							// String workEndDate, String workEndTime, String
+							// externProjectNr, String typeOfWork, String
+							// workDescription,
+							// String modified, String pdfUrl, String
+							// workStatus) {
 							WorkOrder w = new WorkOrder(null, workDate, email, email, debtorCode, offerteStatus + "",
 									paymentMethod, allMaterials, workDate, null, id, null, allRelations, null, null,
 									null, offerteNr, typeOfWork, description, modified, null, null);
 							offertes.add(w);
+							System.out.println("OFFERTESARRAY " + offertes);
 						}
 					}
 				}
@@ -691,7 +703,7 @@ public class WeFactHandler {
 		}
 		return new String[] { errorMessage, checkUpdate + "" };
 	}
-
+	
 	// Set new invoice
 	public String[] setFactuur(String clientToken, String token, String factuurType, int roundedHours)
 			throws IOException, JSONException {
@@ -703,7 +715,12 @@ public class WeFactHandler {
 		for (WorkOrder w : allData) {
 			exportAmount++;
 			// Send invoice
-			errorDetails += sendFactuur(w, clientToken, roundedHours, token, "");
+			if (w.getMaterials().size() > 0 || w.getWorkPeriods().size() > 0) {
+				errorDetails += sendFactuur(w, clientToken, roundedHours, token, "", "", 0);
+			} else {
+				errorMessage += "Something went wrong with sending an invoice. Click for more details<br>";
+				errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr();
+			}
 		}
 		if (errorAmount > 0) {
 			errorMessage += errorAmount + " out of " + exportAmount + " workorders(factuur) have errors<br>";
@@ -713,12 +730,10 @@ public class WeFactHandler {
 		}
 		return new String[] { errorMessage, errorDetails };
 	}
-
-	int relationAmount = 0, materialAmount = 0;
-
-	private String sendFactuur(WorkOrder w, String clientToken, int roundedHours, String token, String errorDetails)
-			throws IOException, JSONException {
-
+	
+	private String sendFactuur(WorkOrder w, String clientToken, int roundedHours, String token, String errorDetails,
+			String error, int amount) throws IOException, JSONException {
+		
 		// Boolean added = false;
 		JSONObject JSONObject = null;
 		// Get JSONObject
@@ -735,7 +750,7 @@ public class WeFactHandler {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
+			
 			System.out.println("setAttachement = " + b);
 			successAmount++;
 			// Set status to afgehandeld
@@ -746,6 +761,16 @@ public class WeFactHandler {
 			JSONArray array = jsonList.getJSONArray("errors");
 			String[] material = null;
 			String relation = null;
+			for (int i = 0; i < array.length(); i++) {
+				System.out.println("ERRORARRAY " + array);
+				Object obj = array.get(i);
+				System.out.println("OBJ " + obj);
+				if (String.valueOf(obj).startsWith("Factuur")) {
+					errorMessage += "Something went wrong with sending an invoice. Click for more details<br>";
+					errorDetails += String.valueOf(obj);
+					return errorDetails;
+				}
+			}
 			for (int i = 0; i < array.length(); i++) {
 				String projectNr = "";
 				if (!w.getWorkorderNr().equals("")) {
@@ -758,9 +783,7 @@ public class WeFactHandler {
 					projectNr = "<leeg>";
 				}
 				Object obj = array.get(i);
-				System.out.println("OBJ " + obj);
-
-				if (String.valueOf(obj).equals("Ongeldig debiteurkenmerk") && relationAmount == 0
+				if (String.valueOf(obj).equals("Ongeldig debiteurkenmerk") && amount == 0
 						|| String.valueOf(obj).equals("Debiteur  niet gevonden")) {
 					// Create new relation in WeFact
 					relation = setRelation(w, clientToken);
@@ -768,18 +791,17 @@ public class WeFactHandler {
 						w.setCustomerDebtorNr(relation);
 						errorDetails += "Debtor " + relation + " added in WeFact\n";
 						obj = null;
-						relationAmount++;
+						amount++;
 					}
-				}
-				if (String.valueOf(obj).equals("Product 0 niet gevonden") && materialAmount == 0) {
+				} else if (String.valueOf(obj).equals("Product 0 niet gevonden") && amount <= 1) {
 					// Create new material in WeFact
 					ArrayList<Material> allMaterials = new ArrayList<Material>();
 					for (Material m : w.getMaterials()) {
 						material = setMaterial(m, clientToken, obj);
 						if (material[0] != null) {
+							amount++;
 							errorDetails += "Material " + material[0] + " added in WeFact\n";
 							obj = null;
-							materialAmount++;
 							if (material[1].equals(m.getDescription())) {
 								m.setCode(material[0]);
 								m.setDescription(material[1]);
@@ -789,18 +811,29 @@ public class WeFactHandler {
 							}
 						}
 					}
+					if (amount <= 1) {
+						amount++;
+						errorDetails += "Hourtype on workorder " + w.getWorkorderNr() + " does not exist in WeFact\n";
+					}
+					
 					w.setMaterials(allMaterials);
+				} else {
+					errorDetails += "Hourtype on workorder " + w.getWorkorderNr() + " does not exist in WeFact\n";
 				}
 			}
 			if (relation != null || material != null) {
-				return sendFactuur(w, clientToken, roundedHours, token, errorDetails);
+				return sendFactuur(w, clientToken, roundedHours, token, errorDetails, error, amount);
 			} else {
-				errorMessage += "Something went wrong with sending an invoice" + " <br>";
+				// check errorDetails
+				errorMessage += "Something went wrong with sending an invoice. Click for more details<br>";
+				// errorDetails += "Hourtype on workorder " + w.getWorkorderNr()
+				// + " does not exist in WeFact\n";;
+				System.out.println("ERRORDETAILS " + errorDetails + amount);
 			}
 		}
 		return errorDetails;
 	}
-
+	
 	public JSONObject factuurJSON(WorkOrder w, String clientToken, int roundedHours) {
 		controller = "invoice";
 		action = "add";
@@ -842,7 +875,7 @@ public class WeFactHandler {
 						workStatus = "0";
 					}
 					JSONObject.put("Status", workStatus);
-
+					
 					JSONObject JSONObjectCustom = new JSONObject();
 					JSONObjectCustom.put("werkbontype", w.getTypeOfWork());
 					JSONObjectCustom.put("paymentmethod", w.getPaymentMethod());
@@ -883,7 +916,7 @@ public class WeFactHandler {
 		}
 		return JSONObject;
 	}
-
+	
 	private String setRelation(WorkOrder w, String clientToken) {
 		String debtorCode = null;
 		controller = "debtor";
@@ -896,7 +929,7 @@ public class WeFactHandler {
 					JSONObject.put("api_key", clientToken);
 					JSONObject.put("controller", controller);
 					JSONObject.put("action", action);
-
+					
 					JSONObject.put("DebtorCode", w.getCustomerDebtorNr());
 					JSONObject.put("CompanyName", r.getCompanyName());
 					JSONObject.put("Initials", a.getName());
@@ -921,7 +954,7 @@ public class WeFactHandler {
 		}
 		return debtorCode;
 	}
-
+	
 	private String[] setMaterial(Material m, String clientToken, Object obj) {
 		String materialCode = null, description = null;
 		controller = "product";
@@ -953,10 +986,10 @@ public class WeFactHandler {
 		} catch (JSONException | IOException e) {
 			e.printStackTrace();
 		}
-
+		
 		return new String[] { materialCode, description };
 	}
-
+	
 	private String encodeFileToBase64Binary(String pdfUrl) throws IOException {
 		URL url = new URL(pdfUrl);
 		InputStream in = url.openStream();
@@ -968,30 +1001,30 @@ public class WeFactHandler {
 		String encodedString = new String(encoded);
 		return encodedString;
 	}
-
+	
 	private static byte[] loadFile(File file) throws IOException {
 		InputStream is = new FileInputStream(file);
-
+		
 		long length = file.length();
 		if (length > Integer.MAX_VALUE) {
 			// File is too large
 		}
 		byte[] bytes = new byte[(int) length];
-
+		
 		int offset = 0;
 		int numRead = 0;
 		while (offset < bytes.length && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
 			offset += numRead;
 		}
-
+		
 		if (offset < bytes.length) {
 			throw new IOException("Could not completely read file " + file.getName());
 		}
-
+		
 		is.close();
 		return bytes;
 	}
-
+	
 	public Boolean setAttachement(String clientToken, String id, String url) throws Exception {
 		JSONObject JSONObject = new JSONObject();
 		controller = "attachment";
@@ -1009,7 +1042,7 @@ public class WeFactHandler {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
+		
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
 		logger.info("Attachement response " + jsonList);
 		String status = jsonList.getString("status");
@@ -1020,7 +1053,7 @@ public class WeFactHandler {
 		}
 		return b;
 	}
-
+	
 	public String[] setOfferte(String clientToken, String token, String factuurType, int roundedHours)
 			throws IOException, JSONException {
 		String errorMessage = "", errorDetails = "";
@@ -1054,7 +1087,7 @@ public class WeFactHandler {
 					} else {
 						action = "add";
 					}
-
+					
 					JSONObject = new JSONObject();
 					try {
 						JSONObject.put("api_key", clientToken);
@@ -1071,7 +1104,7 @@ public class WeFactHandler {
 						JSONObject.put("City", a.getCity());
 						JSONObject.put("EmailAddress", a.getEmail());
 						JSONObject.put("Description", w.getWorkDescription());
-
+						
 						JSONObject JSONObjectCustom = new JSONObject();
 						JSONObjectCustom.put("werkbontype", w.getTypeOfWork());
 						JSONObjectCustom.put("paymentmethod", w.getPaymentMethod());
@@ -1087,7 +1120,7 @@ public class WeFactHandler {
 						for (WorkPeriod p : w.getWorkPeriods()) {
 							double number = p.getDuration();
 							double hours = roundedHours;
-
+							
 							double urenInteger = (number % hours);
 							if (urenInteger < (hours / 2)) {
 								number = number - urenInteger;
@@ -1105,7 +1138,7 @@ public class WeFactHandler {
 						e.printStackTrace();
 					}
 				}
-
+				
 			}
 			logger.info("offerte request " + JSONObject);
 			JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
@@ -1143,12 +1176,12 @@ public class WeFactHandler {
 		}
 		return new String[] { errorMessage, errorDetails };
 	}
-
+	
 	// Set offerte status after sending to WerkbonApp
 	public void setOfferteStatus(String clientToken, int id, Boolean accepted) throws IOException, JSONException {
 		controller = "pricequote";
 		action = "edit";
-
+		
 		JSONObject JSONObject = new JSONObject();
 		try {
 			JSONObject.put("api_key", clientToken);
@@ -1158,17 +1191,17 @@ public class WeFactHandler {
 			JSONObject modifiedFrom = new JSONObject();
 			if (accepted) {
 				modifiedFrom.put("werkbonappadded", "1");
-//				modifiedFromArray.put(modifiedFrom);
+				// modifiedFromArray.put(modifiedFrom);
 				JSONObject.put("CustomFields", modifiedFrom);
-			}else{
+			} else {
 				modifiedFrom.put("werkbonappadded", "0");
-//				modifiedFromArray.put(modifiedFrom);
+				// modifiedFromArray.put(modifiedFrom);
 				JSONObject.put("CustomFields", modifiedFrom);
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
-		System.out.println("JSONLIST1 "  + jsonList);
+		System.out.println("JSONLIST1 " + jsonList);
 	}
 }

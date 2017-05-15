@@ -5,7 +5,12 @@ $(document).ready(function() {
 			setTimeout(function(){
 				  location.reload();
 			  },880000)
-		
+			  
+//			//Date
+		   $('#datetimepicker1').datetimepicker({ format:'DD-MM-YYYY HH:mm:ss'
+		   });
+			
+			
 			var modal = document.getElementById('loginModal');
 			if ($('#client').val() === "" || $('#client').val() === null) {
 				modal.style.display = "block";

@@ -11,6 +11,16 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <title>eAccounting Connection</title>
+<!-- datepicker CSS -->
+<link
+	href="//cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/build/css/bootstrap-datetimepicker.css"
+	rel="stylesheet">
+<!-- Custom CSS -->
+<link href="css/custom.css" rel="stylesheet">
+<script type="text/javascript"
+	src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script
+	src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment-with-locales.js"></script>
 <!-- Bootstrap Core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <!-- Theme CSS -->
@@ -32,41 +42,14 @@
 		        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
 		        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 		    <![endif]-->
-<style type="text/css">
 
-.settings {
-	width: 50%;
-	height: 100%;
-	float: left;
-}
-
-.log {
-	width: 50%;
-	height: 100%;
-	float: right;
-}
-
-#help {
-	float: right;
-}
-
-#show {
-	float: right;
-}
-
-#savebutton {
-	margin-right: 10px;
-	float: right;
-}
-
-#syncbutton {
-	float: right;
-	margin-right: 20px;
-}
-</style>
 </head>
 <body>
 	<!-- Settings Section -->
+	<div id="WBA-section">
+		<img src="./img/werkbonapp.png" height="60" width="170" />
+		<img src="./img/Visma_Logo_Screen.png" height="60" width="220" id="boekhoud_logo"/>
+	</div>
 	<div class="settings">
 		<div class="panel-group">
 			<!-- The Help Modal -->
@@ -84,14 +67,15 @@
 						<h5>Let op!</h5>
 						<ul>
 							<li>Bij het aanschaffen van deze koppeling is het verstandig
-								om alle werkbonnen die in WerkbonApp staan op status afgehandeld
-								te zetten</li>
-							<li>De <abbr>import settings</abbr> mogen alleen in eAccounting
-								worden gewijzigd.
+								om <mark>alle werkbonnen</mark> in WerkbonApp op <mark>status
+									afgehandeld</mark> te zetten
 							</li>
-							<li>Bij een <abbr>foutmelding</abbr> kan je op het
+							<li>De <mark>import settings</mark> mogen alleen in
+								eAccounting worden gewijzigd.
+							</li>
+							<li>Bij een <mark>foutmelding</mark> kan je op het
 								bericht(log) klikken om meer details te zien.
-							<li>Als een <abbr>werkbon(factuur) geëxporteerd</abbr> is,
+							<li>Als een <mark>werkbon(factuur) geëxporteerd</mark> is,
 								kan je op het bericht(log) klikken om meer details te zien.
 							</li>
 							<li>(Nieuwe) Relaties en materialen op een werkbon worden
@@ -102,8 +86,8 @@
 						<h4>Informatie</h4>
 						<ul>
 							<li>Op deze pagina is het mogelijk om de <mark>import</mark>
-								en <mark>export</mark> gegevens tussen WerkbonApp en eAccounting in
-								te stellen.
+								en <mark>export</mark> gegevens tussen WerkbonApp en eAccounting
+								in te stellen.
 							</li>
 							<li>Elke 15 minuten zal er een <mark>automatische
 									synchronisatie</mark> plaatsvinden aan de hand van deze instellingen.
@@ -117,17 +101,13 @@
 
 						<h4>Mogelijkheden</h4>
 						<ul>
-							<li><abbr>Producten, debiteuren, offertes en
-									producten in productengroep Uursoorten</abbr> worden geimporteerd
+							<li><mark>Artikelen, debiteuren, verkooporders,
+									projecten en artikelen met eenheid uur</mark> worden geimporteerd
 								vanuit eAccounting.</li>
-							<li><abbr>Werkbonnen met nieuwe relaties en/of
-									materialen</abbr> zullen geexporteerd worden, hierbij worden nieuwe
-								relaties en/of materialen aangemaakt binnen eAccounting voordat de
-								werkbon opgestuurd wordt.</li>
-							<li>Bij het openen van een werkbon kan de <abbr>werkstatus</abbr>
-								aangepast worden. Deze werkstatus komt overeen met de status van
-								de factuur in eAccounting.
-							</li>
+							<li><mark>Werkbonnen met nieuwe relaties en/of
+									materialen</mark> zullen geexporteerd worden, hierbij worden nieuwe
+								relaties en/of materialen aangemaakt binnen eAccounting voordat
+								de werkbon opgestuurd wordt.</li>
 						</ul>
 						<br>
 						<button type="button" id="show" class="btn btn-info">Show</button>
@@ -146,7 +126,7 @@
 									</tr>
 									<tr>
 										<td>Materialen</td>
-										<td>Producten</td>
+										<td>Artikelen</td>
 									</tr>
 									<tr>
 										<td>Relaties</td>
@@ -154,18 +134,18 @@
 									</tr>
 									<tr>
 										<td>Uursoorten</td>
-										<td>Producten(Uursoorten)</td>
+										<td>Artikelen(uur)</td>
 									</tr>
 									<tr>
-										<td>Offertes</td>
+										<td>Projecten</td>
+										<td>Projecten</td>
+									</tr>
+									<tr>
+										<td>Verkooporders</td>
 										<td>Werkbonnen</td>
 									</tr>
 									<tr>
 										<th colspan="2">Export</th>
-									</tr>
-									<tr>
-										<td>Werkbon</td>
-										<td>Offerte</td>
 									</tr>
 									<tr>
 										<td>Werkbon</td>
@@ -199,7 +179,7 @@
 								<div class="checkbox">
 									<label> <input type="checkbox" value="materials"
 										${"selected" == checkboxes.materials  ? 'checked' : ''}
-										name="importType"> Materialen
+										name="importType"> Materialen/Uursoorten
 									</label>
 								</div>
 								<div class="checkbox">
@@ -209,18 +189,60 @@
 									</label>
 								</div>
 								<div class="checkbox">
-									<label> <input type="checkbox" value="hourtypes"
-										${"selected" == checkboxes.hourtypes  ? 'checked' : ''}
-										name="importType"> Uursoorten
+									<label> <input type="checkbox" value="projects"
+										${"selected" == checkboxes.projects  ? 'checked' : ''}
+										name="importType"> Projecten
 									</label>
 								</div>
 								<div class="checkbox">
-									<label> <input type="checkbox" value="offertes"
-										${"selected" == checkboxes.offertes  ? 'checked' : ''}
-										name="importType" id="offertes"> Offertes
+									<label> <input type="checkbox" value="verkooporders"
+										${"selected" == checkboxes.verkooporders  ? 'checked' : ''}
+										name="importType" id="verkooporders"> Verkooporders
 									</label>
 								</div>
+								<div id="verkooporders_extra">
+									<label>Selecteer een type werkzaamheid</label> <img
+										src="./img/vraagteken.jpg" data-toggle="tooltip"
+										title="Dit type werkzaamheid wordt meegestuurd bij het importeren van verkooporders"
+										height="13" width="13" /> <select name="typeofwork"
+										class="form-control" id="typeofwork" required>
+										<c:forEach items="${types}" var="type">
+											<option value="${type.key}"
+												${type.value == 'selected' ? 'selected="selected"' : ''}>
+												${type.key}</option>
+										</c:forEach>
+
+									</select><br> <label>Selecteer een betaalmethode</label><img
+										src="./img/vraagteken.jpg" data-toggle="tooltip"
+										title="Deze betaalmethode wordt meegestuurd bij het importeren van verkooporders"
+										height="13" width="13" /> <select name="paymentmethod"
+										class="form-control" id="paymentmethod" required>
+										<c:forEach items="${paymentmethods}" var="payment">
+											<option value="${payment.key}"
+												${payment.value == 'selected' ? 'selected="selected"' : ''}>
+												${payment.key}</option>
+										</c:forEach>
+									</select>
+								</div>
+								<br>
+								<div class="row">
+									<div class='col-sm-7'>
+										<div class="form-group">
+											<label>Synchroniseer datum</label> <img
+												src="./img/vraagteken.jpg" height="13" width="13"
+												data-toggle="tooltip"
+												title="Alle gegevens vanaf deze datum worden geschynchroniseerd" />
+
+											<input type='text' class="form-control" id='datetimepicker1'
+												name="syncDate" value="${savedDate}" />
+
+										</div>
+									</div>
+								</div>
+
 								<button type="button" id="help" class="btn btn-info btn-lg">Help</button>
+								<input type="submit" class="btn btn-success btn-lg" value="Save"
+									name="category" id="savebutton" />
 							</div>
 						</div>
 					</div>
@@ -237,15 +259,12 @@
 								<input class="form-control" type="hidden" name="factuurType"
 									value="Compleet" /> <br> <label>Werkbon type</label> <img
 									src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="De werkbon wordt als factuur of offerte verstuurd naar eAccounting"
+									title="De werkbon wordt als verkoopfactuur verstuurd naar eAccounting"
 									height="13" width="13" /> <br> <input type="radio"
 									name="exportWerkbon" value="factuur"
 									${"selected" == exportWerkbonType.factuur  ? 'checked' : ''}
-									checked> Factuur<br> <input type="radio"
-									name="exportWerkbon" value="offerte"
-									${"selected" == exportWerkbonType.offerte  ? 'checked' : ''}>
-								Offerte<br> <br> <label>Afronding uren</label> <img
-									src="./img/vraagteken.jpg" data-toggle="tooltip"
+									checked> Verkoopfactuur<br> <br> <label>Afronding
+									uren</label> <img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="Selecteer het aantal minuten waarop de gewerkte uren moeten worden afgerond"
 									height="13" width="13" /> <br> <select
 									name="roundedHours" class="form-control" id="uren" required>
@@ -269,9 +288,7 @@
 					<div class="row">
 						<div class="form-group col-xs-12">
 							<input type="submit" class="btn btn-success btn-lg" value="Sync"
-								id="syncbutton" /> <input type="submit"
-								class="btn btn-success btn-lg" value="Save" name="category"
-								id="savebutton" />
+								id="syncbutton" />
 						</div>
 					</div>
 				</div>
@@ -323,6 +340,7 @@
 	<script src="js/jqBootstrapValidation.js" type="text/javascript"></script>
 	<script src="js/contact_me.js" type="text/javascript"></script>
 	<!-- Theme JavaScript -->
+	<script type="text/javascript" src="js/bootstrap-datetimepicker.js"></script>
 	<script src="js/freelancer.min.js" type="text/javascript"></script>
 	<script type="text/javascript" src="js/vkbeautify.js"></script>
 	<script type="text/javascript" src="js/eaccounting.js"></script>

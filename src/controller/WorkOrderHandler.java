@@ -17,6 +17,8 @@ import javax.servlet.ServletException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import DAO.ObjectDAO;
 import DBUtil.DBConnection;
@@ -39,7 +41,7 @@ public class WorkOrderHandler {
 	// "622a8ef3a712344ef07a4427550ae1e2b38e5342";
 	// WEFACT
 	final static String softwareToken = "872e5ad04c2607e59ba610712344ef07a4427550ae09bc33f1120a20ffe4";
-
+	
 	// change later
 	public static int checkWorkOrderToken(String token, String softwareName) {
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
@@ -65,9 +67,9 @@ public class WorkOrderHandler {
 			e.printStackTrace();
 		}
 		return code;
-
+		
 	}
-
+	
 	public static void setWorkorderStatus(String id, String workorderNr, Boolean status, String type, String token,
 			String softwareName) {
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
@@ -92,9 +94,86 @@ public class WorkOrderHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
 	}
-
+	
+	public static ArrayList<String> getTypeofwork(String token, String softwareName, String type) {
+		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
+				+ "&software_token=" + softwareToken;
+		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
+					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
+		}
+		ArrayList<String> types = new ArrayList<String>();
+		try {
+			URL url = new URL(link);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Content-Type", "application/json");
+			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+			String output = null;
+			JSONObject json = null;
+			while ((output = br.readLine()) != null) {
+				json = new JSONObject(output);
+				System.out.println("JSON " + json);
+			}
+			br.close();
+			JSONArray jsonArray = json.getJSONArray("response");
+			switch (type) {
+			case "worktypes":
+				Boolean activeBoolean = false;
+				for (int i = 0; i < jsonArray.length(); i++) {
+					JSONObject object = jsonArray.getJSONObject(i);
+					int active = object.getInt("wrt_active");
+					if (active > 0) {
+						activeBoolean = true;
+						String name = object.getString("wrt_name");						
+						types.add(name);
+					}
+				}
+				if (jsonArray.length() == 0 || !activeBoolean) {
+					Map<String, String> worktype = new HashMap<String, String>();
+					types.add("Installatie");
+					types.add("Garantie");
+					types.add("Levering");
+					types.add("Onderhoud");
+					types.add("Project");
+					types.add("Regie");
+					types.add("Reparatie");
+					types.add("Service");
+					types.add("Storing");
+					types.add("Verkoop");
+					types.add("Verhuur");
+				} 
+				break;
+			case "paymentmethods":
+				if (jsonArray.length() == 0) {
+					Map<String, String> worktype = new HashMap<String, String>();
+					types.add("op rekening");
+					types.add("niet van toepassing");
+					types.add("contant voldaan");
+					types.add("pin betaling");
+					types.add("conform offerte");
+				} else {
+					for (int i = 0; i < jsonArray.length(); i++) {
+						JSONObject object = jsonArray.getJSONObject(i);
+						String name = object.getString("pmd_description");
+						Map<String, String> worktype = new HashMap<String, String>();
+						types.add(name);
+					}
+				}
+				break;
+			}
+			
+		} catch (IOException |
+				
+				JSONException e) {
+			e.printStackTrace();
+		}
+		return types;
+	}
+	
 	public static ArrayList<WorkOrder> getData(String token, String type, String stat, boolean updateStatus,
 			String softwareName) {
 		// Header
@@ -107,12 +186,13 @@ public class WorkOrderHandler {
 				customerStreet, customerStreetNo, customerZIP, customerCity, customerContactPerson, customerPhone,
 				customerRemark, customerNameInvoice, customerDebtorNrInvoice, customerStreetInvoice,
 				customerStreetNoInvoice, customerZIPInvoice, customerContactPersonInvoice, customerPhoneInvoice,
-				customerRemarkInvoice, typeOfWork, workDescription, beginTime, endTime, customerCityInvoice, pdfUrl, workStatus;
+				customerRemarkInvoice, typeOfWork, workDescription, beginTime, endTime, customerCityInvoice, pdfUrl,
+				workStatus;
 		String employeeNr = null, hourType = null, description = null, duration = null;
 		// line
 		String materialCode, materialNr, materialUnit, materialName;
 		double materialPrice;
-
+		
 		// Request to WorkOrderApp
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken + "&status=" + stat + "&update_status=" + updateStatus;
@@ -190,7 +270,7 @@ public class WorkOrderHandler {
 							Relation customerRelationInvoice = new Relation(customerNameInvoice,
 									customerDebtorNrInvoice, customerContactPersonInvoice, customerEmailInvoice,
 									invoiceAddress, null);
-
+							
 							ArrayList<Address> postaleAddress = new ArrayList<Address>();
 							// id 2 is postal
 							Address postal = new Address(customerContactPerson, customerPhone, customerEmail,
@@ -202,7 +282,7 @@ public class WorkOrderHandler {
 							// add Relations to ArrayList
 							allRelations.add(customerRelationInvoice);
 							allRelations.add(customerRelationPostal);
-
+							
 							// workperiods
 							ArrayList<WorkPeriod> allWorkPeriods = new ArrayList<WorkPeriod>();
 							JSONArray periods = object.getJSONArray("Workperiods");
@@ -226,7 +306,6 @@ public class WorkOrderHandler {
 							// materials
 							JSONArray materials = object.getJSONArray("Materials");
 							ArrayList<Material> alleMaterials = new ArrayList<Material>();
-							Connection con = DBConnection.createDatabaseConnection();
 							for (int j = 0; j < materials.length(); j++) {
 								JSONObject material = materials.getJSONObject(j);
 								materialCode = material.getString("MaterialCode");
@@ -250,16 +329,15 @@ public class WorkOrderHandler {
 									m = new Material(materialCode, null, materialUnit, materialName, materialPrice,
 											materialNr, null);
 								}
-
+								
 								alleMaterials.add(m);
 							}
-
+							
 							w = new WorkOrder(projectNr, workDate, customerEmailInvoice, customerEmail,
 									customerDebtorNr, status, paymentMethod, alleMaterials, creationDate, id, orderNr,
 									allWorkPeriods, allRelations, workTime, workEndDate, workEndTime, externProjectNr,
 									typeOfWork, workDescription, null, pdfUrl, workStatus);
 							allData.add(w);
-							con.close();
 						}
 					}
 				}
@@ -268,9 +346,9 @@ public class WorkOrderHandler {
 			e.printStackTrace();
 		}
 		return allData;
-
+		
 	}
-
+	
 	public static Object addData(String token, Object array, String type, String softwareName, String clientToken)
 			throws ServletException, IOException {
 		JSONObject completeJSON = new JSONObject();
@@ -299,7 +377,7 @@ public class WorkOrderHandler {
 			input = relationInput(array) + "";
 			break;
 		case "materials":
-				input = materialInput(array) + "";
+			input = materialInput(array) + "";
 			break;
 		case "hourtypes":
 			input = hourtypeInput(array) + "";
@@ -308,7 +386,7 @@ public class WorkOrderHandler {
 			input = workorderInput(array) + "";
 			break;
 		case "workstatusses":
-			//Array is JSONObject
+			// Array is JSONObject
 			input = array + "";
 			break;
 		}
@@ -316,11 +394,11 @@ public class WorkOrderHandler {
 		os.write(input.getBytes("UTF-8"));
 		System.out.println("input " + input);
 		os.flush();
-
+		
 		BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 		String output;
 		System.out.println("Output from Server .... \n");
-
+		
 		while ((output = br.readLine()) != null) {
 			System.out.println("OUTPUT " + output + " type " + type);
 			try {
@@ -339,29 +417,29 @@ public class WorkOrderHandler {
 		}
 		conn.disconnect();
 		return amount;
-
+		
 	}
-
+	
 	public static JSONArray employeeInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
 		@SuppressWarnings("unchecked")
 		ArrayList<Employee> array = (ArrayList<Employee>) obj;
 		for (Employee emp : array) {
-		JSONObject = new JSONObject();
-		try {
-			JSONObject.put("firstname", emp.getFirstName());
-			JSONObject.put("lastname", emp.getLastName());
-			JSONObject.put("number", emp.getCode());
-			JSONArray.put(JSONObject);
-		} catch (JSONException e) {
-			e.printStackTrace();
+			JSONObject = new JSONObject();
+			try {
+				JSONObject.put("firstname", emp.getFirstName());
+				JSONObject.put("lastname", emp.getLastName());
+				JSONObject.put("number", emp.getCode());
+				JSONArray.put(JSONObject);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
 		}
-		
+		return JSONArray;
 	}
-	return JSONArray;
-	}
-
+	
 	public static JSONArray projectInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
@@ -371,7 +449,7 @@ public class WorkOrderHandler {
 			JSONObject = new JSONObject();
 			try {
 				JSONObject.put("code", p.getCode());
-				JSONObject.put("code_ext", "<leeg>");
+				JSONObject.put("code_ext", p.getCodeExt());
 				JSONObject.put("debtor_number", p.getDebtorNumber());
 				JSONObject.put("status", p.getStatus());
 				JSONObject.put("name", p.getName());
@@ -388,14 +466,14 @@ public class WorkOrderHandler {
 		}
 		return JSONArray;
 	}
-
+	
 	public static JSONArray relationInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
 		@SuppressWarnings("unchecked")
 		ArrayList<Relation> array = (ArrayList<Relation>) obj;
 		for (Relation r : array) {
-			//Post the same relation with different addresses
+			// Post the same relation with different addresses
 			for (Address a : r.getAddressess()) {
 				JSONObject = new JSONObject();
 				try {
@@ -419,8 +497,8 @@ public class WorkOrderHandler {
 		return JSONArray;
 	}
 	
-	//Create JSONArray from Materials
-	public static JSONArray materialInput(Object obj){
+	// Create JSONArray from Materials
+	public static JSONArray materialInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
 		@SuppressWarnings("unchecked")
@@ -428,7 +506,7 @@ public class WorkOrderHandler {
 		for (Material m : array) {
 			JSONObject = new JSONObject();
 			String code = null;
-			//Set code with subCode if subCode != null
+			// Set code with subCode if subCode != null
 			if (m.getSubCode() != null && !m.getSubCode().equals("")) {
 				code = m.getSubCode();
 			} else {
@@ -446,7 +524,7 @@ public class WorkOrderHandler {
 		}
 		return JSONArray;
 	}
-
+	
 	public static JSONArray hourtypeInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
@@ -469,7 +547,7 @@ public class WorkOrderHandler {
 		}
 		return JSONArray;
 	}
-
+	
 	public static JSONArray workorderInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONArray JSONArrayMaterials = null;
@@ -485,9 +563,10 @@ public class WorkOrderHandler {
 				JSONObject.put("WorkorderNo", w.getWorkorderNr());
 				JSONObject.put("ProjectNr", "");
 				JSONObject.put("ExternProjectNr", w.getExternProjectNr());
+				System.out.println("workorder ExternProjectNr " + w.getExternProjectNr());
 				JSONObject.put("CustomerName", r.getCompanyName());
 				JSONObject.put("CustomerDebtorNr", w.getCustomerDebtorNr());
-				JSONObject.put("CustomerStreet",a.getStreet());
+				JSONObject.put("CustomerStreet", a.getStreet());
 				JSONObject.put("CustomerEmail", w.getCustomerEmail());
 				JSONObject.put("CustomerZIP", a.getPostalCode());
 				JSONObject.put("CustomerCity", a.getCity());
@@ -511,7 +590,7 @@ public class WorkOrderHandler {
 				for (Material m : w.getMaterials()) {
 					JSONObjecMaterial = new JSONObject();
 					JSONObjecMaterial.put("MaterialCode", m.getCode());
-					JSONObjecMaterial.put("MaterialNr",  m.getQuantity());
+					JSONObjecMaterial.put("MaterialNr", m.getQuantity());
 					JSONObjecMaterial.put("MaterialPrice", m.getPrice());
 					JSONObjecMaterial.put("MaterialName", m.getDescription());
 					JSONObjecMaterial.put("MaterialUnit", m.getUnit());

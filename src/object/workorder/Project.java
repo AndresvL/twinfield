@@ -81,13 +81,13 @@ public class Project {
 	}
 	public String getDate_end() {
 		if(dateEnd == null){
-			return "2017-01-02";
+			return "2017-01-01";
 		}else{
 			return dateEnd;
 		}
 	}
 	public void setDateEnd(String date_end) {
-		if (date_end != null) {
+		if (date_end != null && !date_end.equals("")) {
 			try {
 				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMdd");
 				Date date = dt.parse(date_end);

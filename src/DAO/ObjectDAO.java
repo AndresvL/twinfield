@@ -30,7 +30,7 @@ public class ObjectDAO {
 		PreparedStatement stmt = null;
 		Connection con = null;
 		try {
-			con = DBConnection.createDatabaseConnection();
+			con = DBConnection.createDatabaseConnection(true);
 			for (Employee e : emp) {
 				stmt = con.prepareStatement(
 						"REPLACE INTO employees (code, firstname, lastname, softwareToken) values (?, ?, ?, ?)");
@@ -52,7 +52,7 @@ public class ObjectDAO {
 	public static void saveMaterials(ArrayList<Material> mat, String token) {
 		PreparedStatement stmt = null;
 		try {
-			Connection con = DBConnection.createDatabaseConnection();
+			Connection con = DBConnection.createDatabaseConnection(true);
 			for (Material m : mat) {
 				String subCode = "null";
 				if (m.getSubCode() != null) {
@@ -81,7 +81,7 @@ public class ObjectDAO {
 	public static Material getMaterials(String softwareToken, String subCode, String desc) throws SQLException {
 		Material m = null;
 		PreparedStatement stmt = null;
-		Connection con = DBConnection.createDatabaseConnection();
+		Connection con = DBConnection.createDatabaseConnection(true);
 		try {
 			String selectSQL = "SELECT * FROM materials WHERE softwareToken = ? AND subCode = ?";
 			stmt = con.prepareStatement(selectSQL);
@@ -121,7 +121,7 @@ public class ObjectDAO {
 	public static void saveProjects(ArrayList<Project> projects, String token) {
 		PreparedStatement stmt = null;
 		try {
-			Connection con = DBConnection.createDatabaseConnection();
+			Connection con = DBConnection.createDatabaseConnection(true);
 			for (Project p : projects) {
 				stmt = con.prepareStatement(
 						"REPLACE INTO projects (code, code_ext, debtor_number, status, name, description, progress, date_start, date_end, active, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -149,7 +149,7 @@ public class ObjectDAO {
 	public static void saveRelations(ArrayList<Relation> relations, String token) {
 		PreparedStatement stmt = null;
 		try {
-			Connection con = DBConnection.createDatabaseConnection();
+			Connection con = DBConnection.createDatabaseConnection(true);
 			for (Relation r : relations) {
 				for (Address a : r.getAddressess()) {
 					stmt = con.prepareStatement(
@@ -187,7 +187,7 @@ public class ObjectDAO {
 		PreparedStatement stmt = null;
 		String companyName = null, emailWorkorder = null, contact = null, modified = null;
 		try {
-			Connection con = DBConnection.createDatabaseConnection();
+			Connection con = DBConnection.createDatabaseConnection(true);
 			String selectSQL = "SELECT * FROM relations WHERE softwareToken = ? AND code = ? AND type = ?";
 			stmt = con.prepareStatement(selectSQL);
 			stmt.setString(1, softwareToken);
@@ -225,7 +225,7 @@ public class ObjectDAO {
 	public static void saveHourTypes(ArrayList<HourType> hourtypes, String token) {
 		PreparedStatement stmt = null;
 		try {
-			Connection con = DBConnection.createDatabaseConnection();
+			Connection con = DBConnection.createDatabaseConnection(true);
 			for (HourType h : hourtypes) {
 				stmt = con.prepareStatement(
 						"REPLACE INTO hourtypes (code, name, cost_booking, sale_booking, sale_price, cost_price, active, modified, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -250,7 +250,7 @@ public class ObjectDAO {
 	public static Address getAddressID(String softwareToken, String addressType, String codeString) {
 		Address a = null;
 		try {
-			Connection con = DBConnection.createDatabaseConnection();
+			Connection con = DBConnection.createDatabaseConnection(true);
 			Statement statement = con.createStatement();
 			ResultSet output = statement.executeQuery("SELECT * FROM relations WHERE softwareToken =\"" + softwareToken
 					+ "\" AND type=\"" + addressType + "\"AND code=\"" + codeString + "\"");
@@ -274,9 +274,9 @@ public class ObjectDAO {
 		Connection con = null;
 		if (set != null) {
 			try {
-				con = DBConnection.createDatabaseConnection();
+				con = DBConnection.createDatabaseConnection(true);
 				stmt = con.prepareStatement(
-						"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?)");
+						"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, sync_date, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				stmt.setString(1, set.getImportOffice());
 				stmt.setString(2, set.getExportOffice());
 				stmt.setString(3, set.getFactuurType());
@@ -284,7 +284,8 @@ public class ObjectDAO {
 				stmt.setString(5, set.getUser());
 				stmt.setString(6, set.getExportWerkbontype());
 				stmt.setInt(7, set.getRoundedHours());
-				stmt.setString(8, token);
+				stmt.setString(8, set.getSyncDate());
+				stmt.setString(9, token);
 				stmt.executeUpdate();
 				stmt.close();
 			} catch (SQLException e) {
@@ -297,7 +298,7 @@ public class ObjectDAO {
 		Settings set = null;
 		Connection con = null;
 		try {
-			con = DBConnection.createDatabaseConnection();
+			con = DBConnection.createDatabaseConnection(true);
 			Statement statement = con.createStatement();
 			ResultSet output = statement
 					.executeQuery("SELECT * FROM settings WHERE softwareToken =\"" + softwareToken + "\"");
@@ -313,8 +314,9 @@ public class ObjectDAO {
 				String user = output.getString("user");
 				String exportWerkbonType = output.getString("werkbon_type");
 				int roundedHours = output.getInt("rounded_hours");
+				String syncDate = output.getString("sync_date");
 				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType,
-						roundedHours);
+						roundedHours, syncDate);
 			}
 			statement.close();
 			
@@ -328,7 +330,7 @@ public class ObjectDAO {
 		ArrayList<Map<String, String>> allLogs = null;
 		Connection con = null;
 		try {
-			con = DBConnection.createDatabaseConnection();
+			con = DBConnection.createDatabaseConnection(true);
 			allLogs = new ArrayList<Map<String, String>>();
 			Statement statement = con.createStatement();
 			ResultSet output = statement
@@ -363,7 +365,7 @@ public class ObjectDAO {
 		deleteLog(token);
 		PreparedStatement stmt = null;
 		try {
-			Connection con = DBConnection.createDatabaseConnection();
+			Connection con = DBConnection.createDatabaseConnection(true);
 			stmt = con.prepareStatement(
 					"REPLACE INTO log (message, details, timestamp, softwareToken) values (?, ?, ?, ?)");
 			stmt.setString(1, log);
@@ -388,7 +390,7 @@ public class ObjectDAO {
 		Date currentTime;
 		Connection con = null;
 		try {
-			con = DBConnection.createDatabaseConnection();
+			con = DBConnection.createDatabaseConnection(true);
 			currentTime = format.parse(za.format(formatter));
 			Statement statement = con.createStatement();
 			for (Map<String, String> log : allLogs) {
@@ -411,7 +413,7 @@ public class ObjectDAO {
 	
 	public static Boolean hasContent(String softwareToken, String table) throws SQLException {
 		Boolean b = false;
-		Connection con = DBConnection.createDatabaseConnection();
+		Connection con = DBConnection.createDatabaseConnection(true);
 		Statement statement = con.createStatement();
 		ResultSet output = null;
 		output = statement.executeQuery("SELECT * FROM " + table + " WHERE softwareToken =\"" + softwareToken + "\"");
@@ -426,14 +428,12 @@ public class ObjectDAO {
 	public static String getModifiedDate(String softwareToken, String type, String code, String table)
 			throws SQLException {
 		String modified = null;
-		Connection con = DBConnection.createDatabaseConnection();
+		Connection con = DBConnection.createDatabaseConnection(true);
 		Statement statement = con.createStatement();
 		ResultSet output = null;
 		switch (table) {
 		case "materials":
 			output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
-					+ "\" AND code =\"" + code + "\"");
-			System.out.println("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
 					+ "\" AND code =\"" + code + "\"");
 			break;
 		case "relations":
@@ -444,7 +444,12 @@ public class ObjectDAO {
 			output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
 					+ "\" AND code =\"" + code + "\"");
 			break;
+		case "projects":
+			output = statement.executeQuery("SELECT modified FROM " + table + " WHERE softwareToken =\"" + softwareToken
+					+ "\" AND code =\"" + code + "\"");
+			break;
 		}
+		
 		while (output.next()) {
 			modified = output.getString("modified");
 		}

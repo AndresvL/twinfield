@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import DAO.ObjectDAO;
 import DAO.TokenDAO;
 import controller.Authenticate;
+import controller.WorkOrderHandler;
 import object.Settings;
 import object.Token;
 
@@ -58,37 +59,76 @@ public class OAuthEAccounting extends Authenticate {
 			req.getSession().setAttribute("softwareToken", null);
 			req.getSession().setAttribute("errorMessage",
 					"softwareToken is al in gebruik door " + dbToken.getSoftwareName());
+			rd.forward(req, resp);
 		} else {
 			req.getSession().setAttribute("softwareToken", dbToken.getSoftwareToken());
 			req.getSession().setAttribute("errorMessage", "");
-			if (req.getSession().getAttribute("softwareToken") == null) {
-
-			}
 			ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
 			if (!allLogs.isEmpty() || allLogs != null) {
 				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("logs", allLogs);
 			}
+			// get all typeofwork and paymendmethods
+			ArrayList<String> typeofwork = (ArrayList<String>) WorkOrderHandler.getTypeofwork(softwareToken,
+					softwareName, "worktypes");
+			
+			ArrayList<String> paymentMethod = (ArrayList<String>) WorkOrderHandler.getTypeofwork(softwareToken,
+					softwareName, "paymentmethods");
+			
 			Settings set = ObjectDAO.getSettings(softwareToken);
 			if (set != null) {
+				Map<String, String> typeofworkSelected = new HashMap<String, String>();
+				for (String s : typeofwork) {
+					if (set.getImportOffice() != null && set.getImportOffice().equals(s)) {
+						typeofworkSelected.put(s, "selected");
+					} else {
+						typeofworkSelected.put(s, "");
+					}
+				}
+				req.getSession().setAttribute("types", typeofworkSelected);
+				Map<String, String> paymentmethodSelected = new HashMap<String, String>();
+				for (String s : paymentMethod) {
+					if (set.getExportOffice() != null && set.getExportOffice().equals(s)) {
+						paymentmethodSelected.put(s, "selected");
+					} else {
+						paymentmethodSelected.put(s, "");
+					}
+				}
+				req.getSession().setAttribute("paymentmethods", paymentmethodSelected);
 				Map<String, String> allImports = new HashMap<String, String>();
 				for (String s : set.getImportObjects()) {
 					allImports.put(s, "selected");
 				}
 				Map<String, String> exportWerkbonType = new HashMap<String, String>();
 				exportWerkbonType.put(set.getExportWerkbontype(), "selected");
-
+				
+				req.getSession().setAttribute("savedDate", set.getSyncDate());
 				req.getSession().setAttribute("checkboxes", allImports);
 				req.getSession().setAttribute("exportWerkbonType", exportWerkbonType);
 				req.getSession().setAttribute("roundedHours", set.getRoundedHours());
 				req.getSession().setAttribute("factuur", set.getFactuurType());
+			} else {
+				Map<String, String> typeofworkSelected = new HashMap<String, String>();
+				for (String s : typeofwork) {
+					typeofworkSelected.put(s, "");
+				}
+				System.out.println(typeofworkSelected.toString());
+				req.getSession().setAttribute("types", typeofworkSelected);
+				
+				Map<String, String> paymentmethodSelected = new HashMap<String, String>();
+				for (String s : paymentMethod) {
+					paymentmethodSelected.put(s, "");
+				}
+				System.out.println(paymentmethodSelected.toString());
+				req.getSession().setAttribute("paymentmethods", paymentmethodSelected);
 			}
+			
 			rd = req.getRequestDispatcher("eAccounting.jsp");
 			rd.forward(req, resp);
 		}
-
+		
 	}
-
+	
 	// Called by verifyServlet
 	public static Token getAccessToken(String authCode, String refresh, String softwareName, String softwareToken) {
 		String token = System.getenv("EACCOUNTING_TOKEN");
@@ -101,7 +141,7 @@ public class OAuthEAccounting extends Authenticate {
 			// Client Secret
 			secret = "WWXa37lYWz01tlGkuYzy4PfjhEVRmDijjxPraaDG8U";
 		}
-		//production environment
+		// production environment
 		String host = System.getenv("EACCOUNTING_HOST");
 		if (host == null) {
 			// sandbox environment
@@ -122,14 +162,14 @@ public class OAuthEAccounting extends Authenticate {
 			input = "client_id=" + token + "&client_secret=" + secret + "&refresh_token=" + refresh
 					+ "&grant_type=refresh_token&redirect_uri=" + callback;
 		}
-
+		
 		byte[] postData = input.getBytes(StandardCharsets.UTF_8);
 		int postDataLength = postData.length;
-
+		
 		String auth = token + ":" + secret;
 		byte[] encodedBytes = Base64.encodeBase64(auth.getBytes());
 		String encoding = new String(encodedBytes);
-
+		
 		String output = null;
 		try {
 			URL url = new URL(link);
@@ -153,7 +193,7 @@ public class OAuthEAccounting extends Authenticate {
 				br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 			}
 			System.out.println("Output from Server .... \n");
-
+			
 			while ((output = br.readLine()) != null) {
 				try {
 					JSONObject json = new JSONObject(output);
@@ -174,12 +214,12 @@ public class OAuthEAccounting extends Authenticate {
 			if (authCode != null) {
 				TokenDAO.saveToken(dbToken);
 			} else {
-				TokenDAO.replaceToken(dbToken);
+				TokenDAO.updateToken(dbToken);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
+		
 		return dbToken;
 	}
 }

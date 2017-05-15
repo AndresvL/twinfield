@@ -1,0 +1,60 @@
+#loginContent {
+	width: 400px;
+}
+
+.panel-heading {
+	background-color: #3D4A5D !important;
+	color: white !important;
+	font-size: 16px !important;
+}
+
+#WBA-section {
+	padding: 20px 10px;
+	background-color: #3D4A5D;
+	border-left: 1px solid transparent;
+	border-right: 1px solid transparent;
+	border-color: #fff;
+}
+#boekhoud_logo {
+	float: right;
+}
+.settings {
+	width: 50%;
+	height: 100%;
+	float: left;
+}
+
+.log {
+	width: 50%;
+	height: 100%;
+	float: right;
+}
+
+#help {
+	float: right;
+	background-color: #6599C8;
+	border-color: #fff !important;
+}
+#loginButton{
+	background-color: #6599C8;
+	border-color: #fff !important;
+}
+#show {
+	float: right;
+	background-color: #6599C8;
+	border-color: #fff !important;
+}
+
+#savebutton {
+	margin-right: 10px;
+	background-color: #6599C8;
+	float: right;
+	border-color: #fff !important;
+}
+
+#syncbutton {
+	float: right;
+	background-color: #6599C8;
+	margin-right: 20px;
+	border-color: #fff !important;
+}

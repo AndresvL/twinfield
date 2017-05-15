@@ -44,6 +44,7 @@ public class OAuthWeFact extends Authenticate {
 			if (!req.getParameterMap().containsKey("clientToken")) {
 				rd = req.getRequestDispatcher("weFact.jsp");
 				req.getSession().setAttribute("clientToken", null);
+				System.out.println("DBTOKEN " + dbToken);
 			// If clientToken is filled
 			} else {
 				String clientToken = req.getParameter("clientToken");
@@ -93,7 +94,6 @@ public class OAuthWeFact extends Authenticate {
 						JSONObject.put("sta_code", "9");
 						JSONObject.put("sta_name", "Betaald");
 						JSONArray.put(JSONObject);
-						System.out.println("JSONARRAY " + JSONArray);
 						WorkOrderHandler.addData(softwareToken, JSONArray, "workstatusses", softwareName, clientToken);
 					} catch (JSONException e) {
 						e.printStackTrace();
@@ -126,7 +126,7 @@ public class OAuthWeFact extends Authenticate {
 				Map<String, String> exportWerkbonType = new HashMap<String, String>();
 				exportWerkbonType.put(set.getExportWerkbontype(), "selected");
 				
-				
+				req.getSession().setAttribute("savedDate", set.getSyncDate());
 				req.getSession().setAttribute("checkboxes", allImports);
 				req.getSession().setAttribute("exportWerkbonType", exportWerkbonType);
 				req.getSession().setAttribute("roundedHours", set.getRoundedHours());

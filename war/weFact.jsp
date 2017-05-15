@@ -11,6 +11,16 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <title>WeFact Connection</title>
+<!-- datepicker CSS -->
+<link
+	href="//cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/build/css/bootstrap-datetimepicker.css"
+	rel="stylesheet">
+<!-- Custom CSS -->
+<link href="css/custom.css" rel="stylesheet">
+<script type="text/javascript"
+	src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script
+	src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment-with-locales.js"></script>
 <!-- Bootstrap Core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <!-- Theme CSS -->
@@ -32,45 +42,15 @@
 		        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
 		        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 		    <![endif]-->
-<style type="text/css">
-#loginContent {
-	width: 400px;
-}
-
-.settings {
-	width: 50%;
-	height: 100%;
-	float: left;
-}
-
-.log {
-	width: 50%;
-	height: 100%;
-	float: right;
-}
-
-#help {
-	float: right;
-}
-
-#show {
-	float: right;
-}
-
-#savebutton {
-	margin-right: 10px;
-	float: right;
-}
-
-#syncbutton {
-	float: right;
-	margin-right: 20px;
-}
-</style>
 </head>
 <body>
 	<!-- Settings Section -->
+	<div id="WBA-section">
+		<img src="./img/werkbonapp.png" height="60" width="170" id="WBA_logo"/>
+		<img src="./img/logo-wefact.png" height="80" width="150" id="boekhoud_logo"/>
+	</div>
 	<div class="settings">
+
 		<div class="panel-group">
 			<!-- The login Modal -->
 			<div id="loginModal" class="modal">
@@ -102,7 +82,7 @@
 									name="clientToken" required /></td>
 							</tr>
 						</table>
-						<br> <input type="submit" value="Submit"
+						<br> <input type="submit" id="loginButton" value="Submit"
 							class="btn btn-success btn-lg" />
 					</form>
 				</div>
@@ -223,7 +203,8 @@
 				type="hidden" value="${saved}" id="saved" name="saved" />
 			<form action="settings.do" id="saveWeFact">
 				<div class="panel panel-success">
-					<div class="panel-heading">Import instellingen</div>
+					<div class="panel-heading" id="import-panel">Import
+						instellingen</div>
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
@@ -258,7 +239,26 @@
 										name="importType" id="offertes"> Offertes
 									</label>
 								</div>
+
+								<div class="row">
+									<div class='col-sm-7'>
+										<div class="form-group">
+											<label>Synchroniseer datum</label> <img
+												src="./img/vraagteken.jpg" height="13" width="13"
+												data-toggle="tooltip"
+												title="Alle gegevens vanaf deze datum worden geschynchroniseerd" />
+
+											<input type='text' class="form-control" id='datetimepicker1'
+												name="syncDate" value="${savedDate}" />
+
+										</div>
+									</div>
+								</div>
+
+								<br>
 								<button type="button" id="help" class="btn btn-info btn-lg">Help</button>
+								<input type="submit" class="btn btn-success btn-lg" value="Save"
+									name="category" id="savebutton" />
 							</div>
 						</div>
 					</div>
@@ -307,9 +307,7 @@
 					<div class="row">
 						<div class="form-group col-xs-12">
 							<input type="submit" class="btn btn-success btn-lg" value="Sync"
-								id="syncbutton" /> <input type="submit"
-								class="btn btn-success btn-lg" value="Save" name="category"
-								id="savebutton" />
+								id="syncbutton" />
 						</div>
 					</div>
 				</div>
@@ -361,8 +359,10 @@
 	<script src="js/jqBootstrapValidation.js" type="text/javascript"></script>
 	<script src="js/contact_me.js" type="text/javascript"></script>
 	<!-- Theme JavaScript -->
+
 	<script src="js/freelancer.min.js" type="text/javascript"></script>
 	<script type="text/javascript" src="js/vkbeautify.js"></script>
+	<script type="text/javascript" src="js/bootstrap-datetimepicker.js"></script>
 	<script type="text/javascript" src="js/wefact.js"></script>
 </body>
 </html>

@@ -5,6 +5,16 @@ $(document).ready(function() {
 			setTimeout(function(){
 				  location.reload();
 			  },880000)
+			  //Date
+		    $('#datetimepicker1').datetimepicker({ format:'DD-MM-YYYY HH:mm:ss'
+		    });
+			
+			if(!$('#verkooporders').attr('checked')){
+				 $('#verkooporders_extra').hide();
+			}
+		    $('#verkooporders').on('change', function() {
+			    $('#verkooporders_extra').toggle(this.checked);
+		    })
 		
 			if($('#error').val() === "true"){
 				swal({

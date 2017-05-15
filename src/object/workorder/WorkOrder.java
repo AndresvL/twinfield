@@ -37,7 +37,7 @@ public class WorkOrder {
 		this.workTime = workTime;
 		this.workEndDate = workEndDate;
 		this.workEndTime = workEndTime;
-		this.externProjectNr = externProjectNr;
+		this.setExternProjectNr(externProjectNr);
 		this.typeOfWork = typeOfWork;
 		this.workDescription = workDescription;
 		this.setModified(modified);

@@ -5,10 +5,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-	private static Connection con = null;
+	private static Connection con;
 	private static String password, user, url, host, port, database;
 
-	public static Connection createDatabaseConnection() throws SQLException {
+	public static Connection createDatabaseConnection(Boolean b) throws SQLException {
 		//check if app runs locally or online
 		if(System.getenv("MYSQL_SERVICE_HOST") == null){
 			localCon();
@@ -17,8 +17,11 @@ public class DBConnection {
 		}
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
-			if(con == null || con.isClosed()){
+			if(con == null && b || con.isClosed() && b){
 				con = (Connection) DriverManager.getConnection(url, user, password);
+			}			
+			if(!b){
+				con.close();
 			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();

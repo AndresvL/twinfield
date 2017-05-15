@@ -50,6 +50,10 @@ public class OAuthServlet extends HttpServlet {
 				oauth2.authenticate(softwareToken, req, resp);
 				break;
 			case "EAccounting":
+				//typeofwork
+				req.getSession().setAttribute("types", null);
+				//paymentmethod
+				req.getSession().setAttribute("paymentmethod", null);
 				OAuthEAccounting oauth3 = new OAuthEAccounting();
 				oauth3.authenticate(softwareToken, req, resp);
 				break;

@@ -3,11 +3,17 @@ package servlet;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.Format;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -35,7 +41,7 @@ public class SynchServlet extends HttpServlet {
 	private String[] messageArray = null;
 	private String checkUpdate = "false";
 	private String errorDetails = "";
-
+	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		errorMessage = "";
 		String softwareToken = req.getParameter("token");
@@ -60,7 +66,7 @@ public class SynchServlet extends HttpServlet {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
+			
 			// Get all users from database to Sync their data all at once
 		} else {
 			try {
@@ -83,7 +89,7 @@ public class SynchServlet extends HttpServlet {
 			System.out.println(allTokens.size() + " Users found in database");
 		}
 	}
-
+	
 	public String getDate(String date) {
 		String timestamp;
 		ZonedDateTime za = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
@@ -95,7 +101,7 @@ public class SynchServlet extends HttpServlet {
 		}
 		return timestamp;
 	}
-
+	
 	public void setSyncMethods(Token t, HttpServletRequest req, boolean loggedIn) throws Exception {
 		String date = null;
 		String sessionID = null;
@@ -112,15 +118,15 @@ public class SynchServlet extends HttpServlet {
 					cluster = array[1];
 					twinfieldSyncHandler(sessionID, cluster, t.getSoftwareToken(), t.getSoftwareName(), date);
 				}
-				DBConnection.createDatabaseConnection().close();
+				DBConnection.createDatabaseConnection(false);
 				break;
 			case "WeFact":
 				weFactSyncHandler(t.getSoftwareToken(), t.getAccessToken(), date);
-				DBConnection.createDatabaseConnection().close();
+				DBConnection.createDatabaseConnection(false);
 				break;
 			case "EAccounting":
 				eAccountingSyncHandler(t, date);
-				DBConnection.createDatabaseConnection().close();
+				DBConnection.createDatabaseConnection(false);
 				break;
 			default:
 				break;
@@ -128,9 +134,9 @@ public class SynchServlet extends HttpServlet {
 		} catch (ServletException | IOException | JSONException e) {
 			e.printStackTrace();
 		}
-
+		
 	}
-
+	
 	// Twinfield
 	public void setErrorMessage(String[] messageArray) {
 		if (messageArray != null) {
@@ -141,7 +147,7 @@ public class SynchServlet extends HttpServlet {
 			}
 		}
 	}
-
+	
 	// Twinfield
 	public void setErrorMessageDetails(String[] messageArray) {
 		if (messageArray != null) {
@@ -151,7 +157,7 @@ public class SynchServlet extends HttpServlet {
 			}
 		}
 	}
-
+	
 	public void twinfieldSyncHandler(String session, String cluster, String token, String softwareName, String date)
 			throws Exception {
 		TwinfieldHandler twinfield = new TwinfieldHandler();
@@ -186,7 +192,7 @@ public class SynchServlet extends HttpServlet {
 							date);
 					setErrorMessage(messageArray);
 					break;
-
+				
 				}
 			}
 			// Export section
@@ -203,12 +209,26 @@ public class SynchServlet extends HttpServlet {
 			}
 		}
 	}
-
+	
 	public void weFactSyncHandler(String token, String clientToken, String date) throws Exception {
 		errorMessage = "";
+		
 		WeFactHandler wefact = new WeFactHandler();
 		Settings set = ObjectDAO.getSettings(token);
 		if (set != null) {
+			if (date == null) {
+				date = set.getSyncDate();
+				DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+				Date newDate = null;
+				try {
+					// String to date
+					newDate = format.parse(date);
+					Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					date = formatter.format(newDate);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
 			ArrayList<String> importTypes = set.getImportObjects();
 			// Import section
 			for (String type : importTypes) {
@@ -251,7 +271,7 @@ public class SynchServlet extends HttpServlet {
 			}
 		}
 	}
-
+	
 	public void eAccountingSyncHandler(Token t, String date) throws Exception {
 		EAccountingHandler eaccounting = new EAccountingHandler();
 		errorMessage = "";
@@ -259,10 +279,24 @@ public class SynchServlet extends HttpServlet {
 		if (t.getAccessSecret() != null && !eaccounting.checkAccessToken(t.getAccessToken())) {
 			// Get accessToken with refreshToken
 			t = OAuthEAccounting.getAccessToken(null, t.getAccessSecret(), t.getSoftwareName(), t.getSoftwareToken());
-		}		
+		}
 		Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
-		System.out.println("TOKEN " + t.getSoftwareToken());
 		if (set != null) {
+			System.out.println("DATE " + date);
+			if (date == null) {
+				date = set.getSyncDate();
+				DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+				Date newDate = null;
+				try {
+					// String to date
+					newDate = format.parse(date);
+					Format formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+					date = formatter.format(newDate);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
+			System.out.println("DATE2 " + date);
 			ArrayList<String> importTypes = set.getImportObjects();
 			// Import section
 			for (String type : importTypes) {
@@ -275,22 +309,28 @@ public class SynchServlet extends HttpServlet {
 					messageArray = eaccounting.getRelations(t, date);
 					setErrorMessage(messageArray);
 					break;
-//				case "offertes":
-//					messageArray = wefact.getOffertes(clientToken, token, date);
-//					setErrorMessageWeFact(messageArray);
-//					break;
+				case "projects":
+					messageArray = eaccounting.getProjects(t, date);
+					setErrorMessage(messageArray);
+					break;
+				case "verkooporders":
+					messageArray = eaccounting.getOrders(t, date, set);
+					setErrorMessage(messageArray);
+					break;
 				}
 			}
 			// Export section
-//			String[] exportMessageArray = null;
-//			// Type is factuur
-//			if (set.getExportWerkbontype().equals("factuur")) {
-//				exportMessageArray = wefact.setFactuur(clientToken, token, set.getFactuurType(), set.getRoundedHours());
-//				// Type is offerte
-//			} else {
-//				exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType(), set.getRoundedHours());
-//			}
-//			setErrorMessageDetailsWeFact(exportMessageArray);
+			String[] exportMessageArray = null;
+			// // Type is factuur
+//			 if (set.getExportWerkbontype().equals("factuur")) {
+//			 exportMessageArray = eaccounting.setFactuur(t, set, date);
+//			 }
+			// // Type is offerte
+			// } else {
+			// exportMessageArray = wefact.setOfferte(clientToken, token,
+			// set.getFactuurType(), set.getRoundedHours());
+			// }
+			// setErrorMessageDetailsWeFact(exportMessageArray);
 			if (checkUpdate.equals("true")) {
 				TokenDAO.saveModifiedDate(getDate(null), t.getSoftwareToken());
 			}
