@@ -49,11 +49,12 @@ public class OAuthServlet extends HttpServlet {
 				OAuthWeFact oauth2 = new OAuthWeFact();
 				oauth2.authenticate(softwareToken, req, resp);
 				break;
-			case "EAccounting":
+			case "eAccounting":
 				//typeofwork
 				req.getSession().setAttribute("types", null);
 				//paymentmethod
 				req.getSession().setAttribute("paymentmethod", null);
+				System.out.println("ERROR"+req.getSession().getAttribute("errorMessage"));
 				OAuthEAccounting oauth3 = new OAuthEAccounting();
 				oauth3.authenticate(softwareToken, req, resp);
 				break;
@@ -72,7 +73,7 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
 				rd = req.getRequestDispatcher("weFact.jsp");
 				break;
-			case "EAccounting":
+			case "eAccounting":
 				req.getSession().setAttribute("softwareToken", softwareToken);			
 				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");

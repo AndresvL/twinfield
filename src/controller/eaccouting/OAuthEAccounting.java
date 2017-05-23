@@ -30,15 +30,28 @@ import object.Settings;
 import object.Token;
 
 public class OAuthEAccounting extends Authenticate {
+	private static String host = System.getenv("EACCOUNTING_OAUTH_HOST");
+	private static String token = System.getenv("EACCOUNTING_TOKEN");
+	private static String callback = System.getenv("CALLBACK");
+	private static String secret = System.getenv("EACCOUNTING_SECRET");
 	@Override
 	public void authenticate(String softwareToken, HttpServletRequest req, HttpServletResponse resp)
 			throws ClientProtocolException, IOException, ServletException {
 		RequestDispatcher rd = null;
-		String token = System.getenv("EACCOUNTING_TOKEN");
 		if (token == null) {
 			// Client ID
 			token = "werkbonapp";
 		}
+		if (host == null) {
+			// Host
+			host = "https://auth-sandbox.test.vismaonline.com";
+		}
+		System.out.println("HOST " + host);
+		// check if callback is online or local
+		if (callback == null) {
+			callback = "https://localhost:8080/connect/verify.do";
+		}
+		System.out.println("CALLBACK " + callback);
 		String softwareName = req.getParameter("softwareName");
 		Token dbToken = null;
 		// Get token from database
@@ -47,12 +60,15 @@ public class OAuthEAccounting extends Authenticate {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		
 		// First time login
-		if (dbToken == null) {
-			String callback = "https://localhost:8080/connect/verify.do";
-			String host = "https://auth-sandbox.test.vismaonline.com";
+		if (dbToken == null) {		
+			//Local
+//			String uri = host + "/eaccountingapi/oauth/authorize?client_id=" + token + "&redirect_uri=" + callback
+//					+ "&state=success&scope=sales+accounting+purchase&response_type=code";
+//			Online
 			String uri = host + "/eaccountingapi/oauth/authorize?client_id=" + token + "&redirect_uri=" + callback
-					+ "&state=success&scope=sales+accounting+purchase&response_type=code";
+					+ "&state=success&scope=All&response_type=code";
 			resp.sendRedirect(uri);
 		} else if (dbToken.getAccessSecret().equals("invalid")) {
 			rd = req.getRequestDispatcher("eAccounting.jsp");
@@ -62,7 +78,6 @@ public class OAuthEAccounting extends Authenticate {
 			rd.forward(req, resp);
 		} else {
 			req.getSession().setAttribute("softwareToken", dbToken.getSoftwareToken());
-			req.getSession().setAttribute("errorMessage", "");
 			ArrayList<Map<String, String>> allLogs = ObjectDAO.getLogs(softwareToken);
 			if (!allLogs.isEmpty() || allLogs != null) {
 				req.getSession().setAttribute("logs", null);
@@ -77,6 +92,7 @@ public class OAuthEAccounting extends Authenticate {
 			
 			Settings set = ObjectDAO.getSettings(softwareToken);
 			if (set != null) {
+				req.getSession().setAttribute("errorMessage", "");
 				Map<String, String> typeofworkSelected = new HashMap<String, String>();
 				for (String s : typeofwork) {
 					if (set.getImportOffice() != null && set.getImportOffice().equals(s)) {
@@ -112,14 +128,12 @@ public class OAuthEAccounting extends Authenticate {
 				for (String s : typeofwork) {
 					typeofworkSelected.put(s, "");
 				}
-				System.out.println(typeofworkSelected.toString());
 				req.getSession().setAttribute("types", typeofworkSelected);
 				
 				Map<String, String> paymentmethodSelected = new HashMap<String, String>();
 				for (String s : paymentMethod) {
 					paymentmethodSelected.put(s, "");
 				}
-				System.out.println(paymentmethodSelected.toString());
 				req.getSession().setAttribute("paymentmethods", paymentmethodSelected);
 			}
 			
@@ -131,28 +145,28 @@ public class OAuthEAccounting extends Authenticate {
 	
 	// Called by verifyServlet
 	public static Token getAccessToken(String authCode, String refresh, String softwareName, String softwareToken) {
-		String token = System.getenv("EACCOUNTING_TOKEN");
 		if (token == null) {
 			// Client ID
 			token = "werkbonapp";
 		}
-		String secret = System.getenv("EACCOUNTING_SECRET");
 		if (secret == null) {
 			// Client Secret
 			secret = "WWXa37lYWz01tlGkuYzy4PfjhEVRmDijjxPraaDG8U";
 		}
 		// production environment
-		String host = System.getenv("EACCOUNTING_HOST");
 		if (host == null) {
 			// sandbox environment
 			host = "https://auth-sandbox.test.vismaonline.com";
+		}
+		// check if callback is online or local
+		if (callback == null) {
+			callback = "https://localhost:8080/connect/verify.do";
 		}
 		Token dbToken = new Token();
 		dbToken.setConsumerToken(token);
 		dbToken.setConsumerSecret(secret);
 		dbToken.setSoftwareName(softwareName);
 		dbToken.setSoftwareToken(softwareToken);
-		String callback = "https://localhost:8080/connect/verify.do";
 		String link = host + "/eaccountingapi/oauth/token";
 		String input = null;
 		if (authCode != null) {

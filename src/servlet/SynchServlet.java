@@ -1,18 +1,15 @@
 package servlet;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 
 import javax.servlet.ServletException;
@@ -37,7 +34,7 @@ import object.Token;
 public class SynchServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private String errorMessage;
-	private String redirect = System.getenv("CALLBACK");
+	private String redirect = System.getenv("REDIRECT");
 	private String[] messageArray = null;
 	private String checkUpdate = "false";
 	private String errorDetails = "";
@@ -124,7 +121,7 @@ public class SynchServlet extends HttpServlet {
 				weFactSyncHandler(t.getSoftwareToken(), t.getAccessToken(), date);
 				DBConnection.createDatabaseConnection(false);
 				break;
-			case "EAccounting":
+			case "eAccounting":
 				eAccountingSyncHandler(t, date);
 				DBConnection.createDatabaseConnection(false);
 				break;
@@ -321,15 +318,13 @@ public class SynchServlet extends HttpServlet {
 			}
 			// Export section
 			String[] exportMessageArray = null;
-			// // Type is factuur
-//			 if (set.getExportWerkbontype().equals("factuur")) {
-//			 exportMessageArray = eaccounting.setFactuur(t, set, date);
-//			 }
-			// // Type is offerte
-			// } else {
-			// exportMessageArray = wefact.setOfferte(clientToken, token,
-			// set.getFactuurType(), set.getRoundedHours());
-			// }
+			// Type is factuur
+			if (set.getExportWerkbontype().equals("factuur")) {			
+				exportMessageArray = eaccounting.setFactuur(t, set, date);
+				System.out.println("exportMessageArray message " + exportMessageArray[0]);
+				System.out.println("exportMessageArray details " + exportMessageArray[1]);
+				setErrorMessageDetails(exportMessageArray);
+			}
 			// setErrorMessageDetailsWeFact(exportMessageArray);
 			if (checkUpdate.equals("true")) {
 				TokenDAO.saveModifiedDate(getDate(null), t.getSoftwareToken());

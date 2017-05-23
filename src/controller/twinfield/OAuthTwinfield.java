@@ -55,8 +55,6 @@ public class OAuthTwinfield extends Authenticate {
 			// check if callback is online or local
 			if (callback == null) {
 				callback = "http://localhost:8080/connect/verify.do";
-			} else {
-				callback += "verify.do";
 			}
 			CloseableHttpClient httpclient;
 			httpclient = HttpClients.createDefault();

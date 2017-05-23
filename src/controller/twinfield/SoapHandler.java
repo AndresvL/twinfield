@@ -366,7 +366,7 @@ public class SoapHandler {
 			description = line.item(3).getTextContent();
 			subcode = line.item(5).getTextContent();
 			// do something with the subMaterials
-			m = new Material(code, subcode, unit, description, price, null, null);
+			m = new Material(code, subcode, unit, description, price, null, null, null);
 			materials.add(m);
 		}
 		return materials;
@@ -437,7 +437,7 @@ public class SoapHandler {
 					addressId);
 			allAddresses.add(a);
 		}
-		r = new Relation(name, debtorNumber, name, emailWorkorder, allAddresses, null);
+		r = new Relation(name, debtorNumber, name, emailWorkorder, allAddresses, null, null);
 		return r;
 	}
 
@@ -454,7 +454,7 @@ public class SoapHandler {
 		String name = allData.item(4).getTextContent();
 		// h = new HourType(code, name, costBooking, saleBooking, costPrice,
 		// salePrice, active);
-		h = new HourType(code, name, 0, 0, 0.0, 0.0, 1, null);
+		h = new HourType(code, name, 0, 0, 0.0, 0.0, 1, null, null);
 		return h;
 	}
 

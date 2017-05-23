@@ -11,7 +11,7 @@ import object.Settings;
 
 public class SettingsServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private String redirect = System.getenv("CALLBACK");
+	private String redirect = System.getenv("REDIRECT");
 	private String softwareName = null, factuurType = null, user = null, token = null;
 	private String importOffice = null, exportOffice = null, exportWerkbonType = null, syncDate = null;
 	private int roundedHours = 1;
@@ -34,7 +34,7 @@ public class SettingsServlet extends HttpServlet {
 			exportWerkbonType = req.getParameter("exportWerkbon");
 			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
 			break;
-		case "EAccounting":
+		case "eAccounting":
 			exportWerkbonType = req.getParameter("exportWerkbon");
 			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
 			importOffice = req.getParameter("typeofwork");

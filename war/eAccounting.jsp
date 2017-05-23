@@ -284,7 +284,6 @@
 							</div>
 						</div>
 					</div>
-					<br>
 					<div class="row">
 						<div class="form-group col-xs-12">
 							<input type="submit" class="btn btn-success btn-lg" value="Sync"

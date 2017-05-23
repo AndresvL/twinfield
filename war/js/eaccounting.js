@@ -62,7 +62,7 @@ $(document).ready(function() {
 		});
 		$("#syncbutton").click(
 				function(event) {
-
+					
 				event.preventDefault();
 				swal({
 					  title: 'Even geduld...',

@@ -6,8 +6,9 @@ public class HourType {
 	private double costPrice, salePrice;
 	private int active;
 	private String modified;
+	private String id;
 	
-	public HourType(String c, String n, int cB, int sB, double cP, double sP, int a, String m){
+	public HourType(String c, String n, int cB, int sB, double cP, double sP, int a, String m, String id){
 		this.code = c;
 		this.name = n;
 		this.costBooking = cB;
@@ -16,6 +17,7 @@ public class HourType {
 		this.salePrice = sP;
 		this.active = a;
 		this.setModified(m);
+		this.setId(id);
 	}
 	public String getCode() {
 		return code;
@@ -64,5 +66,11 @@ public class HourType {
 	}
 	public void setModified(String modified) {
 		this.modified = modified;
+	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
 	}
 }

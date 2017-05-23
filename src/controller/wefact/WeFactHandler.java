@@ -206,7 +206,7 @@ public class WeFactHandler {
 					// }
 					Double price = object.getDouble("PriceExcl");
 					String unit = object.getString("NumberSuffix");
-					Material m = new Material(productCode, null, unit, description, price, null, modified);
+					Material m = new Material(productCode, null, unit, description, price, null, modified, null);
 					materials.add(m);
 				}
 			}
@@ -303,18 +303,7 @@ public class WeFactHandler {
 						// if (email.equals("")) {
 						// email = "<leeg>";
 						// }
-						String houseNumber = "";
-						String street = "";
-						String streetNumber[] = debtorDetails.getString("Address").split("\\s+");
-						for (int j = 0; j < streetNumber.length; j++) {
-							if (j == streetNumber.length - 1) {
-								houseNumber = streetNumber[j];
-							} else if (j == streetNumber.length - 2) {
-								street += streetNumber[j];
-							} else {
-								street += streetNumber[j] + " ";
-							}
-						}
+						String street = debtorDetails.getString("Address");
 						if (street.equals("")) {
 							street = "<leeg>";
 						}
@@ -328,7 +317,7 @@ public class WeFactHandler {
 						}
 						String remark = debtorDetails.getString("Comment");
 						
-						Address postal = new Address(contact, phoneNr, email, street, houseNumber, postalCode, city,
+						Address postal = new Address(contact, phoneNr, email, street, "", postalCode, city,
 								remark, "postal", 2);
 						address.add(postal);
 						// Invoice
@@ -372,7 +361,7 @@ public class WeFactHandler {
 							address.add(invoice);
 						}
 						
-						r = new Relation(companyName, debtorNr, contact, invoiceEmail, address, modified);
+						r = new Relation(companyName, debtorNr, contact, invoiceEmail, address, modified, null);
 						relations.add(r);
 					}
 				}
@@ -483,7 +472,7 @@ public class WeFactHandler {
 									booking = 1;
 								}
 								h = new HourType(productCode, productName, booking, booking, costPrice, salePrice, 1,
-										modified);
+										modified, null);
 								hourtypes.add(h);
 							}
 						}
@@ -648,7 +637,7 @@ public class WeFactHandler {
 								String materialDescription = priceQuoteLineObject.getString("Description");
 								double price = priceQuoteLineObject.getDouble("PriceExcl");
 								String quantity = priceQuoteLineObject.getString("Number");
-								Material m = new Material(code, null, unit, materialDescription, price, quantity, null);
+								Material m = new Material(code, null, unit, materialDescription, price, quantity, null, null);
 								allMaterials.add(m);
 							}
 							
@@ -814,9 +803,10 @@ public class WeFactHandler {
 					if (amount <= 1) {
 						amount++;
 						errorDetails += "Hourtype on workorder " + w.getWorkorderNr() + " does not exist in WeFact\n";
-					}
-					
-					w.setMaterials(allMaterials);
+						material = null;
+					}else{
+						w.setMaterials(allMaterials);
+					}					
 				} else {
 					errorDetails += "Hourtype on workorder " + w.getWorkorderNr() + " does not exist in WeFact\n";
 				}
@@ -864,7 +854,13 @@ public class WeFactHandler {
 					JSONObject.put("ReferenceNumber", reference);
 					JSONObject.put("CompanyName", r.getCompanyName());
 					JSONObject.put("Initials", a.getName());
-					JSONObject.put("Address", a.getStreet());
+					String address = null;
+					if(a.getHouseNumber()!= null || !a.getHouseNumber().equals("")){
+						address = a.getStreet() + " " + a.getHouseNumber();
+					}else{
+						address = a.getStreet();
+					}
+					JSONObject.put("Address", address);
 					JSONObject.put("ZipCode", a.getPostalCode());
 					JSONObject.put("City", a.getCity());
 					JSONObject.put("EmailAddress", a.getEmail());
@@ -883,13 +879,13 @@ public class WeFactHandler {
 					JSONObject JSONObjectMaterial = null;
 					for (Material m : w.getMaterials()) {
 						JSONObjectMaterial = new JSONObject();
-						System.out.println("JSONObjectMaterial " + m.getCode() + " end");
 						if (m.getCode().equals("") || m.getCode() == null) {
 							JSONObjectMaterial.put("ProductCode", "-");
 						} else {
 							JSONObjectMaterial.put("ProductCode", m.getCode());
 						}
 						JSONObjectMaterial.put("Number", m.getQuantity());
+						JSONObjectMaterial.put("PriceExcl", m.getPrice());
 						JSONArray.put(JSONObjectMaterial);
 					}
 					JSONObject JSONObjectWorkPeriod = null;
@@ -914,6 +910,7 @@ public class WeFactHandler {
 				}
 			}
 		}
+		System.out.println("JSONObjectFactuur WEFACT " + JSONObject);
 		return JSONObject;
 	}
 	

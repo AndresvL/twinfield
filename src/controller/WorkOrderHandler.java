@@ -6,22 +6,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
 import DAO.ObjectDAO;
-import DBUtil.DBConnection;
 import object.workorder.Address;
 import object.workorder.Employee;
 import object.workorder.HourType;
@@ -40,7 +34,10 @@ public class WorkOrderHandler {
 	// final static String softwareToken =
 	// "622a8ef3a712344ef07a4427550ae1e2b38e5342";
 	// WEFACT
-	final static String softwareToken = "872e5ad04c2607e59ba610712344ef07a4427550ae09bc33f1120a20ffe4";
+//	final static String softwareToken = "872e5ad04c2607e59ba610712344ef07a4427550ae09bc33f1120a20ffe4";
+//	// EAccounting
+	final static String softwareToken = "9b39b7ab4178067360b9b39b7ab4178067360b8250d671fd448881e8db78250d671fd448881e8db7";
+	
 	
 	// change later
 	public static int checkWorkOrderToken(String token, String softwareName) {
@@ -133,7 +130,6 @@ public class WorkOrderHandler {
 					}
 				}
 				if (jsonArray.length() == 0 || !activeBoolean) {
-					Map<String, String> worktype = new HashMap<String, String>();
 					types.add("Installatie");
 					types.add("Garantie");
 					types.add("Levering");
@@ -149,7 +145,6 @@ public class WorkOrderHandler {
 				break;
 			case "paymentmethods":
 				if (jsonArray.length() == 0) {
-					Map<String, String> worktype = new HashMap<String, String>();
 					types.add("op rekening");
 					types.add("niet van toepassing");
 					types.add("contant voldaan");
@@ -159,7 +154,6 @@ public class WorkOrderHandler {
 					for (int i = 0; i < jsonArray.length(); i++) {
 						JSONObject object = jsonArray.getJSONObject(i);
 						String name = object.getString("pmd_description");
-						Map<String, String> worktype = new HashMap<String, String>();
 						types.add(name);
 					}
 				}
@@ -269,7 +263,7 @@ public class WorkOrderHandler {
 							invoiceAddress.add(invoice);
 							Relation customerRelationInvoice = new Relation(customerNameInvoice,
 									customerDebtorNrInvoice, customerContactPersonInvoice, customerEmailInvoice,
-									invoiceAddress, null);
+									invoiceAddress, null, null);
 							
 							ArrayList<Address> postaleAddress = new ArrayList<Address>();
 							// id 2 is postal
@@ -278,7 +272,7 @@ public class WorkOrderHandler {
 									"postal", 2);
 							postaleAddress.add(postal);
 							Relation customerRelationPostal = new Relation(customerName, customerDebtorNr,
-									customerContactPerson, customerEmail, postaleAddress, null);
+									customerContactPerson, customerEmail, postaleAddress, null, null);
 							// add Relations to ArrayList
 							allRelations.add(customerRelationInvoice);
 							allRelations.add(customerRelationPostal);
@@ -314,20 +308,20 @@ public class WorkOrderHandler {
 								materialName = material.getString("MaterialName");
 								materialPrice = material.getDouble("MaterialPrice");
 								// Get material from db
-								Material sub = ObjectDAO.getMaterials(token, materialCode, materialName);
+								Material sub = ObjectDAO.getMaterials(token, materialCode);
 								Material m = null;
 								if (sub != null) {
 									// Check if material has subCode
 									if (sub.getSubCode() != null) {
 										m = new Material(sub.getCode(), materialCode, materialUnit, materialName,
-												materialPrice, materialNr, null);
+												materialPrice, materialNr, null, null);
 									} else {
 										m = new Material(materialCode, null, materialUnit, materialName, materialPrice,
-												materialNr, null);
+												materialNr, null, null);
 									}
 								} else {
 									m = new Material(materialCode, null, materialUnit, materialName, materialPrice,
-											materialNr, null);
+											materialNr, null, null);
 								}
 								
 								alleMaterials.add(m);
@@ -351,7 +345,6 @@ public class WorkOrderHandler {
 	
 	public static Object addData(String token, Object array, String type, String softwareName, String clientToken)
 			throws ServletException, IOException {
-		JSONObject completeJSON = new JSONObject();
 		Object amount = 0;
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken;
@@ -561,7 +554,11 @@ public class WorkOrderHandler {
 			JSONObject = new JSONObject();
 			try {
 				JSONObject.put("WorkorderNo", w.getWorkorderNr());
-				JSONObject.put("ProjectNr", "");
+				String projectNr = "";
+				if(w.getProjectNr() != null){
+					projectNr = w.getProjectNr();
+				}
+				JSONObject.put("ProjectNr", projectNr);
 				JSONObject.put("ExternProjectNr", w.getExternProjectNr());
 				System.out.println("workorder ExternProjectNr " + w.getExternProjectNr());
 				JSONObject.put("CustomerName", r.getCompanyName());

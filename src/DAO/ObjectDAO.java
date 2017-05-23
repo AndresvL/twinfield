@@ -61,14 +61,15 @@ public class ObjectDAO {
 					}
 				}
 				stmt = con.prepareStatement(
-						"REPLACE INTO materials (code, subcode, description, price, unit, modified, softwareToken) values (?, ?, ?, ?, ?, ?, ?)");
+						"REPLACE INTO materials (code, subcode, description, price, unit, id, modified, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?)");
 				stmt.setString(1, m.getCode());
 				stmt.setString(2, subCode);
 				stmt.setString(3, m.getDescription());
 				stmt.setDouble(4, m.getPrice());
 				stmt.setString(5, m.getUnit());
-				stmt.setString(6, m.getModified());
-				stmt.setString(7, token);
+				stmt.setString(6, m.getId());
+				stmt.setString(7, m.getModified());
+				stmt.setString(8, token);
 				stmt.executeUpdate();
 			}
 			stmt.close();
@@ -78,7 +79,7 @@ public class ObjectDAO {
 		}
 	}
 	
-	public static Material getMaterials(String softwareToken, String subCode, String desc) throws SQLException {
+	public static Material getMaterials(String softwareToken, String subCode) throws SQLException {
 		Material m = null;
 		PreparedStatement stmt = null;
 		Connection con = DBConnection.createDatabaseConnection(true);
@@ -94,8 +95,10 @@ public class ObjectDAO {
 				String description = output.getString("description");
 				Double price = output.getDouble("price");
 				String unit = output.getString("unit");
-				m = new Material(code, subCode, unit, description, price, null, null);
+				String id = output.getString("id");
+				m = new Material(code, subCode, unit, description, price, null, null, id);
 			}
+			
 			// check if code exists
 			if (m == null) {
 				selectSQL = "SELECT * FROM materials WHERE softwareToken = ? AND code = ?";
@@ -107,9 +110,11 @@ public class ObjectDAO {
 					String description = output.getString("description");
 					Double price = output.getDouble("price");
 					String unit = output.getString("unit");
-					m = new Material(subCode, null, unit, description, price, null, null);
+					String id = output.getString("id");
+					m = new Material(subCode, null, unit, description, price, null, null, id);
 				}
 			}
+			System.out.println("material " + subCode + " stmt "+ stmt.toString());
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -136,7 +141,6 @@ public class ObjectDAO {
 				stmt.setString(9, p.getDate_end());
 				stmt.setInt(10, p.getActive());
 				stmt.setString(11, token);
-				
 				stmt.executeUpdate();
 			}
 			stmt.close();
@@ -144,6 +148,61 @@ public class ObjectDAO {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	public static Project getProjectByCode(String softwareToken, String code) {
+		Project p = null;
+		PreparedStatement stmt = null;
+		try {
+			Connection con = DBConnection.createDatabaseConnection(true);
+			String selectSQL = "SELECT * FROM projects WHERE softwareToken = ? AND code = ?";
+			stmt = con.prepareStatement(selectSQL);
+			stmt.setString(1, softwareToken);
+			stmt.setString(2, code);
+			ResultSet output = stmt.executeQuery();
+			while (output.next()) {
+				String id = output.getString("code_ext");
+				String debtorNumber = output.getString("debtor_number");
+				String status = output.getString("status");
+				String name = output.getString("name");
+				String description = output.getString("description");
+				String dateStart = output.getString("date_start");
+				String dateEnd = output.getString("date_end");
+				p = new Project(code, id, debtorNumber, status, name, dateStart, dateEnd, description, 0, 1, null);
+			}
+			stmt.close();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return p;
+	}
+	
+	public static Project getProjectById(String softwareToken, String id) {
+		Project p = null;
+		PreparedStatement stmt = null;
+		try {
+			Connection con = DBConnection.createDatabaseConnection(true);
+			String selectSQL = "SELECT * FROM projects WHERE softwareToken = ? AND code_ext = ?";
+			stmt = con.prepareStatement(selectSQL);
+			stmt.setString(1, softwareToken);
+			stmt.setString(2, id);
+			ResultSet output = stmt.executeQuery();
+			while (output.next()) {
+				String code = output.getString("code");
+				String debtorNumber = output.getString("debtor_number");
+				String status = output.getString("status");
+				String name = output.getString("name");
+				String description = output.getString("description");
+				String dateStart = output.getString("date_start");
+				String dateEnd = output.getString("date_end");
+				p = new Project(code, id, debtorNumber, status, name, dateStart, dateEnd, description, 0, 1, null);
+			}
+			stmt.close();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return p;
 	}
 	
 	public static void saveRelations(ArrayList<Relation> relations, String token) {
@@ -153,7 +212,7 @@ public class ObjectDAO {
 			for (Relation r : relations) {
 				for (Address a : r.getAddressess()) {
 					stmt = con.prepareStatement(
-							"REPLACE INTO relations (name, code, contact, phone_number, email, email_workorder, street, house_number, postal_code, city, remark, type, addressId, modified, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+							"REPLACE INTO relations (name, code, contact, phone_number, email, email_workorder, street, house_number, postal_code, city, remark, type, addressId, id, modified, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 					stmt.setString(1, r.getCompanyName());
 					stmt.setString(2, r.getDebtorNumber());
 					stmt.setString(3, a.getName());
@@ -167,8 +226,9 @@ public class ObjectDAO {
 					stmt.setString(11, a.getRemark());
 					stmt.setString(12, a.getType());
 					stmt.setInt(13, a.getAddressId());
-					stmt.setString(14, r.getModified());
-					stmt.setString(15, token);
+					stmt.setString(14, r.getId());
+					stmt.setString(15, r.getModified());
+					stmt.setString(16, token);
 					
 					stmt.executeUpdate();
 				}
@@ -208,11 +268,12 @@ public class ObjectDAO {
 				String city = output.getString("city");
 				String phoneNumber = output.getString("phone_number");
 				String remark = output.getString("remark");
+				String id = output.getString("id");
 				int addressId = output.getInt("addressId");
 				adr = new Address(contact, phoneNumber, email, street, houseNumber, postalCode, city, remark, type,
 						addressId);
 				allAddresses.add(adr);
-				r = new Relation(companyName, debtorCode, contact, emailWorkorder, allAddresses, modified);
+				r = new Relation(companyName, debtorCode, contact, emailWorkorder, allAddresses, modified, id);
 			}
 			stmt.close();
 			
@@ -228,7 +289,7 @@ public class ObjectDAO {
 			Connection con = DBConnection.createDatabaseConnection(true);
 			for (HourType h : hourtypes) {
 				stmt = con.prepareStatement(
-						"REPLACE INTO hourtypes (code, name, cost_booking, sale_booking, sale_price, cost_price, active, modified, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						"REPLACE INTO hourtypes (code, name, cost_booking, sale_booking, sale_price, cost_price, active, id, modified, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				stmt.setString(1, h.getCode());
 				stmt.setString(2, h.getName());
 				stmt.setInt(3, h.getCostBooking());
@@ -236,8 +297,9 @@ public class ObjectDAO {
 				stmt.setDouble(5, h.getSalePrice());
 				stmt.setDouble(6, h.getCostPrice());
 				stmt.setInt(7, h.getActive());
-				stmt.setString(8, h.getModified());
-				stmt.setString(9, token);
+				stmt.setString(8, h.getId());
+				stmt.setString(9, h.getModified());
+				stmt.setString(10, token);
 				stmt.executeUpdate();
 			}
 			stmt.close();
@@ -245,6 +307,33 @@ public class ObjectDAO {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	
+
+	public static HourType getHourType(String softwareToken, String code) throws SQLException {
+		HourType t = null;
+		PreparedStatement stmt = null;
+		Connection con = DBConnection.createDatabaseConnection(true);
+		try {
+			String selectSQL = "SELECT * FROM hourtypes WHERE softwareToken = ? AND code = ?";
+			stmt = con.prepareStatement(selectSQL);
+			stmt.setString(1, softwareToken);
+			stmt.setString(2, code);
+			ResultSet output = stmt.executeQuery();
+			while (output.next()) {
+				Double price = output.getDouble("sale_price");
+				String name = output.getString("name");
+				String id = output.getString("id");
+				String modified = output.getString("modified");
+				t = new HourType(code, name, 0, 0, 0, price, 1, modified, id);
+			}
+			System.out.println("hourtype " + code + " stmt "+ stmt.toString());
+			stmt.close();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return t;
 	}
 	
 	public static Address getAddressID(String softwareToken, String addressType, String codeString) {

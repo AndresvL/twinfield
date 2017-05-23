@@ -18,7 +18,7 @@ import object.twinfield.Search;
 
 public class VerifyServlet extends HttpServlet {
 
-	private String redirect = System.getenv("CALLBACK");
+	private String redirect = System.getenv("REDIRECT");
 	private static final long serialVersionUID = 1L;
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -62,7 +62,7 @@ public class VerifyServlet extends HttpServlet {
 						+ "&softwareName=" + softwareName);
 			}
 			break;
-		case "EAccounting":
+		case "eAccounting":
 			String softwareToken = (String) req.getSession().getAttribute("softwareToken");
 			String code = req.getParameter("code");
 			String error = req.getParameter("error");

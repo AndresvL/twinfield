@@ -3,17 +3,18 @@ package object.workorder;
 import java.util.ArrayList;
 
 public class Relation {
-	private String companyName, debtorNumber, contact, emailWorkorder, modified;
+	private String companyName, debtorNumber, contact, emailWorkorder, modified, id;
 	private ArrayList<Address> addresses;
 
 	public Relation(String companyName, String debtorNumber, String contact, String emailWorkorder,
-			ArrayList<Address> addresses, String modified) {
+			ArrayList<Address> addresses, String modified, String id) {
 		this.companyName = companyName;
 		this.debtorNumber = debtorNumber;
 		this.contact = contact;
 		this.emailWorkorder = emailWorkorder;
 		this.setAddresses(addresses);
 		this.setModified(modified);
+		this.setId(id);
 	}
 	//CompanyName
 	public String getCompanyName() {
@@ -65,5 +66,11 @@ public class Relation {
 
 	public void setModified(String modified) {
 		this.modified = modified;
+	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
 	}
 }
