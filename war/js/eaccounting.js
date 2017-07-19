@@ -5,7 +5,7 @@ $(document).ready(function() {
 			setTimeout(function(){
 				  location.reload();
 			  },880000)
-			  //Date
+			  // Date
 		    $('#datetimepicker1').datetimepicker({ format:'DD-MM-YYYY HH:mm:ss'
 		    });
 			
@@ -65,26 +65,17 @@ $(document).ready(function() {
 					
 				event.preventDefault();
 				swal({
-					  title: 'Even geduld...',
-					  text: 'Data Synchroniseren (Pagina reload automatisch)',
+					  title: 'Synchroniseren...',
+					  text: 'Op de achtergrond zal de synchronisatie plaatsvinden. Kom over een paar minuten terug',
 					  imageUrl: 'WBA.png',
 					  imageWidth: 250,
 					  imageHeight: 220,
-					  showConfirmButton: false,
-					  timer: 1000
-					  
+					  showConfirmButton: true					  
 					}).then(
 					  function () {
 						  $( "#sync" ).submit();
-					  },
-					  function (dismiss) {
-					    if (dismiss === 'timer') {
-					    	 $( "#sync" ).submit();
-					    }
+					  
 					  })
 					
 				});
-		$("#officelist").change(function() {
-			$("#officeExportList").val($("#officelist").val());
-			$("#exportOfficeValue").val($("#officelist").val());
-		});
+	

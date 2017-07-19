@@ -1,37 +1,38 @@
 $(document).ready(function() {
 	  		$('[data-toggle="tooltip"]').tooltip(); 
 	  		
-			<!-- reload page every 15 - 20 min -->
+			<!-- reload page every 1,5 - 2 min -->
 			setTimeout(function(){
 				  location.reload();
-			  },880000)
-			  
-//			//Date
-		   $('#datetimepicker1').datetimepicker({ format:'DD-MM-YYYY HH:mm:ss'
-		   });
+			  },88000)
+			  // Date
+		    $('#datetimepicker1').datetimepicker({ format:'DD-MM-YYYY HH:mm:ss'
+		    });
 			
-			
-			var modal = document.getElementById('loginModal');
-			if ($('#client').val() === "" || $('#client').val() === null) {
-				modal.style.display = "block";
-			}else {
-				if($('#error').val() === "true"){
-					swal({
-						title : 'Success',
-						text : "Je bent ingelogd",
-						type : 'success'
-					})
-					$('#error').val("");
-				}
-				if ($('#saved').val() !== "") {
-					swal({
-						title : 'Success',
-						text : $('#saved').val(),
-						type : 'success'
-					})
-				}
-				$('#saved').val("false");
+			if(!$('#verkooporders').attr('checked')){
+				 $('#verkooporders_extra').hide();
 			}
+		    $('#verkooporders').on('change', function() {
+			    $('#verkooporders_extra').toggle(this.checked);
+		    })
+		
+			if($('#error').val() === "true"){
+				swal({
+					title : 'Success',
+					text : "You are logged in",
+					type : 'success'
+				})
+				$('#error').val("");
+			}
+			if ($('#saved').val() !== "") {
+				swal({
+					title : 'Success',
+					text : $('#saved').val(),
+					type : 'success'
+				})
+			}
+			$('#saved').val("false");
+			
 			$(".showDetails").click(function() {
 				var errorDetails = $(this).data("href");
 				if(errorDetails !== null && errorDetails !== true && errorDetails !== false && errorDetails !== ""){
@@ -61,19 +62,18 @@ $(document).ready(function() {
 		});
 		$("#syncbutton").click(
 				function(event) {
-
+					
 				event.preventDefault();
 				swal({
-					  title: 'Synchroniseren',
-					  text: 'Op de achtergrond zal de synchronisatie plaatsvinden. Kom over een paar minuten terug',
+					  title: 'Synchronizing...',
+					  text: 'Synchronisation takes place in the background. Please come back in a moment',
 					  imageUrl: 'WBA.png',
 					  imageWidth: 250,
 					  imageHeight: 220,
-					  showConfirmButton: true
+					  showConfirmButton: true					  
 					}).then(
 					  function () {
 						  $( "#sync" ).submit();
 					  })
 					
 				});
-		

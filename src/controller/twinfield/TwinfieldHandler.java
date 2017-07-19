@@ -72,6 +72,7 @@ public class TwinfieldHandler {
 		responseArray = SoapHandler.createSOAPFinder(session, cluster, searchObject);
 		ArrayList<Employee> emp = new ArrayList<Employee>();
 		// Split data from ArrayList
+		
 		for (int i = 0; i < responseArray.size(); i++) {
 			String[] parts = responseArray.get(i).split(",");
 			// firstName and Lastname are identical
@@ -131,6 +132,9 @@ public class TwinfieldHandler {
 				errorMessage += "Er ging iets mis met de projecten<br />";
 			}
 		}
+		else{
+			errorMessage += "Geen projecten voor import<br />";
+		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
 	}
@@ -166,6 +170,8 @@ public class TwinfieldHandler {
 			} else {
 				errorMessage += "Er ging iets mis met de materialen<br />";
 			}
+		}else{
+			errorMessage += "Geen materialen voor import<br />";
 		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
@@ -207,6 +213,9 @@ public class TwinfieldHandler {
 				errorMessage += "Er ging iets mis met de relaties<br />";
 			}
 		}
+		else{
+			errorMessage += "Geen relaties voor import<br />";
+		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
 	}
@@ -246,6 +255,8 @@ public class TwinfieldHandler {
 			} else {
 				errorMessage += "Er ging iets mis met de uursoorten<br />";
 			}
+		}else{
+			errorMessage += "Geen uursoorten voor import<br />";
 		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
@@ -279,7 +290,7 @@ public class TwinfieldHandler {
 				if(factuurSuccess > 0){
 					errorMessage += factuurSuccess + " facturen aangemaakt<br />";
 				}
-				errorMessage += factuurError + " van de " + factuurAmount + " werkbonnen voor facturatie hebben errors<br />";
+				errorMessage += factuurError + " van de " + factuurAmount + " werkbonnen voor facturatie hebben errors. klik voor meer details<br />";
 //				errorFactuurDetails += "Zorg dat <b>alleen</b> de werkbonnen die je wilt <b>factureren</b> op status <b>compleet</b> staan";
 			} else {
 				// Factuur
@@ -314,7 +325,7 @@ public class TwinfieldHandler {
 					if(urenSuccess > 0){
 						errorMessage += urenSuccess + " uurboekingen aangemaakt<br />";
 					}
-					errorMessage += urenError + " van de " + urenAmount + " uurboekingen hebben errors<br />";
+					errorMessage += urenError + " van de " + urenAmount + " uurboekingen hebben errors. klik voor meer details<br />";
 			} else {
 				if (urenSuccess > 0) {
 					errorMessage += urenSuccess + " uurboekingen aangemaakt<br />";

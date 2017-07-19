@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="author" content="">
-<title>eAccounting Connection</title>
+<title>Moloni Connection</title>
 <!-- datepicker CSS -->
 <link
 	href="//cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/build/css/bootstrap-datetimepicker.css"
@@ -48,8 +48,7 @@
 	<!-- Settings Section -->
 	<div id="WBA-section">
 		<img src="./img/werkbonapp.png" height="60" width="170" />
-		<img src="./img/Visma_Logo_Screen.png" height="60" width="220"
-			id="boekhoud_logo" />
+		<img src="./img/moloni.png" height=80 width="120" id="boekhoud_logo" />
 	</div>
 	<div class="settings">
 		<div class="panel-group">
@@ -60,55 +59,44 @@
 					<div class="modal-header">
 						<span class="close">&times;</span>
 						<h2>
-							Welkom <small>bij de eAccounting koppeling</small>
+							Welcome <small>at the Moloni integration</small>
 						</h2>
 					</div>
 					<div class="modal-body">
-						<h4>Belangrijk</h4>
-						<h5>Let op!</h5>
+						<h4>Important</h4>
+						<h5>Pay attention!</h5>
 						<ul>
-							<li>Bij het aanschaffen van deze koppeling is het verstandig
-								om <mark>alle werkbonnen</mark> in WerkbonApp op <mark>status
-									afgehandeld</mark> te zetten
+							<li>After purchasing the integration, it is wise to put the
+								status of <mark>all existing workorders</mark> in WorkOrderApp
+								on <mark>handled</mark>.
 							</li>
-							<li>De <mark>import settings</mark> mogen alleen in
-								eAccounting worden gewijzigd.
+							<li>The <mark>import settings</mark> may only be editted in
+								Moloni.
 							</li>
-							<li>Bij een <mark>foutmelding</mark> kan je op het
-								bericht(log) klikken om meer details te zien.
-							<li>Als een <mark>werkbon(factuur) geëxporteerd</mark> is,
-								kan je op het bericht(log) klikken om meer details te zien.
-							</li>
-							<li>(Nieuwe) Relaties en materialen op een werkbon worden
-								geëxporteerd naar eAccounting.</li>
-						</ul>
-						<br>
-
-						<h4>Informatie</h4>
-						<ul>
-							<li>Op deze pagina is het mogelijk om de <mark>import</mark>
-								en <mark>export</mark> gegevens tussen WerkbonApp en eAccounting
-								in te stellen.
-							</li>
-							<li>Elke 15 minuten zal er een <mark>automatische
-									synchronisatie</mark> plaatsvinden aan de hand van deze instellingen.
-							</li>
-							<li>Het is mogelijk om <mark>handmatig een
-									synchronisatie uit te voeren</mark> door onderaan op de knop Synch te
-								klikken.
+							<li>Click on an <mark>error message</mark> in the log to see
+								more details.
 							</li>
 						</ul>
 						<br>
 
-						<h4>Mogelijkheden</h4>
+						<h4>Information</h4>
 						<ul>
-							<li><mark>Artikelen, debiteuren, verkooporders,
-									projecten en artikelen met eenheid uur</mark> worden geimporteerd
-								vanuit eAccounting.</li>
-							<li><mark>Werkbonnen met nieuwe relaties en/of
-									materialen</mark> zullen geexporteerd worden, hierbij worden nieuwe
-								relaties en/of materialen aangemaakt binnen eAccounting voordat
-								de werkbon opgestuurd wordt.</li>
+							<li>On this page it is possible to set the settings for <mark>importing</mark>
+								and <mark>exporting</mark> data between WorkOrderApp and Moloni.
+							</li>
+							<li>An <mark>automatic synchronisation</mark> will take
+								place every 15 minutes.
+							</li>
+							<li>It is possible to <mark>synchronize manually</mark>, by
+								pressing the sync button at the bottom of this page.
+							</li>
+						</ul>
+						<br>
+
+						<h4>Possibilities</h4>
+						<ul>
+							<li><mark>Employees, products, customers and products
+									with unit hour</mark> can be imported from Moloni.</li>
 						</ul>
 						<br>
 						<button type="button" id="show" class="btn btn-info">Show</button>
@@ -117,8 +105,8 @@
 							<table class="table table-hover">
 								<thead>
 									<tr>
-										<th>WerkbonApp</th>
-										<th>eAccounting</th>
+										<th>WorkOrderApp</th>
+										<th>Moloni</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -126,31 +114,27 @@
 										<th colspan="2">Import</th>
 									</tr>
 									<tr>
-										<td>Materialen</td>
-										<td>Artikelen</td>
+										<td>Employees</td>
+										<td>Users</td>
 									</tr>
 									<tr>
-										<td>Relaties</td>
-										<td>Debiteuren</td>
+										<td>Materials</td>
+										<td>Products</td>
 									</tr>
 									<tr>
-										<td>Uursoorten</td>
-										<td>Artikelen(uur)</td>
+										<td>Relations</td>
+										<td>Customers</td>
 									</tr>
 									<tr>
-										<td>Projecten</td>
-										<td>Projecten</td>
-									</tr>
-									<tr>
-										<td>Verkooporders</td>
-										<td>Werkbonnen</td>
+										<td>Hourtypes</td>
+										<td>Products with unit hour</td>
 									</tr>
 									<tr>
 										<th colspan="2">Export</th>
 									</tr>
 									<tr>
-										<td>Werkbon</td>
-										<td>Factuur</td>
+										<td>WorkOrder</td>
+										<td>Invoice</td>
 									</tr>
 								</tbody>
 							</table>
@@ -164,25 +148,46 @@
 			</div>
 			<input type="hidden" value="${errorMessage}" id="error" />
 			<input type="hidden" value="${saved}" id="saved" name="saved" />
-			<form action="settings.do" id="saveeAccounting">
+			<form action="settings.do" id="saveMoloni">
 				<div class="panel panel-success">
-					<div class="panel-heading">Import instellingen</div>
+					<div class="panel-heading">Import Settings</div>
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
 								<input type="hidden" value="${softwareName}" name="softwareName" />
 								<input type="hidden" value="${softwareToken}"
 									name="softwareToken" />
-								<label>Selecteer objecten om te importeren</label>
+								<label>Administration</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Selecteer de objecten die je wilt importeren van eAccounting naar WerkbonApp"
+									title="Choose an administration" height="13" width="13" />
+								<select name="offices" class="form-control" id="officelist"
+									required>
+									<option disabled selected value>-- Selecteer een
+										administratie --</option>
+									<c:forEach items="${offices}" var="office">
+										<option value="${office.code}"
+											${office.code == importOffice ? 'selected="selected"' : ''}>
+											${office.name}</option>
+									</c:forEach>
+								</select><br>
+								<label>Select objects for import</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="Select the objects you want to import from Moloni into WorkOrderApp"
 									height="13" width="13" />
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" value="employees"
+											${"selected" == checkboxes.employees  ? 'checked' : ''}
+											name="importType">
+										Employees
+									</label>
+								</div>
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" value="materials"
 											${"selected" == checkboxes.materials  ? 'checked' : ''}
 											name="importType">
-										Materialen/Uursoorten
+										Products/Hourtypes
 									</label>
 								</div>
 								<div class="checkbox">
@@ -190,30 +195,23 @@
 										<input type="checkbox" value="relations"
 											${"selected" == checkboxes.relations  ? 'checked' : ''}
 											name="importType">
-										Relaties
+										Relations
 									</label>
 								</div>
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" value="projects"
-											${"selected" == checkboxes.projects  ? 'checked' : ''}
-											name="importType">
-										Projecten
-									</label>
-								</div>
-								<div class="checkbox">
+
+								<%-- <div class="checkbox">
 									<label>
 										<input type="checkbox" value="verkooporders"
 											${"selected" == checkboxes.verkooporders  ? 'checked' : ''}
 											name="importType" id="verkooporders">
-										Verkooporders
+										Orders
 									</label>
-								</div>
+								</div> --%>
 								<div id="verkooporders_extra">
-									<label>Selecteer een type werkzaamheid</label>
+									<label>Select a worktype</label>
 									<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-										title="Dit type werkzaamheid wordt meegestuurd bij het importeren van verkooporders"
-										height="13" width="13" />
+										title="This worktype will be added to every order" height="13"
+										width="13" />
 									<select name="typeofwork" class="form-control" id="typeofwork"
 										required>
 										<c:forEach items="${types}" var="type">
@@ -222,11 +220,10 @@
 												${type.key}</option>
 										</c:forEach>
 
-									</select>
-									<br>
-									<label>Selecteer een betaalmethode</label>
+									</select> <br>
+									<label>Select a payment method</label>
 									<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-										title="Deze betaalmethode wordt meegestuurd bij het importeren van verkooporders"
+										title="This payment method will be added to every order"
 										height="13" width="13" />
 									<select name="paymentmethod" class="form-control"
 										id="paymentmethod" required>
@@ -241,11 +238,10 @@
 								<div class="row">
 									<div class='col-sm-7'>
 										<div class="form-group">
-											<label>Synchroniseer datum</label>
+											<label>Synchronisation date</label>
 											<img src="./img/vraagteken.jpg" height="13" width="13"
 												data-toggle="tooltip"
-												title="Alle gegevens vanaf deze datum worden geschynchroniseerd" />
-
+												title="Alle data will be importerd starting from this date" />
 											<input type='text' class="form-control" id='datetimepicker1'
 												name="syncDate" value="${savedDate}" />
 
@@ -261,57 +257,45 @@
 					</div>
 				</div>
 				<div class="panel panel-success">
-					<div class="panel-heading">Export instellingen</div>
+					<div class="panel-heading">Export Settings</div>
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
-								<label>Werkbonstatus</label>
+								<label>Workorderstatus</label>
 								<img src="./img/vraagteken.jpg" height="13" width="13"
 									data-toggle="tooltip"
-									title="Werkbonnen met status compleet worden opgehaald" />
+									title="WorkOrders with status complete will be exported" />
 								<input class="form-control" type="text" disabled
-									value="Compleet" />
+									value="Complete" />
 								<input class="form-control" type="hidden" name="factuurType"
 									value="Compleet" />
 								<br>
-								<label>Werkbon exporteren als</label>
+								<label>Export workorder as</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="De werkbon wordt als verkoopfactuur verstuurd naar eAccounting"
-									height="13" width="13" />
+									title="A workorder will be exporterd as an invoice" height="13"
+									width="13" />
 								<br>
-								<input type="radio" name="exportWerkbon" value="factuur"
-									${"selected" == exportWerkbonType.factuur  ? 'checked' : ''}
-									checked>
-								Verkoopfactuur<br><br>
-								<label>Afronding uren</label>
+								<input type="radio" name="exportWerkbon" value="factuur" checked>
+								Invoice<br> <br>
+								<label>Rounded hours</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Selecteer het aantal minuten waarop de gewerkte uren moeten worden afgerond"
+									title="All worked hours will be rounded to the selected amount of minutes"
 									height="13" width="13" />
-								<br>
-								<select name="roundedHours" class="form-control" id="uren"
-									required>
+								<br> <select name="roundedHours" class="form-control"
+									id="uren" required>
 									<option selected value="1"
-										${"1" == roundedHours ? 'selected="selected"' : ''}>Geen
-										afronding</option>
+										${"1" == roundedHours ? 'selected="selected"' : ''}>No
+										rounding</option>
 									<option value="5"
 										${"5" == roundedHours ? 'selected="selected"' : ''}>5
-										minuten</option>
+										minutes</option>
 									<option value="15"
 										${"15" == roundedHours ? 'selected="selected"' : ''}>15
-										minuten</option>
+										minutes</option>
 									<option value="30"
 										${"30" == roundedHours ? 'selected="selected"' : ''}>30
-										minuten</option>
+										minutes</option>
 								</select>
-								<br>
-								<label>Universeel materiaal</label>
-								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Op dit artikelnummer in eAccounting worden de onbekende materialen vanuit WerkbonApp geboekt"
-									height="13" width="13" />
-								<br>
-								<input type="text" class="form-control" name="materialCode"
-									value="${materialCode}" required>
-								<br>
 							</div>
 						</div>
 					</div>
@@ -339,8 +323,8 @@
 						<table class="table table-hover">
 							<thead>
 								<tr>
-									<th>Tijd</th>
-									<th>Bericht</th>
+									<th>Time</th>
+									<th>Message</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -373,6 +357,6 @@
 	<script type="text/javascript" src="js/bootstrap-datetimepicker.js"></script>
 	<script src="js/freelancer.min.js" type="text/javascript"></script>
 	<script type="text/javascript" src="js/vkbeautify.js"></script>
-	<script type="text/javascript" src="js/eaccounting.js"></script>
+	<script type="text/javascript" src="js/moloni.js"></script>
 </body>
 </html>

@@ -107,11 +107,9 @@ public class WeFactHandler {
 		} else {
 			parameters = "api_key=" + clientToken + "&controller=" + controller + "&action=" + action + array;
 		}
-		System.out.println("PARAMATERS " + parameters);
 		// jsonRequest is filled when a 'set' Method is called;
 		if (jsonRequest != null) {
 			parameters = jsonRequest;
-			System.out.println("PARAMATERS " + parameters);
 		}
 		byte[] postData = parameters.getBytes(StandardCharsets.UTF_8);
 		int postDataLength = postData.length;
@@ -131,7 +129,6 @@ public class WeFactHandler {
 	}
 	
 	public String getDateMinHour(String string) {
-		System.out.println("TIME " + string);
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		Date date = null;
 		try {
@@ -148,7 +145,6 @@ public class WeFactHandler {
 		// Date to String
 		Format formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		String s = formatter.format(date);
-		System.out.println("TIME S " + s);
 		return s;
 	}
 	
@@ -174,7 +170,6 @@ public class WeFactHandler {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		System.out.println("JSONObject " + JSONObject);
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
 		logger.info("Material response " + jsonList);
 		String status = jsonList.getString("status");
@@ -332,18 +327,7 @@ public class WeFactHandler {
 						if (invoiceEmail.equals("")) {
 							invoiceEmail = email;
 						}
-						String invoicehouseNumber = "";
-						String invoicestreet = "";
-						String invoicestreetNumber[] = debtorDetails.getString("InvoiceAddress").split("\\s+");
-						for (int j = 0; j < invoicestreetNumber.length; j++) {
-							if (j == invoicestreetNumber.length - 1) {
-								invoicehouseNumber = invoicestreetNumber[j];
-							} else if (j == invoicestreetNumber.length - 2) {
-								invoicestreet += invoicestreetNumber[j];
-							} else {
-								invoicestreet += invoicestreetNumber[j] + " ";
-							}
-						}
+						String invoicestreet = debtorDetails.getString("InvoiceAddress");
 						if (invoicestreet.equals("")) {
 							invoicestreet = "<leeg>";
 						}
@@ -357,7 +341,7 @@ public class WeFactHandler {
 						}
 						if (!invoicecity.equals("<leeg>")) {
 							Address invoice = new Address(invoiceContact, phoneNr, invoiceEmail, invoicestreet,
-									invoicehouseNumber, invoicepostalCode, invoicecity, remark, "invoice", 1);
+									"", invoicepostalCode, invoicecity, remark, "invoice", 1);
 							address.add(invoice);
 						}
 						
@@ -463,15 +447,15 @@ public class WeFactHandler {
 									editCount++;
 								}
 								Double costPrice = object.getDouble("PriceExcl");
-								Double tax = object.getDouble("TaxPercentage");
+//								Double tax = object.getDouble("TaxPercentage");
 								// Calculate salesPrice with tax and
 								// productPrice
-								Double salePrice = costPrice * (tax / 100 + 1.00);
+//								Double salePrice = costPrice * (tax / 100 + 1.00);
 								int booking = 0;
 								if (costPrice != null && !costPrice.equals("")) {
 									booking = 1;
 								}
-								h = new HourType(productCode, productName, booking, booking, costPrice, salePrice, 1,
+								h = new HourType(productCode, productName, 0, booking, 0, costPrice, 1,
 										modified, null);
 								hourtypes.add(h);
 							}
@@ -532,8 +516,6 @@ public class WeFactHandler {
 			e.printStackTrace();
 		}
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
-		System.out.println("JSONOBJECT" + JSONObject);
-		System.out.println("JSONLIST" + jsonList);
 		String status = jsonList.getString("status");
 		
 		// Check if ListRequest is successful
@@ -562,10 +544,7 @@ public class WeFactHandler {
 					// 3 is geaccepteerd
 					int offerteStatus = offerteDetails.getInt("Status");
 					// if customField werkbonapp is set to yes
-					System.out.println("STATUSSHOW " + statusShow);
-					System.out.println("OFFERTESTATUS " + offerteStatus);
 					if (statusShow.equals("success") && werkbonApp == 1 && werkbonAppAdded == 0) {
-						System.out.println("OFFERTESTATUS " + offerteStatus);
 						String modified = offerteDetails.getString("Modified");
 						offerteNr = offerteDetails.getString("PriceQuoteCode");
 						String debtorCode = offerteDetails.getString("DebtorCode");
@@ -598,9 +577,6 @@ public class WeFactHandler {
 							city = "<leeg>";
 						}
 						String email = offerteDetails.getString("EmailAddress");
-						// if (email.equals("")) {
-						// email = "<leeg>";
-						// }
 						String description = offerteDetails.getString("Description");
 						// String comment = offerteDetails.getString("Comment");
 						// Invoice relation from database
@@ -659,7 +635,6 @@ public class WeFactHandler {
 									paymentMethod, allMaterials, workDate, null, id, null, allRelations, null, null,
 									null, offerteNr, typeOfWork, description, modified, null, null);
 							offertes.add(w);
-							System.out.println("OFFERTESARRAY " + offertes);
 						}
 					}
 				}
@@ -707,8 +682,8 @@ public class WeFactHandler {
 			if (w.getMaterials().size() > 0 || w.getWorkPeriods().size() > 0) {
 				errorDetails += sendFactuur(w, clientToken, roundedHours, token, "", "", 0);
 			} else {
-				errorMessage += "Something went wrong with sending an invoice. Click for more details<br>";
-				errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr();
+				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
+				errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr() + "\n";
 			}
 		}
 		if (errorAmount > 0) {
@@ -751,11 +726,9 @@ public class WeFactHandler {
 			String[] material = null;
 			String relation = null;
 			for (int i = 0; i < array.length(); i++) {
-				System.out.println("ERRORARRAY " + array);
 				Object obj = array.get(i);
-				System.out.println("OBJ " + obj);
 				if (String.valueOf(obj).startsWith("Factuur")) {
-					errorMessage += "Something went wrong with sending an invoice. Click for more details<br>";
+					errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 					errorDetails += String.valueOf(obj);
 					return errorDetails;
 				}
@@ -815,10 +788,9 @@ public class WeFactHandler {
 				return sendFactuur(w, clientToken, roundedHours, token, errorDetails, error, amount);
 			} else {
 				// check errorDetails
-				errorMessage += "Something went wrong with sending an invoice. Click for more details<br>";
+				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 				// errorDetails += "Hourtype on workorder " + w.getWorkorderNr()
-				// + " does not exist in WeFact\n";;
-				System.out.println("ERRORDETAILS " + errorDetails + amount);
+				// + " does not exist in WeFact\n";
 			}
 		}
 		return errorDetails;
@@ -885,6 +857,7 @@ public class WeFactHandler {
 							JSONObjectMaterial.put("ProductCode", m.getCode());
 						}
 						JSONObjectMaterial.put("Number", m.getQuantity());
+						JSONObjectMaterial.put("Description", m.getDescription());
 						JSONObjectMaterial.put("PriceExcl", m.getPrice());
 						JSONArray.put(JSONObjectMaterial);
 					}
@@ -910,7 +883,6 @@ public class WeFactHandler {
 				}
 			}
 		}
-		System.out.println("JSONObjectFactuur WEFACT " + JSONObject);
 		return JSONObject;
 	}
 	
@@ -1199,6 +1171,5 @@ public class WeFactHandler {
 			e.printStackTrace();
 		}
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
-		System.out.println("JSONLIST1 " + jsonList);
 	}
 }

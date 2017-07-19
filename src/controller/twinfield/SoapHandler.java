@@ -27,7 +27,7 @@ import object.workorder.Relation;
 
 public class SoapHandler {
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
-
+	
 	public static String[] getSession(Token token) {
 		String sessionID = null;
 		String cluster = null;
@@ -45,32 +45,28 @@ public class SoapHandler {
 			} else {
 				return null;
 			}
-//			ByteArrayOutputStream out = new ByteArrayOutputStream();
-//			soapResponse.writeTo(out);
-//			String strMsg = new String(out.toByteArray());
-//			System.out.println(" SOAPResponse " + strMsg);
 			soapConnection.close();
 		} catch (Exception e) {
 			System.err.println("Error occurred while sending SOAP Request to Server");
 			e.printStackTrace();
 		}
-
+		System.out.println("SESSIONID CREATED " + sessionID);
 		String[] sessionArray = new String[] { sessionID, cluster };
 		return sessionArray;
 	}
-
+	
 	private static SOAPMessage createSOAPSession(Token token) throws Exception {
 		MessageFactory messageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
 		SOAPMessage soapMessage = messageFactory.createMessage();
-
+		
 		SOAPPart soapPart = soapMessage.getSOAPPart();
-
+		
 		// SOAP Envelope
 		SOAPEnvelope envelope = soapPart.getEnvelope();
-
+		
 		envelope.addNamespaceDeclaration("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 		envelope.addNamespaceDeclaration("xsd", "http://www.w3.org/2001/XMLSchema");
-
+		
 		// SOAP Body
 		SOAPBody soapBody = envelope.getBody();
 		SOAPElement soapBodyElem = soapBody.addChildElement("OAuthLogon", "", "http://www.twinfield.com/");
@@ -83,10 +79,10 @@ public class SoapHandler {
 		SOAPElement soapBodyElem4 = soapBodyElem.addChildElement("accessSecret");
 		soapBodyElem4.addTextNode(token.getAccessSecret());
 		soapMessage.saveChanges();
-
+		
 		return soapMessage;
 	}
-
+	
 	public static Object createSOAPXML(String session, String cluster, String data, String type) {
 		// Create SOAP Connection
 		SOAPMessage soapResponse = null;
@@ -104,16 +100,17 @@ public class SoapHandler {
 			MessageFactory messageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
 			SOAPMessage soapMessage = messageFactory.createMessage();
 			SOAPPart soapPart = soapMessage.getSOAPPart();
-
+			
 			// SOAP Envelope
 			SOAPEnvelope envelope = soapPart.getEnvelope();
-
+			
 			// SOAP Header
 			setHeader(envelope, session);
-
+			
 			// SOAP Body
 			setXMLBody(envelope, data);
 			soapMessage.saveChanges();
+			
 			soapResponse = soapConnection.call(soapMessage, url);
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
@@ -121,20 +118,21 @@ public class SoapHandler {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			soapMessage.writeTo(out);
 			String strMsg = new String(out.toByteArray());
-			System.out.println("SOAPREQUEST " + xmlString);
-		    System.out.println("SOAPRESPONSE " + strMsg);
+			System.out.println("SOAPREQUEST " + strMsg);
+			System.out.println("SOAPRESPONSE" + xmlString);
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
-
+			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}	int result = 0;
-		
-		if(doc.getChildNodes().item(0).hasAttributes()){
+		}
+		int result = 0;
+		if (doc  == null){
+			System.out.println("DOC IS NULL" + xmlString);
+		}
+		if (doc != null && doc.getChildNodes().item(0).hasAttributes()) {
 			result = Integer
-				.parseInt(doc.getChildNodes().item(0).getAttributes().getNamedItem("result").getNodeValue());
-		}else{
-			
+					.parseInt(doc.getChildNodes().item(0).getAttributes().getNamedItem("result").getNodeValue());
 		}
 		if (type.equals("workorder")) {
 			logger.info("UrenboekingRequest " + data);
@@ -192,12 +190,12 @@ public class SoapHandler {
 		}
 		return obj;
 	}
-
+	
 	// See Finder methode from Twinfield
 	public static ArrayList<String> createSOAPFinder(String session, String cluster, Search object) {
 		return createSOAPFinder(session, cluster, object, null);
 	}
-
+	
 	public static ArrayList<String> createSOAPFinder(String session, String cluster, Search object,
 			ArrayList<String> rows) {
 		if (rows == null) {
@@ -214,25 +212,25 @@ public class SoapHandler {
 			MessageFactory messageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
 			SOAPMessage soapMessage = messageFactory.createMessage();
 			SOAPPart soapPart = soapMessage.getSOAPPart();
-
+			
 			// SOAP Envelope
 			SOAPEnvelope envelope = soapPart.getEnvelope();
-
+			
 			// SOAP Header
 			setHeader(envelope, session);
-
+			
 			// SOAP Body
 			setFinderBody(envelope, object);
-
+			
 			soapMessage.saveChanges();
-
+			
 			soapResponse = soapConnection.call(soapMessage, url);
 			soapConnection.close();
-
+			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			soapResponse.writeTo(baos);
 			String results = baos.toString();
-			// System.out.println("results " + results);
+			 System.out.println("RESULTS " + results);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -245,7 +243,7 @@ public class SoapHandler {
 			return createSOAPFinder(session, cluster, object, rows);
 		}
 	}
-
+	
 	private static void setFinderBody(SOAPEnvelope envelope, Search object) throws SOAPException {
 		// SOAP Body
 		SOAPBody soapBody = envelope.getBody();
@@ -272,7 +270,7 @@ public class SoapHandler {
 			}
 		}
 	}
-
+	
 	// Set a body with parameter list
 	private static void setXMLBody(SOAPEnvelope envelope, String data) throws SOAPException {
 		SOAPBody soapBody = envelope.getBody();
@@ -280,19 +278,19 @@ public class SoapHandler {
 		SOAPElement soapBodyElem1 = soapBodyElem.addChildElement("xmlRequest");
 		soapBodyElem1.addTextNode("<![CDATA[" + data + "]]>");
 	}
-
+	
 	// Global header
 	private static void setHeader(SOAPEnvelope envelope, String session) throws SOAPException {
 		envelope.addNamespaceDeclaration("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 		envelope.addNamespaceDeclaration("xsd", "http://www.w3.org/2001/XMLSchema");
-
+		
 		// SOAP head
 		SOAPHeader soapHead = envelope.getHeader();
 		SOAPElement soapHeadElem = soapHead.addChildElement("Header", "", "http://www.twinfield.com/");
 		SOAPElement soapHeadElem1 = soapHeadElem.addChildElement("SessionID");
 		soapHeadElem1.addTextNode(session);
 	}
-
+	
 	// Converts String to Project Object
 	private static Object getProjectXML(Document doc) {
 		Project p = null;
@@ -317,7 +315,7 @@ public class SoapHandler {
 		int active = 0;
 		if (projectsNode.getLength() > 0) {
 			projects = projectsNode.item(0).getChildNodes();
-
+			
 			// <invoicedescription>
 			description = projects.item(0).getTextContent();
 			authoriser = projects.item(1).getTextContent();
@@ -334,7 +332,7 @@ public class SoapHandler {
 			// <customer>
 			debtorNumber = projects.item(4).getTextContent();
 			// active
-
+			
 			if (status.equals("active")) {
 				active = 1;
 			}
@@ -343,7 +341,7 @@ public class SoapHandler {
 				authoriser);
 		return p;
 	}
-
+	
 	// Converts String to Material Object
 	private static Object getMaterialXML(Document doc) {
 		ArrayList<Material> materials = new ArrayList<Material>();
@@ -361,7 +359,12 @@ public class SoapHandler {
 		for (int i = 0; i < lines.getLength(); i++) {
 			// <line>
 			NodeList line = lines.item(i).getChildNodes();
-			price = Double.parseDouble(line.item(0).getTextContent());
+			String priceString = line.item(0).getTextContent();
+			if (priceString != null && !priceString.equals("")) {
+				price = Double.parseDouble(priceString);
+			} else {
+				price = 0;
+			}
 			unit = line.item(2).getTextContent();
 			description = line.item(3).getTextContent();
 			subcode = line.item(5).getTextContent();
@@ -371,7 +374,7 @@ public class SoapHandler {
 		}
 		return materials;
 	}
-
+	
 	// Converts String to Relation Object
 	private static Object getRelationXML(Document doc) {
 		Relation r = null;
@@ -389,7 +392,7 @@ public class SoapHandler {
 		String emailWorkorder = financials.item(9).getTextContent();
 		// <addresses>
 		NodeList addresses = doc.getElementsByTagName("addresses").item(0).getChildNodes();
-		String phoneNumber = null, email = null, street = null, houseNumber = null, postalCode = null, city = null,
+		String phoneNumber = null, email = null, street = null, houseNumber = "", postalCode = null, city = null,
 				remark = null;
 		ArrayList<Address> allAddresses = new ArrayList<Address>();
 		for (int i = 0; i < addresses.getLength(); i++) {
@@ -402,25 +405,12 @@ public class SoapHandler {
 			if (email.equals("")) {
 				email = "<leeg>";
 			}
-			String streetArray = address.item(9).getTextContent();
-			String[] streetNumber = null;
-			if (streetArray != null) {
-				streetNumber = streetArray.split("\\s+");
-
-				for (int j = 0; j < streetNumber.length; j++) {
-					if (j == streetNumber.length - 1) {
-						houseNumber = streetNumber[j];
-					} else if (j == streetNumber.length - 2) {
-						street += streetNumber[j];
-					} else {
-						street += streetNumber[j] + " ";
-					}
-				}
-				if (street.equals("")) {
-					street = "<leeg>";
-				}
+			street = address.item(9).getTextContent();
+			
+			if (street.equals("")) {
+				street = "<leeg>";
 			}
-			houseNumber = streetNumber[streetNumber.length - 1];
+			
 			postalCode = address.item(3).getTextContent();
 			if (postalCode.equals("")) {
 				postalCode = "<leeg>";
@@ -440,7 +430,7 @@ public class SoapHandler {
 		r = new Relation(name, debtorNumber, name, emailWorkorder, allAddresses, null, null);
 		return r;
 	}
-
+	
 	// Converts String to Hourtype Object
 	private static Object getHourTypeXML(Document doc) {
 		HourType h = null;
@@ -457,7 +447,7 @@ public class SoapHandler {
 		h = new HourType(code, name, 0, 0, 0.0, 0.0, 1, null, null);
 		return h;
 	}
-
+	
 	public static ArrayList<String> setArrayList(SOAPMessage response) {
 		ArrayList<String> allItems = new ArrayList<String>();
 		try {
@@ -468,7 +458,7 @@ public class SoapHandler {
 			if (data.getNodeType() == Node.ELEMENT_NODE) {
 				element = (Element) data;
 			}
-
+			
 			NodeList allData = element.getChildNodes();
 			// <TotalRows>
 			int totalRows = Integer.parseInt(allData.item(0).getFirstChild().getTextContent());
@@ -503,7 +493,7 @@ public class SoapHandler {
 		}
 		return allItems;
 	}
-
+	
 	public static ArrayList<Map<String, String>> getOffices(Document doc) {
 		ArrayList<Map<String, String>> offices = new ArrayList<Map<String, String>>();
 		// <offices>
@@ -516,7 +506,7 @@ public class SoapHandler {
 			office.put("name", officeName);
 			offices.add(office);
 		}
-
+		
 		return offices;
 	}
 }

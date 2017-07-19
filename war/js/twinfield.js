@@ -66,7 +66,7 @@ $(document).ready(function() {
 						event.preventDefault();
 						swal({
 							title : 'Warning',
-							text : 'Geen administration geselecteerd',
+							text : 'Geen administratie geselecteerd',
 							type : 'error'
 						})
 					}
@@ -84,22 +84,15 @@ $(document).ready(function() {
 					} else {
 						event.preventDefault();
 						swal({
-							  title: 'Even geduld...',
-							  text: 'Data Synchroniseren',
+							  title: 'Synchroniseren',
+							  text: 'Op de achtergrond zal de synchronisatie plaatsvinden. Kom over een paar minuten terug',
 							  imageUrl: 'WBA.png',
 							  imageWidth: 250,
 							  imageHeight: 220,
-							  showConfirmButton: false,
-							  timer: 1000
-							  
+							  showConfirmButton: true
 							}).then(
 							  function () {
 								  $( "#sync" ).submit();
-							  },
-							  function (dismiss) {
-							    if (dismiss === 'timer') {
-							    	 $( "#sync" ).submit();
-							    }
 							  })
 					}
 				});

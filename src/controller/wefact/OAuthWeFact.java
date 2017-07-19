@@ -41,11 +41,11 @@ public class OAuthWeFact extends Authenticate {
 		
 		if (dbToken == null) {
 			WeFactHandler we = new WeFactHandler();
+			// If parameter clientToken doesn't exist
 			if (!req.getParameterMap().containsKey("clientToken")) {
 				rd = req.getRequestDispatcher("weFact.jsp");
 				req.getSession().setAttribute("clientToken", null);
-				System.out.println("DBTOKEN " + dbToken);
-			// If clientToken is filled
+			// If clientToken exist
 			} else {
 				String clientToken = req.getParameter("clientToken");
 				Object obj = we.checkClientToken(clientToken);

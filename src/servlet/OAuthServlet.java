@@ -2,6 +2,7 @@ package servlet;
 
 import controller.WorkOrderHandler;
 import controller.eaccouting.OAuthEAccounting;
+import controller.moloni.OAuthMoloni;
 import controller.twinfield.OAuthTwinfield;
 import controller.wefact.OAuthWeFact;
 import java.io.IOException;
@@ -54,9 +55,17 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("types", null);
 				//paymentmethod
 				req.getSession().setAttribute("paymentmethod", null);
-				System.out.println("ERROR"+req.getSession().getAttribute("errorMessage"));
 				OAuthEAccounting oauth3 = new OAuthEAccounting();
 				oauth3.authenticate(softwareToken, req, resp);
+				break;
+			case "Moloni":
+				req.getSession().setAttribute("offices", null);
+				//typeofwork
+				req.getSession().setAttribute("types", null);
+				//paymentmethod
+				req.getSession().setAttribute("paymentmethod", null);
+				OAuthMoloni oauth4 = new OAuthMoloni();
+				oauth4.authenticate(softwareToken, req, resp);
 				break;
 			}
 		}else{
@@ -78,6 +87,12 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
 				rd = req.getRequestDispatcher("eAccounting.jsp");
+				break;
+			case "Moloni":
+				req.getSession().setAttribute("softwareToken", softwareToken);			
+				req.getSession().setAttribute("logs", null);
+				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				rd = req.getRequestDispatcher("moloni.jsp");
 				break;
 			default:
 				break;

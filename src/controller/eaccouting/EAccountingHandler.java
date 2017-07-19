@@ -52,13 +52,9 @@ public class EAccountingHandler {
 	final String softwareName = "EAccounting";
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
 	// Change to environment variable
-	protected String host = System.getenv("EACCOUNTING_API_HOST");
+	protected static String host = System.getenv("EACCOUNTING_API_HOST");
 	
 	public boolean checkAccessToken(String accessToken) throws IOException {
-		if (host == null) {
-			// Host
-			host = "eaccountingapi-sandbox.test.vismaonline.com";
-		}
 		String link = "https://" + host + "/v1/articles";
 		
 		try {
@@ -81,14 +77,13 @@ public class EAccountingHandler {
 		return true;
 	}
 	
-	public Object getJSON(String accessToken, String parameters, String path, String method)
+	public static Object getJSON(String accessToken, String parameters, String path, String method)
 			throws IOException, URISyntaxException {
 		String jsonString = null;
 		Object object = null;
 		try {
 			URI uri = new URI("https", host, path, parameters, null);
 			String request = uri.toASCIIString();
-			System.out.println("REQUESTLINK " + request);
 			URL url = new URL(request);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
@@ -99,11 +94,17 @@ public class EAccountingHandler {
 			conn.setRequestProperty("Authorization", "Bearer " + accessToken);
 			conn.setUseCaches(false);
 			if (conn.getResponseCode() > 200 && conn.getResponseCode() < 405) {
+				System.out.println("Response message " + conn.getResponseMessage());
 				return null;
 			}
 			BufferedReader br = new BufferedReader(
 					new InputStreamReader((conn.getInputStream()), StandardCharsets.UTF_8));
-			
+			// if (conn.getResponseCode() > 201 && conn.getResponseCode() < 405)
+			// {
+			// System.out.println("RESPONSEMESSAGE " +
+			// conn.getResponseMessage());
+			// return null;
+			// }
 			while ((jsonString = br.readLine()) != null) {
 				switch (method) {
 				case "array":
@@ -122,7 +123,8 @@ public class EAccountingHandler {
 		return object;
 	}
 	
-	public Object putJSON(String accessToken, JSONObject json, String path, String method, String requestMethod) {
+	public static Object putJSON(String accessToken, JSONObject json, String path, String method,
+			String requestMethod) {
 		String jsonString = null;
 		Object object = null;
 		String jsonRequestString = json + "";
@@ -146,7 +148,7 @@ public class EAccountingHandler {
 				wr.write(postData);
 			}
 			
-			if (conn.getResponseCode() > 201 && conn.getResponseCode() < 405) {
+			if (conn.getResponseCode() > 201 && conn.getResponseCode() <= 409) {
 				System.out.println("RESPONSEMESSAGE " + conn.getResponseMessage());
 				return null;
 			}
@@ -222,6 +224,58 @@ public class EAccountingHandler {
 			timestamp = za.format(formatter);
 		}
 		return timestamp;
+	}
+	
+	public static JSONObject setUniversalMaterial(Token t, String materialCode) {
+		JSONObject setMaterialResponse = null;
+		// Get BTW id default is 21%
+		String path = "/v1/articleaccountcodings";
+		JSONArray codingsArray, unitArray;
+		JSONObject accCodings, unitObject;
+		String btwId = "";
+		String unitId = "";
+		try {
+			
+			codingsArray = (JSONArray) getJSON(t.getAccessToken(), "", path, "array");
+			System.out.println("CodingsArray " + codingsArray);
+			for (int i = 0; i < codingsArray.length(); i++) {
+				accCodings = codingsArray.getJSONObject(i);
+				String type = accCodings.getString("Type");
+				String vat = accCodings.getString("VatRate");
+				if (type.equals("Goods") && vat.equals("21%")) {
+					logger.info("BTW RESPONSE " + accCodings);
+					btwId = accCodings.getString("Id");
+				}
+			}
+			// Get Unit id default is Stuk
+			path = "/v1/units";
+			unitArray = (JSONArray) getJSON(t.getAccessToken(), "", path, "array");
+			for (int i = 0; i < unitArray.length(); i++) {
+				unitObject = unitArray.getJSONObject(i);
+				String code = unitObject.getString("Code");
+				
+				// Stuk
+				if (code.equals("PCE")) {
+					logger.info("UNITID RESPONSE " + unitObject);
+					unitId = unitObject.getString("Id");
+				}
+			}
+			
+			JSONObject JSONObject = new JSONObject();
+			JSONObject.put("IsActive", true);
+			JSONObject.put("Number", materialCode);
+			JSONObject.put("Name", "Material onbekend");
+			JSONObject.put("CodingId", btwId);
+			JSONObject.put("UnitId", unitId);
+			path = "/v1/articles";
+			logger.info("setMaterialRequest " + JSONObject);
+			setMaterialResponse = (JSONObject) putJSON(t.getAccessToken(), JSONObject, path, "object", "POST");
+			logger.info("setMaterialResponse " + setMaterialResponse);
+		} catch (IOException | URISyntaxException | JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return setMaterialResponse;
 	}
 	
 	// Producten
@@ -329,7 +383,6 @@ public class EAccountingHandler {
 		if (date != null && hasContent) {
 			parameters += "changedFromDate=" + getDateMinHour(date);
 		}
-		
 		jsonArray = (JSONArray) getJSON(t.getAccessToken(), parameters, path, "array");
 		logger.info("Relation response JSONArray " + jsonArray);
 		if (jsonArray != null) {
@@ -341,8 +394,8 @@ public class EAccountingHandler {
 				JSONObject debtorDetails = (JSONObject) getJSON(t.getAccessToken(), parameters, path, "object");
 				logger.info("Relation response debtorDetails " + debtorDetails);
 				ArrayList<Address> address = new ArrayList<Address>();
-				String modified = debtorDetails.getString("ChangedUtc");
-				String debtorNr = debtorDetails.getString("CustomerNumber");
+				String modified = debtorDetails.optString("ChangedUtc", "");
+				String debtorNr = debtorDetails.optString("CustomerNumber", "");
 				String dbModified = ObjectDAO.getModifiedDate(t.getSoftwareToken(), "invoice", debtorNr, "relations");
 				// Check if data is modified
 				if (dbModified == null || date == null) {
@@ -376,11 +429,12 @@ public class EAccountingHandler {
 				}
 				String invoiceContact = invoiceFirstName;
 				String invoiceEmail = debtorDetails.optString("EmailAddress");
+				String contactEmail = debtorDetails.optString("ContactPersonEmail");
 				String invoicestreet = debtorDetails.optString("InvoiceAddress1", "<leeg>");
 				String invoicepostalCode = debtorDetails.optString("InvoicePostalCode", "<leeg>");
 				String invoicecity = debtorDetails.optString("InvoiceCity", "<leeg>");
 				if (!invoicecity.equals("<leeg>")) {
-					Address invoice = new Address(invoiceContact, phoneNr, invoiceEmail, invoicestreet, "",
+					Address invoice = new Address(invoiceContact, phoneNr, contactEmail, invoicestreet, "",
 							invoicepostalCode, invoicecity, remark, "invoice", 1);
 					address.add(invoice);
 				}
@@ -425,7 +479,7 @@ public class EAccountingHandler {
 				ArrayList<Address> address = new ArrayList<Address>();
 				jsonObj = jsonArray.getJSONObject(i);
 				int status = jsonObj.getInt("Status");
-				//Status is verzonden
+				// Status is verzonden
 				if (status == 2) {
 					String id = jsonObj.getString("Id");
 					path = "/v1/orders/" + id;
@@ -460,19 +514,19 @@ public class EAccountingHandler {
 					}
 					// Postal
 					String companyName = orderDetails.optString("DeliveryCustomerName", invoiceCompanyName);
-					String debtorNr = debtorDetails.optInt("CustomerNumber") + "";
 					String email = debtorDetails.optString("EmailAddress", invoiceEmail);
 					String street = debtorDetails.optString("DeliveryAddress1", invoicestreet);
 					String postalCode = debtorDetails.optString("DeliveryPostalCode", invoicepostalCode);
 					String city = debtorDetails.optString("DeliveryCity", invoicecity);
 					
 					if (!invoicecity.equals("<leeg>")) {
-						Address postal = new Address(invoiceCompanyName, phoneNr, invoiceEmail, street, "", postalCode,
-								city, remark, "postal", 2);
+						Address postal = new Address(companyName, phoneNr, invoiceEmail, street, "", postalCode, city,
+								remark, "postal", 2);
 						address.add(postal);
 					}
 					String contact = orderDetails.optString("YourReference", "");
-					Relation r = new Relation(companyName, invoiceDebtorNr, contact, invoiceEmail, address, null, null);
+					Relation r = new Relation(invoiceCompanyName, invoiceDebtorNr, contact, invoiceEmail, address, null,
+							null);
 					relations.add(r);
 					
 					// Materials
@@ -485,10 +539,10 @@ public class EAccountingHandler {
 						JSONObject rowDetails = rows.getJSONObject(j);
 						boolean isTextRow = rowDetails.getBoolean("IsTextRow");
 						if (!isTextRow) {
-							String projectId = rowDetails.getString("ProjectId");
+							String projectId = rowDetails.optString("ProjectId", "");
 							Project dbProject = ObjectDAO.getProjectById(t.getSoftwareToken(), projectId);
 							
-							if(dbProject != null){
+							if (dbProject != null) {
 								projectNr = dbProject.getCode();
 							}
 							String productId = rowDetails.getString("ArticleId");
@@ -512,8 +566,7 @@ public class EAccountingHandler {
 					String externProjectNr = orderDetails.optInt("Number") + "";
 					String typeofwork = set.getImportOffice();
 					String paymentMethod = set.getExportOffice();
-					System.out.println("PROJECTNR " + projectNr);
-					w = new WorkOrder(projectNr, convertDate(workDate, "dd-MM-yyyy hh:mm:ss"), email, email, invoiceDebtorNr,
+					w = new WorkOrder(projectNr, convertDate(workDate, "dd-MM-yyyy"), email, email, invoiceDebtorNr,
 							status + "", paymentMethod, materials, workDate, null, id, null, relations, null, null,
 							null, externProjectNr, typeofwork, workDescription, null, null, null);
 					
@@ -525,7 +578,6 @@ public class EAccountingHandler {
 		if (!workorders.isEmpty()) {
 			JSONArray responseArray = (JSONArray) WorkOrderHandler.addData(t.getSoftwareToken(), workorders,
 					"PostWorkorders", softwareName, null);
-			System.out.println("WORKORDERS POST" + workorders.toString());
 			for (int i = 0; i < responseArray.length(); i++) {
 				JSONObject object = responseArray.getJSONObject(i);
 				String id = object.optString("workorder_no", "");
@@ -592,7 +644,6 @@ public class EAccountingHandler {
 				projects.add(p);
 				importCount++;
 			}
-			System.out.println("PROJECTS " + projects.toString());
 		}
 		if (!projects.isEmpty()) {
 			int successAmount = (int) WorkOrderHandler.addData(t.getSoftwareToken(), projects, "projects", softwareName,
@@ -689,12 +740,10 @@ public class EAccountingHandler {
 				lineNumber++;
 			}
 			JSONObject.put("Rows", jsonArray);
-			System.out.println("JSONObject setOrderStatus" + JSONObject);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		JSONObject setOrderResponse = (JSONObject) putJSON(t.getAccessToken(), JSONObject, path, "object", "PUT");
-		System.out.println("setOrderResponse " + setOrderResponse);
 	}
 	
 	// Create verkoopfactuur
@@ -710,18 +759,33 @@ public class EAccountingHandler {
 				set.getFactuurType(), false, softwareName);
 		for (WorkOrder w : allData) {
 			exportAmount++;
+			// Check if projectnr is empty
+			// if empty create draftInvoice
+			// Else create voucher
+			Boolean b = false;
+			// if (w.getProjectNr().equals("") || w.getProjectNr() == null) {
+			// JSONObject = factuurJSON(w, t, set.getRoundedHours());
+			// } else {
+			// b = true;
+			// JSONObject = voucherJSON(w, t, set.getRoundedHours());
+			// }
 			JSONObject = factuurJSON(w, t, set.getRoundedHours());
 			String error = (String) JSONObject.opt("Error");
 			if (error != null) {
 				errorDetails += error;
 				errorAmount++;
 			} else {
-				logger.info("factuur request " + JSONObject);
-				String path = "/v1/customerinvoicedrafts";
-				JSONObject setVerkoopFactuur = (JSONObject) putJSON(t.getAccessToken(), JSONObject, path, "object",
-						"POST");
-				System.out.println("setVerkoopFactuur " + setVerkoopFactuur);
-				if (setVerkoopFactuur.optString("Id") != null) {
+				logger.info("REQUEST " + JSONObject);
+				JSONObject response = null;
+				String path = null;
+				if (!b) {
+					path = "/v1/customerinvoicedrafts";
+				} else {
+					path = "/v1/vouchers";
+				}
+				response = (JSONObject) putJSON(t.getAccessToken(), JSONObject, path, "object", "POST");
+				logger.info("RESPONSE " + response);
+				if (response.optString("Id") != null) {
 					successAmount++;
 					// Boolean b = null;
 					// try {
@@ -746,6 +810,91 @@ public class EAccountingHandler {
 		}
 		return new String[] { errorMessage, errorDetails };
 	}
+	
+//	private JSONObject voucherJSON(WorkOrder w, Token t, int roundedHours) throws JSONException {
+//		JSONArray JSONArrayRows = null;
+//		String error = "";
+//		String hourNumber = "1800";
+//		JSONObject JSONObject = new JSONObject();
+//		try {
+//			// Map date
+//			String workDate = w.getWorkDate();
+//			String workEndDate = w.getWorkEndDate();
+//			try {
+//				SimpleDateFormat dt = new SimpleDateFormat("dd-MM-yyyy");
+//				
+//				if (workEndDate.equals("")) {
+//					workEndDate = getCurrentDate(null);
+//				} else {
+//					Date formatDate1 = dt.parse(w.getWorkEndDate());
+//					SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+//					workEndDate = dt1.format(formatDate1);
+//				}
+//				if (workDate.equals("")) {
+//					workDate = getCurrentDate(null);
+//				} else {
+//					Date formatDate = dt.parse(w.getWorkDate());
+//					SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+//					workDate = dt1.format(formatDate);
+//				}
+//				
+//			} catch (ParseException e) {
+//				e.printStackTrace();
+//			}
+//			Relation r = w.getRelations().get(0);
+//			JSONObject.put("VoucherDate", workDate);
+//			JSONObject.put("VoucherText", "Verkoopfactuur voor " + r.getDebtorNumber() + " " + r.getCompanyName());
+//			JSONObject jsonRow = new JSONObject();
+//			jsonRow.put("AccountNumber", hourNumber);
+//			JSONArrayRows = new JSONArray();
+//			double hourAmount = 0;
+//			for (WorkPeriod p : w.getWorkPeriods()) {
+//				HourType h = ObjectDAO.getHourType(t.getSoftwareToken(), p.getHourType());
+//				// Get ID from db(hourtype)
+//				if (h == null) {
+//					error += "Hourtype " + p.getHourType()
+//							+ " not found in eAccounting or hourtype is not synchronized\n";
+//					return new JSONObject().put("Error", error);
+//				} else {
+//					double number = p.getDuration();
+//					double hours = roundedHours;
+//					double urenInteger = (number % hours);
+//					if (urenInteger < (hours / 2)) {
+//						number = number - urenInteger;
+//					} else {
+//						number = number - urenInteger + hours;
+//					}
+//					double quantity = (number / 60);
+//					hourAmount += quantity * h.getSalePrice();
+//					System.out.println("HourAmountPrice " + hourAmount);
+//				}
+//			}
+//			DecimalFormat df1 = new DecimalFormat("#.##");
+//			String formatted1 = df1.format(hourAmount);
+//			hourAmount = Double.parseDouble(formatted1.toString().replaceAll(",", "."));
+//			jsonRow.put("CreditAmount", hourAmount);
+//			Project dbProject = ObjectDAO.getProjectByCode(t.getSoftwareToken(), w.getProjectNr());
+//			if (dbProject != null) {
+//				jsonRow.put("ProjectId", dbProject.getCodeExt());
+//			}
+//			JSONArrayRows.put(jsonRow);
+//			jsonRow = new JSONObject();
+//			jsonRow.put("AccountNumber", 1200);
+//			jsonRow.put("DebitAmount", hourAmount);
+//			JSONArrayRows.put(jsonRow);
+//			JSONObject.put("Rows", JSONArrayRows);
+//			System.out.println("JSON VOUCHER OBJECT " + JSONObject);
+			
+//			
+//		} catch (JSONException | SQLException e) {
+//			e.printStackTrace();
+//		}
+//		if (error.equals("")) {
+//			return JSONObject;
+//		} else {
+//			return new JSONObject().put("Error", error);
+//		}
+//	}
 	
 	public JSONObject factuurJSON(WorkOrder w, Token t, int roundedHours) throws JSONException {
 		JSONArray JSONArrayMaterials = null;
@@ -779,11 +928,118 @@ public class EAccountingHandler {
 			}
 			JSONObject.put("EuThirdParty", false);
 			JSONObject.put("CurrencyCode", "EUR");
+			
+			JSONObject.put("CustomerIsPrivatePerson", false);
+			JSONObject.put("CustomerEmail", w.getCustomerEmail());
+			
+			JSONArrayMaterials = new JSONArray();
+			int lineNumber = 0;
+			for (Material m : w.getMaterials()) {
+				JSONObject json = new JSONObject();
+				// Get ID from db(material)
+				Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
+				Material dbMaterial = ObjectDAO.getMaterials(t.getSoftwareToken(), m.getCode());
+				if (dbMaterial == null) {
+					Material dbUniversalMaterial = ObjectDAO.getMaterials(t.getSoftwareToken(), set.getMaterialCode());
+					String materialId = null;
+					if (dbUniversalMaterial == null) {
+						return new JSONObject().put("Error",
+								"Universal material " + set.getMaterialCode() + " not found\n");
+					} else {
+						materialId = dbUniversalMaterial.getId();
+					}
+					json.put("ArticleId", materialId);
+					json.put("ArticleNumber", m.getCode());
+				} else {
+					String materialId = dbMaterial.getId();
+					json.put("ArticleId", materialId);
+					json.put("ArticleNumber", m.getCode());
+				}
+				json.put("LineNumber", lineNumber);
+				json.put("isTextRow", false);
+				json.put("Text", m.getDescription());
+				// Calculate price incl 21% BTW and round price with 2 decimals
+				double price = 0;
+				DecimalFormat df = new DecimalFormat("#.##");
+				String formatted = df.format(m.getPrice());
+				price = Double.parseDouble(formatted.toString().replaceAll(",", "."));
+				json.put("UnitPrice", price);
+				json.put("UnitName", m.getUnit());
+				json.put("Quantity", m.getQuantity());
+				json.put("IsWorkCost", false);
+				json.put("IsVatFree", false);
+				Project dbProject = ObjectDAO.getProjectByCode(t.getSoftwareToken(), w.getProjectNr());
+				if (dbProject != null) {
+					json.put("ProjectId", dbProject.getCodeExt());
+				}
+				JSONArrayMaterials.put(json);
+				lineNumber++;
+				
+			}
+			for (WorkPeriod p : w.getWorkPeriods()) {
+				HourType h = ObjectDAO.getHourType(t.getSoftwareToken(), p.getHourType());
+				// Get ID from db(hourtype)
+				if (h == null) {
+					error += "Hourtype " + p.getHourType()
+							+ " not found in eAccounting or hourtype is not synchronized\n";
+					return new JSONObject().put("Error", error);
+				} else {
+					JSONObject json = new JSONObject();
+					json.put("ArticleId", h.getId());
+					double number = p.getDuration();
+					double hours = roundedHours;
+					double urenInteger = (number % hours);
+					if (urenInteger < (hours / 2)) {
+						number = number - urenInteger;
+					} else {
+						number = number - urenInteger + hours;
+					}
+					double quantity = (number / 60);
+					DecimalFormat df = new DecimalFormat("#.##");
+					String formatted = df.format(quantity);
+					quantity = Double.parseDouble(formatted.toString().replaceAll(",", "."));
+					json.put("ArticleNumber", p.getHourType());
+					json.put("LineNumber", lineNumber);
+					json.put("isTextRow", false);
+					if (p.getDescription().equals("")) {
+						json.put("Text", h.getName());
+					} else {
+						json.put("Text", p.getDescription());
+					}
+					DecimalFormat df1 = new DecimalFormat("#.##");
+					String formatted1 = df1.format(h.getSalePrice());
+					Double unitPrice = Double.parseDouble(formatted1.toString().replaceAll(",", "."));
+					json.put("UnitPrice", unitPrice);
+					json.put("UnitName", "Uur");
+					json.put("Quantity", quantity);
+					json.put("IsWorkCost", false);
+					json.put("IsVatFree", false);
+					Project dbProject = ObjectDAO.getProjectByCode(t.getSoftwareToken(), w.getProjectNr());
+					if (dbProject != null) {
+						json.put("ProjectId", dbProject.getCodeExt());
+					}
+					JSONArrayMaterials.put(json);
+					lineNumber++;
+				}
+			}
+			JSONObject.put("Rows", JSONArrayMaterials);
 			// Get ID from db
 			Relation dbRelation = ObjectDAO.getRelation(t.getSoftwareToken(), w.getCustomerDebtorNr(), "invoice");
 			if (dbRelation == null) {
-				error += "Relation " + w.getCustomerDebtorNr()
-						+ " not found in eAccounting or relation is not synchronized\n";
+				// error += "Relation " + w.getCustomerDebtorNr()
+				// + " not found in eAccounting or relation is not
+				// synchronized\n";
+				// Create new relation
+				JSONObject object = setRelation(t, w);
+				if (object != null) {
+					JSONObject.put("CustomerId", object.getString("Id"));
+				} else {
+					if (w.getCustomerDebtorNr().equals("") || w.getCustomerDebtorNr() == null) {
+						error = "Something is wrong with relation " + w.getRelations().get(0).getCompanyName() + "\n";
+					} else {
+						error = "Relation " + w.getCustomerDebtorNr() + " is not synchronized\n";
+					}
+				}
 			} else {
 				String customerId = dbRelation.getId();
 				JSONObject.put("CustomerId", customerId);
@@ -792,7 +1048,7 @@ public class EAccountingHandler {
 			JSONObject.put("InvoiceDate", workDate);
 			JSONObject.put("DueDate", workEndDate);
 			JSONObject.put("RotReducedInvoicingType", "Normal");
-			JSONObject.put("ReverseChargeOnConstructionServices", true);
+			JSONObject.put("ReverseChargeOnConstructionServices", false);
 			for (Relation r : w.getRelations()) {
 				Address a = r.getAddressess().get(0);
 				if (a.getType().equals("invoice")) {
@@ -812,88 +1068,7 @@ public class EAccountingHandler {
 				}
 			}
 			
-			JSONObject.put("CustomerIsPrivatePerson", true);
-			JSONObject.put("CustomerEmail", w.getCustomerEmail());
-			
-			JSONArrayMaterials = new JSONArray();
-			int lineNumber = 0;
-			double percentVat = 21;
-			for (Material m : w.getMaterials()) {
-				JSONObject json = new JSONObject();
-				// Get ID from db(material)
-				Material dbMaterial = ObjectDAO.getMaterials(t.getSoftwareToken(), m.getCode());
-				if (dbMaterial == null) {
-					error += "Material " + m.getCode() + " not found in eAccounting or material is not synchronized\n";
-				} else {
-					String materialId = dbMaterial.getId();
-					json.put("ArticleId", materialId);
-				}
-				json.put("ArticleNumber", m.getCode());
-				json.put("LineNumber", lineNumber);
-				json.put("PercentVat", percentVat);
-				json.put("isTextRow", false);
-				json.put("Text", m.getDescription());
-				json.put("UnitPrice", m.getPrice() * 1.21);
-				json.put("UnitName", m.getUnit());
-				json.put("Quantity", m.getQuantity());
-				json.put("IsWorkCost", false);
-				json.put("IsVatFree", false);
-				Project dbProject = ObjectDAO.getProjectByCode(t.getSoftwareToken(), w.getProjectNr());
-				if (dbProject != null) {
-					json.put("ProjectId", dbProject.getCodeExt());
-				}
-				JSONArrayMaterials.put(json);
-				lineNumber++;
-				
-			}
-			for (WorkPeriod p : w.getWorkPeriods()) {
-				HourType h = ObjectDAO.getHourType(t.getSoftwareToken(), p.getHourType());
-				// Get ID from db(hourtype)
-				if (h == null) {
-					error += "Hourtype " + p.getHourType()
-							+ " not found in eAccounting or hourtype is not synchronized\n";
-				} else {
-					JSONObject json = new JSONObject();
-					json.put("ArticleId", h.getId());
-					double number = p.getDuration();
-					System.out.println("DURATION MINUTE " + number);
-					double hours = roundedHours;
-					double urenInteger = (number % hours);
-					if (urenInteger < (hours / 2)) {
-						number = number - urenInteger;
-					} else {
-						number = number - urenInteger + hours;
-					}
-					double quantity = (number / 60);
-					
-					DecimalFormat df = new DecimalFormat("#.##");
-					String formatted = df.format(quantity);
-					quantity = Double.parseDouble(formatted.toString().replaceAll(",", "."));
-					json.put("ArticleNumber", p.getHourType());
-					json.put("LineNumber", lineNumber);
-					json.put("PercentVat", percentVat);
-					json.put("isTextRow", false);
-					if (p.getDescription().equals("")) {
-						json.put("Text", p.getHourType());
-					} else {
-						json.put("Text", p.getDescription());
-					}
-					
-					json.put("UnitPrice", h.getSalePrice() * 1.21);
-					json.put("UnitName", "Uur");
-					json.put("Quantity", quantity);
-					json.put("IsWorkCost", false);
-					json.put("IsVatFree", false);
-					Project dbProject = ObjectDAO.getProjectByCode(t.getSoftwareToken(), w.getProjectNr());
-					if (dbProject != null) {
-						json.put("ProjectId", dbProject.getCodeExt());
-					}
-					JSONArrayMaterials.put(json);
-					lineNumber++;
-				}
-			}
-			JSONObject.put("Rows", JSONArrayMaterials);
-			
+			System.out.println("SETFACTUUR JSONOBJECT " + JSONObject);
 		} catch (JSONException | SQLException e) {
 			e.printStackTrace();
 		}
@@ -903,6 +1078,63 @@ public class EAccountingHandler {
 			return new JSONObject().put("Error", error);
 		}
 		
+	}
+	
+	public static JSONObject setRelation(Token t, WorkOrder w) {
+		JSONObject setRelationResponse = null;
+		// Get BTW id default is 21%
+		String path = "/v1/termsofpayment";
+		JSONArray termsofpaymentArray;
+		JSONObject termsofpayment;
+		String id = "";
+		JSONObject JSONObject = new JSONObject();
+		try {
+			termsofpaymentArray = (JSONArray) getJSON(t.getAccessToken(), "", path, "array");
+			for (int i = 0; i < termsofpaymentArray.length(); i++) {
+				termsofpayment = termsofpaymentArray.getJSONObject(i);
+				String type = termsofpayment.getString("TermsOfPaymentTypeText");
+				int numberDays = termsofpayment.getInt("NumberOfDays");
+				if (type.equals("Normal") && numberDays == 30) {
+					logger.info("PaymentMethod RESPONSE " + termsofpayment);
+					id = termsofpayment.getString("Id");
+				}
+			}
+			JSONObject.put("TermsOfPaymentId", id);
+			JSONObject.put("IsPrivatePerson", false);
+			for (Relation r : w.getRelations()) {
+				Address a = r.getAddressess().get(0);
+				if (a.getType().equals("invoice")) {
+					if (w.getCustomerDebtorNr() != null && !w.getCustomerDebtorNr().equals("")) {
+						JSONObject.put("CustomerNumber", w.getCustomerDebtorNr());
+					}
+					JSONObject.put("EmailAddress", r.getEmailWorkorder());
+					JSONObject.put("InvoiceAddress1", a.getStreet());
+					JSONObject.put("InvoiceCity", a.getCity());
+					JSONObject.put("InvoicePostalCode", a.getPostalCode());
+					JSONObject.put("MobilePhone", a.getPhoneNumber());
+					JSONObject.put("Name", r.getCompanyName());
+					JSONObject.put("Note", a.getRemark());
+				} else if (a.getType().equals("postal")) {
+					JSONObject.put("ContactPersonEmail", a.getEmail());
+					if (!a.getName().equals("") && a.getName() != null) {
+						JSONObject.put("ContactPersonName", a.getName());
+					}
+					JSONObject.put("DeliveryCustomerName", r.getCompanyName());
+					JSONObject.put("DeliveryAddress1", a.getStreet());
+					JSONObject.put("DeliveryCity", a.getCity());
+					JSONObject.put("DeliveryPostalCode", a.getPostalCode());
+				}
+				
+			}
+			path = "/v1/customers";
+			logger.info("setRelationRequest " + JSONObject);
+			setRelationResponse = (JSONObject) putJSON(t.getAccessToken(), JSONObject, path, "object", "POST");
+			logger.info("setRelationResponse " + setRelationResponse);
+		} catch (IOException | URISyntaxException | JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return setRelationResponse;
 	}
 	
 	private String encodeFileToBase64Binary(String pdfUrl) throws IOException {
@@ -965,78 +1197,3 @@ public class EAccountingHandler {
 		return true;
 	}
 }
-// private String setRelation(WorkOrder w, String clientToken) {
-// String debtorCode = null;
-// controller = "debtor";
-// action = "add";
-// for (Relation r : w.getRelations()) {
-// Address a = r.getAddressess().get(0);
-// if (a.getType().equals("invoice")) {
-// JSONObject JSONObject = new JSONObject();
-// try {
-// JSONObject.put("api_key", clientToken);
-// JSONObject.put("controller", controller);
-// JSONObject.put("action", action);
-//
-// JSONObject.put("DebtorCode", w.getCustomerDebtorNr());
-// JSONObject.put("CompanyName", r.getCompanyName());
-// JSONObject.put("Initials", a.getName());
-// JSONObject.put("Address", a.getStreet());
-// JSONObject.put("ZipCode", a.getPostalCode());
-// JSONObject.put("City", a.getCity());
-// JSONObject.put("EmailAddress", a.getEmail());
-// JSONObject.put("PhoneNumber", a.getPhoneNumber());
-// JSONObject.put("Description", w.getWorkDescription());
-// JSONObject jsonList = getJsonResponse(clientToken, controller, action, array,
-// JSONObject + "");
-// String status = jsonList.getString("status");
-// if (status.equals("success")) {
-// JSONObject debtorDetails = jsonList.getJSONObject("debtor");
-// debtorCode = debtorDetails.getString("DebtorCode");
-// } else {
-// errorDetails += "Error while adding relation\n";
-// }
-// } catch (JSONException | IOException e) {
-// e.printStackTrace();
-// }
-// }
-// }
-// return debtorCode;
-// }
-//
-// private String[] setMaterial(Material m, String clientToken, Object obj) {
-// String materialCode = null, description = null;
-// controller = "product";
-// action = "add";
-// JSONObject JSONObject = new JSONObject();
-// try {
-// JSONObject.put("api_key", clientToken);
-// JSONObject.put("controller", controller);
-// JSONObject.put("action", action);
-// JSONObject.put("ProductCode", m.getCode());
-// JSONObject.put("ProductName", m.getDescription());
-// JSONObject.put("ProductKeyPhrase", m.getDescription());
-// JSONObject.put("NumberSuffix", m.getUnit());
-// JSONObject.put("PriceExcl", m.getPrice());
-// JSONObject jsonList = getJsonResponse(clientToken, controller, action, array,
-// JSONObject + "");
-// String status = jsonList.getString("status");
-// if (status.equals("success")) {
-// JSONObject materialDetails = jsonList.getJSONObject("product");
-// materialCode = materialDetails.getString("ProductCode");
-// description = materialDetails.getString("ProductName");
-// } else {
-// if (String.valueOf(obj).startsWith("Productcode " + m.getCode())) {
-// materialCode = null;
-// description = null;
-// } else {
-// errorDetails += "Error while adding new material\n";
-// }
-// }
-// } catch (JSONException | IOException e) {
-// e.printStackTrace();
-// }
-//
-// return new String[] { materialCode, description };
-// }
-// }

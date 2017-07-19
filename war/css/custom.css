@@ -58,3 +58,19 @@
 	margin-right: 20px;
 	border-color: #fff !important;
 }
+
+.image img {
+	-webkit-transition: all 1s ease; /* Safari and Chrome */
+	-moz-transition: all 1s ease; /* Firefox */
+	-ms-transition: all 1s ease; /* IE 9 */
+	-o-transition: all 1s ease; /* Opera */
+	transition: all 1s ease;
+}
+
+.image:hover img {
+	-webkit-transform: scale(1.90); /* Safari and Chrome */
+	-moz-transform: scale(1.90); /* Firefox */
+	-ms-transform: scale(1.90); /* IE 9 */
+	-o-transform: scale(1.90); /* Opera */
+	transform: scale(1.90);
+}

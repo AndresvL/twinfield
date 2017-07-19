@@ -1,4 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <!DOCTYPE html>
@@ -10,15 +11,19 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <title>Twinfield Koppeling</title>
+<!-- Custom CSS -->
+<link href="css/custom.css" rel="stylesheet">
 <!-- Bootstrap Core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <!-- Theme CSS -->
 <link href="css/freelancer.min.css" rel="stylesheet">
 <!-- Custom Fonts -->
-<link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet"
-	type="text/css">
-<link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic"
+<link href="vendor/font-awesome/css/font-awesome.min.css"
+	rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700"
+	rel="stylesheet" type="text/css">
+<link
+	href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic"
 	rel="stylesheet" type="text/css">
 <!-- Sweet Alert -->
 <script src="sweetalert2/sweetalert2.min.js"></script>
@@ -52,24 +57,15 @@
 	float: right;
 }
 
-.image img {
-	-webkit-transition: all 1s ease; /* Safari and Chrome */
-	-moz-transition: all 1s ease; /* Firefox */
-	-ms-transition: all 1s ease; /* IE 9 */
-	-o-transition: all 1s ease; /* Opera */
-	transition: all 1s ease;
-}
 
-.image:hover img {
-	-webkit-transform: scale(1.90); /* Safari and Chrome */
-	-moz-transform: scale(1.90); /* Firefox */
-	-ms-transform: scale(1.90); /* IE 9 */
-	-o-transform: scale(1.90); /* Opera */
-	transform: scale(1.90);
-}
 </style>
 </head>
 <body>
+<!-- Settings Section -->
+	<div id="WBA-section">
+		<img src="./img/werkbonapp.png" height="60" width="170" id="WBA_logo"/>
+		<img src="./img/Twinfield-logo.png" height="80" width="180" id="boekhoud_logo"/>
+	</div>
 	<!-- Settings Section -->
 	<div class="settings" style="display: none;">
 		<div class="panel-group">
@@ -85,16 +81,23 @@
 					</div>
 					<div class="modal-body">
 						<h4>Informatie</h4>
-						- Op deze pagina is het mogelijk om de <mark>import</mark> en <mark>export</mark>
-						gegevens tussen WerkbonApp en Twinfield in te stellen<br> - Elke 15 minuten zal
-						er een <mark>automatische synchronisatie</mark> plaatsvinden aan de hand van deze
-						instellingen.<br> - Het is mogelijk om <mark>handmatig een synchronisatie
-							uit te voeren</mark> door onderaan op de knop Start Synchronisation te klikken.<br> <br>
+						- Op deze pagina is het mogelijk om de
+						<mark>import</mark>
+						en
+						<mark>export</mark>
+						gegevens tussen WerkbonApp en Twinfield in te stellen<br> -
+						Elke 15 minuten zal er een
+						<mark>automatische synchronisatie</mark>
+						plaatsvinden aan de hand van deze instellingen.<br> - Het is
+						mogelijk om
+						<mark>handmatig een synchronisatie uit te voeren</mark>
+						door onderaan op de knop Start Synchronisation te klikken.<br>
+						<br>
 						<h4>Belangrijk</h4>
-						<b>
-							Let op! Twinfield is leidend. <br>- De <abbr>import settings</abbr> mogen alleen
-							in Twinfield worden gewijzigd. <br> - Bij een <abbr>foutmelding</abbr> kan je op
-							het bericht(log) klikken om meer details te zien. <br> <br>
+						<b> Let op! Twinfield is leidend. <br>- De <abbr>import
+								settings</abbr> mogen alleen in Twinfield worden gewijzigd. <br> -
+							Bij een <abbr>foutmelding</abbr> kan je op het bericht(log)
+							klikken om meer details te zien. <br> <br>
 						</b>
 						<button type="button" id="show" class="btn btn-info">Show</button>
 						<h4>Data Mapping</h4>
@@ -146,9 +149,11 @@
 						</div>
 						<br>
 						<h4>Gebruikersrollen</h4>
-						In Twinfield <abbr>moet</abbr> de volgende gebruikersrol worden toegevoegd.<br> <br>
+						In Twinfield <abbr>moet</abbr> de volgende gebruikersrol worden
+						toegevoegd.<br> <br>
 						<div class="image">
-							<img src="./img/rol.png" width="100%" height="100%" data-toggle="tooltip"
+							<img src="./img/rol.png" width="100%" height="100%"
+								data-toggle="tooltip"
 								title="Ga naar Projecten > Uren & onkosten > Tarieven & toegang" />
 						</div>
 					</div>
@@ -168,13 +173,16 @@
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
 								<input type="hidden" value="${softwareName}" name="softwareName" />
-								<input type="hidden" value="${softwareToken}" name="softwareToken" />
+								<input type="hidden" value="${softwareToken}"
+									name="softwareToken" />
 								<label>Administratie</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-										title="Kies een administratie waaruit de objecten geimporteerd moeten worden"
-										height="13" width="13" />
-								<select name="offices" class="form-control" id="officelist" required>
-									<option disabled selected value>-- Selecteer een administratie --</option>
+									title="Kies een administratie waaruit de objecten geimporteerd moeten worden"
+									height="13" width="13" />
+								<select name="offices" class="form-control" id="officelist"
+									required>
+									<option disabled selected value>-- Selecteer een
+										administratie --</option>
 									<c:forEach items="${offices}" var="office">
 										<option value="${office.code}"
 											${office.code == importOffice ? 'selected="selected"' : ''}>
@@ -183,42 +191,45 @@
 								</select><br>
 								<label>Selecteer objecten om te importeren</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-										title="Selecteer de objecten die je wilt importeren van Twinfield naar WerkbonApp"
-										height="13" width="13" />
+									title="Selecteer de objecten die je wilt importeren van Twinfield naar WerkbonApp"
+									height="13" width="13" />
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" value="employees"
-											${"selected" == checkboxes.employees  ? 'checked' : ''} name="importType"
-											id="employees">
+											${"selected" == checkboxes.employees  ? 'checked' : ''}
+											name="importType" id="employees">
 										Medewerkers
 									</label>
 								</div>
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" value="projects"
-											${"selected" == checkboxes.projects  ? 'checked' : ''} name="importType"
-											id="projects">
+											${"selected" == checkboxes.projects  ? 'checked' : ''}
+											name="importType" id="projects">
 										Projecten
 									</label>
 								</div>
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" value="materials"
-											${"selected" == checkboxes.materials  ? 'checked' : ''} name="importType">
+											${"selected" == checkboxes.materials  ? 'checked' : ''}
+											name="importType">
 										Materialen
 									</label>
 								</div>
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" value="relations"
-											${"selected" == checkboxes.relations  ? 'checked' : ''} name="importType">
+											${"selected" == checkboxes.relations  ? 'checked' : ''}
+											name="importType">
 										Relaties
 									</label>
 								</div>
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" value="hourtypes"
-											${"selected" == checkboxes.hourtypes  ? 'checked' : ''} name="importType">
+											${"selected" == checkboxes.hourtypes  ? 'checked' : ''}
+											name="importType">
 										Uursoorten
 									</label>
 								</div>
@@ -233,9 +244,11 @@
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Administratie</label>
-								<img src="./img/vraagteken.jpg" data-toggle="tooltip" title="Export administratie is hetzelfde als import administratie" height="13"
-									width="13" />
-								<select name="exportOffices" class="form-control" id="officeExportList" disabled>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="Export administratie is hetzelfde als import administratie"
+									height="13" width="13" />
+								<select name="exportOffices" class="form-control"
+									id="officeExportList" disabled>
 									<option>-- Selecteer een administratie --</option>
 									<c:forEach items="${offices}" var="office">
 										<option value="${office.code}"
@@ -245,12 +258,15 @@
 								</select><br>
 								<label>Medewerker</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Deze medewerker wordt gekoppeld aan alle uurboekingen" height="13" width="13" />
+									title="Deze medewerker wordt gekoppeld aan alle uurboekingen"
+									height="13" width="13" />
 								<select name="users" class="form-control" id="userList" required>
 									<!-- <option disabled selected value>-- Selecteer een medewerker --</option> -->
-									<option selected value="Geen" ${"Geen" == setUser ? 'selected="selected"' : ''}>Geen</option>
+									<option selected value="Geen"
+										${"Geen" == setUser ? 'selected="selected"' : ''}>Geen</option>
 									<c:forEach items="${users}" var="user">
-										<option value="${user.code}" ${user.code == setUser ? 'selected="selected"' : ''}>
+										<option value="${user.code}"
+											${user.code == setUser ? 'selected="selected"' : ''}>
 											${user.name}</option>
 									</c:forEach>
 								</select>
@@ -260,17 +276,21 @@
 							<div class="form-group col-xs-12 floating-label controls">
 								<label>Werkbonstatus</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="De werkbonnen met status compleet worden opgehaald" height="13" width="13" />
-								<input class="form-control" type="text" disabled value="Compleet" />
-								<input class="form-control" type="hidden" name="factuurType" value="Compleet" />
+									title="De werkbonnen met status compleet worden opgehaald"
+									height="13" width="13" />
+								<input class="form-control" type="text" disabled
+									value="Compleet" />
+								<input class="form-control" type="hidden" name="factuurType"
+									value="Compleet" />
 							</div>
 						</div>
 						<br>
 						<div class="row">
 							<div class="form-group col-xs-12">
-								<input type="submit" class="btn btn-success btn-lg" value="Sync" id="syncbutton" />
-								<input type="submit" class="btn btn-success btn-lg" value="Save" name="category"
-									id="savebutton" />
+								<input type="submit" class="btn btn-success btn-lg" value="Sync"
+									id="syncbutton" />
+								<input type="submit" class="btn btn-success btn-lg" value="Save"
+									name="category" id="savebutton" />
 							</div>
 						</div>
 					</div>
@@ -315,7 +335,8 @@
 	<!-- Bootstrap Core JavaScript -->
 	<script src="vendor/bootstrap/js/bootstrap.min.js"></script>
 	<!-- Plugin JavaScript -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
 	<!-- Contact Form JavaScript -->
 	<script src="js/jqBootstrapValidation.js"></script>
 	<script src="js/contact_me.js"></script>

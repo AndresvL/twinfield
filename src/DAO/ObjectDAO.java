@@ -114,7 +114,6 @@ public class ObjectDAO {
 					m = new Material(subCode, null, unit, description, price, null, null, id);
 				}
 			}
-			System.out.println("material " + subCode + " stmt "+ stmt.toString());
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -249,10 +248,12 @@ public class ObjectDAO {
 		try {
 			Connection con = DBConnection.createDatabaseConnection(true);
 			String selectSQL = "SELECT * FROM relations WHERE softwareToken = ? AND code = ? AND type = ?";
+			
 			stmt = con.prepareStatement(selectSQL);
 			stmt.setString(1, softwareToken);
 			stmt.setString(2, debtorCode);
 			stmt.setString(3, type);
+			System.out.println("QUERY " + stmt.toString());
 			ResultSet output = stmt.executeQuery();
 			while (output.next()) {
 				allAddresses = new ArrayList<Address>();
@@ -327,7 +328,6 @@ public class ObjectDAO {
 				String modified = output.getString("modified");
 				t = new HourType(code, name, 0, 0, 0, price, 1, modified, id);
 			}
-			System.out.println("hourtype " + code + " stmt "+ stmt.toString());
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -358,7 +358,6 @@ public class ObjectDAO {
 	}
 	
 	public static void saveSettings(Settings set, String token) {
-		System.out.println("SaveSettings TEST " + token);
 		PreparedStatement stmt = null;
 		Connection con = null;
 		if (set != null) {
@@ -370,7 +369,11 @@ public class ObjectDAO {
 				stmt.setString(2, set.getExportOffice());
 				stmt.setString(3, set.getFactuurType());
 				stmt.setString(4, set.getImportObjects() + "");
-				stmt.setString(5, set.getUser());
+				if(set.getUser() == null){
+					stmt.setString(5, set.getMaterialCode());
+				}else{
+					stmt.setString(5, set.getUser());
+				}				
 				stmt.setString(6, set.getExportWerkbontype());
 				stmt.setInt(7, set.getRoundedHours());
 				stmt.setString(8, set.getSyncDate());
@@ -405,7 +408,7 @@ public class ObjectDAO {
 				int roundedHours = output.getInt("rounded_hours");
 				String syncDate = output.getString("sync_date");
 				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType,
-						roundedHours, syncDate);
+						roundedHours, syncDate, user);
 			}
 			statement.close();
 			

@@ -24,7 +24,14 @@ import object.workorder.Project;
 import object.workorder.Relation;
 import object.workorder.WorkOrder;
 import object.workorder.WorkPeriod;
-
+/**
+* The Universale Integration Adapter integrates with third-party invoice systems and WorkOrderApp
+* This application handles API requests and responses and maps the data with the data in WorkOrderApp. 
+*
+* @author  Andres van Lummel
+* @version 1.0
+* @since   2017-07-19
+*/
 //In this class you'll find all the methodes that are used to communicate with WBA
 public class WorkOrderHandler {
 	private static String version = "8";
@@ -34,18 +41,29 @@ public class WorkOrderHandler {
 	// final static String softwareToken =
 	// "622a8ef3a712344ef07a4427550ae1e2b38e5342";
 	// WEFACT
-//	final static String softwareToken = "872e5ad04c2607e59ba610712344ef07a4427550ae09bc33f1120a20ffe4";
-//	// EAccounting
-	final static String softwareToken = "9b39b7ab4178067360b9b39b7ab4178067360b8250d671fd448881e8db78250d671fd448881e8db7";
+	// final static String softwareToken =
+	// "872e5ad04c2607e59ba610712344ef07a4427550ae09bc33f1120a20ffe4";
+	// EAccounting
+	// final static String softwareToken =
+	// "9b39b7ab4178067360b9b39b7ab4178067360b8250d671fd448881e8db78250d671fd448881e8db7";
+	// Moloni
+	final static String softwareToken = "";
 	
-	
-	// change later
+	/**
+	* Returns a code that will be used to check if the token is valid.
+	* code 200 is success
+	*
+	* @param  token softwareToken received from WOA
+	* @version 1.0
+	* @since   2017-07-19
+	*/
 	public static int checkWorkOrderToken(String token, String softwareName) {
-		String link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
-				+ softwareToken;
+		String link = "";
 		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
+			link = link.trim();
+			System.out.println("GOOD link "+link);
 		}
 		int code = 0;
 		String output = null;
@@ -125,7 +143,7 @@ public class WorkOrderHandler {
 					int active = object.getInt("wrt_active");
 					if (active > 0) {
 						activeBoolean = true;
-						String name = object.getString("wrt_name");						
+						String name = object.getString("wrt_name");
 						types.add(name);
 					}
 				}
@@ -141,7 +159,7 @@ public class WorkOrderHandler {
 					types.add("Storing");
 					types.add("Verkoop");
 					types.add("Verhuur");
-				} 
+				}
 				break;
 			case "paymentmethods":
 				if (jsonArray.length() == 0) {
@@ -550,39 +568,60 @@ public class WorkOrderHandler {
 		ArrayList<WorkOrder> allWorkorders = (ArrayList<WorkOrder>) obj;
 		for (WorkOrder w : allWorkorders) {
 			Relation r = w.getRelations().get(0);
-			Address a = r.getAddressess().get(0);
 			JSONObject = new JSONObject();
 			try {
 				JSONObject.put("WorkorderNo", w.getWorkorderNr());
 				String projectNr = "";
-				if(w.getProjectNr() != null){
+				if (w.getProjectNr() != null) {
 					projectNr = w.getProjectNr();
 				}
 				JSONObject.put("ProjectNr", projectNr);
 				JSONObject.put("ExternProjectNr", w.getExternProjectNr());
 				System.out.println("workorder ExternProjectNr " + w.getExternProjectNr());
-				JSONObject.put("CustomerName", r.getCompanyName());
+				Address postal = null;
+				Address invoice = null;
+				if (r.getAddressess().size() > 1) {
+					// postal and invoice address
+					postal = r.getAddressess().get(1);
+					invoice = r.getAddressess().get(0);
+				} else {
+					// invoice
+					invoice = r.getAddressess().get(0);
+				}
+				if (postal != null) {
+					JSONObject.put("CustomerName", postal.getName());
+					JSONObject.put("CustomerStreet", postal.getStreet());
+					JSONObject.put("CustomerZIP", postal.getPostalCode());
+					JSONObject.put("CustomerCity", postal.getCity());
+					JSONObject.put("CustomerPhone", postal.getPhoneNumber());
+					JSONObject.put("CustomerRemark", postal.getRemark());
+				} else {
+					JSONObject.put("CustomerName", invoice.getName());
+					JSONObject.put("CustomerStreet", invoice.getStreet());
+					JSONObject.put("CustomerZIP", invoice.getPostalCode());
+					JSONObject.put("CustomerCity", invoice.getCity());
+					JSONObject.put("CustomerPhone", invoice.getPhoneNumber());
+					JSONObject.put("CustomerRemark", invoice.getRemark());
+				}
+				
 				JSONObject.put("CustomerDebtorNr", w.getCustomerDebtorNr());
-				JSONObject.put("CustomerStreet", a.getStreet());
 				JSONObject.put("CustomerEmail", w.getCustomerEmail());
-				JSONObject.put("CustomerZIP", a.getPostalCode());
-				JSONObject.put("CustomerCity", a.getCity());
 				JSONObject.put("CustomerContactPerson", r.getContact());
-				JSONObject.put("CustomerPhone", a.getPhoneNumber());
-				JSONObject.put("CustomerRemark", a.getRemark());
 				JSONObject.put("CustomerNameInvoice", r.getCompanyName());
 				JSONObject.put("CustomerDebtorNrInvoice", r.getDebtorNumber());
-				JSONObject.put("CustomerStreetInvoice", a.getStreet());
+				JSONObject.put("CustomerStreetInvoice", invoice.getStreet());
 				JSONObject.put("CustomerEmailInvoice", w.getCustomerEmail());
-				JSONObject.put("CustomerZIPInvoice", a.getPostalCode());
-				JSONObject.put("CustomerCityInvoice", a.getCity());
+				JSONObject.put("CustomerZIPInvoice", invoice.getPostalCode());
+				JSONObject.put("CustomerCityInvoice", invoice.getCity());
 				JSONObject.put("CustomerContactPersonInvoice", r.getContact());
-				JSONObject.put("CustomerPhoneInvoice", a.getPhoneNumber());
-				JSONObject.put("CustomerRemarkInvoice", a.getRemark());
+				JSONObject.put("CustomerPhoneInvoice", invoice.getPhoneNumber());
+				JSONObject.put("CustomerRemarkInvoice", invoice.getRemark());
+				
 				JSONObject.put("TypeOfWork", w.getTypeOfWork());
 				JSONObject.put("WorkDescription", w.getWorkDescription());
 				JSONObject.put("PaymentMethod", w.getPaymentMethod());
 				JSONObject.put("WorkDate", w.getWorkDate());
+				JSONObject.put("WorkTime", w.getWorkTime());
 				JSONArrayMaterials = new JSONArray();
 				for (Material m : w.getMaterials()) {
 					JSONObjecMaterial = new JSONObject();

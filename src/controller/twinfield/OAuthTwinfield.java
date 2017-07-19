@@ -37,7 +37,7 @@ public class OAuthTwinfield extends Authenticate {
 	private static Token token = null;
 	private String callback = System.getenv("CALLBACK");
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
-
+	
 	public Token getTempToken(String consumerKey, String consumerSecret, String softwareToken, String softwareName,
 			Boolean newLogin) throws ClientProtocolException, IOException, SQLException {
 		// Check if user has the accessToken stored in the database
@@ -51,15 +51,10 @@ public class OAuthTwinfield extends Authenticate {
 			String uri = "https://login.twinfield.com/oauth/initiate.aspx";
 			// Change to WorkOrder host
 			// action is verify.do
-
-			// check if callback is online or local
-			if (callback == null) {
-				callback = "http://localhost:8080/connect/verify.do";
-			}
 			CloseableHttpClient httpclient;
 			httpclient = HttpClients.createDefault();
 			HttpGet httpGet = new HttpGet(uri);
-
+			
 			// Build temporary token request
 			// Set consumer_key, consumer_secret_key and callback
 			StringBuilder headerReq = new StringBuilder();
@@ -71,10 +66,10 @@ public class OAuthTwinfield extends Authenticate {
 			headerReq.append("oauth_nonce=\"\", ");
 			headerReq.append("oauth_callback=\"" + callback + "\", ");
 			headerReq.append("oauth_signature=\"" + consumerSecret + "&\"");
-
+			
 			httpGet.addHeader("Authorization", headerReq.toString());
 			CloseableHttpResponse response = httpclient.execute(httpGet);
-
+			
 			try {
 				HttpEntity entity = response.getEntity();
 				String responseString = EntityUtils.toString(entity);
@@ -106,18 +101,18 @@ public class OAuthTwinfield extends Authenticate {
 			return accessToken;
 		}
 	}
-
+	
 	public Token getAccessToken(String tempToken, String verifyToken, String softwareName)
 			throws ClientProtocolException, IOException {
 		token.setTempToken(tempToken);
 		token.setVerifyToken(verifyToken);
 		token.setSoftwareName(softwareName);
-
+		
 		String uri = "https://login.twinfield.com/oauth/finalize.aspx";
 		CloseableHttpClient httpclient;
 		httpclient = HttpClients.createDefault();
 		HttpGet httpGet = new HttpGet(uri);
-
+		
 		// //Build access token request
 		// //Set consumer_key, consumer_secret_key, temporary_secret_key,
 		// temporary_key and verify_key
@@ -160,7 +155,7 @@ public class OAuthTwinfield extends Authenticate {
 		}
 		return token;
 	}
-
+	
 	@Override
 	public void authenticate(String softwareToken, HttpServletRequest req, HttpServletResponse resp)
 			throws ClientProtocolException, IOException, ServletException {
@@ -168,13 +163,7 @@ public class OAuthTwinfield extends Authenticate {
 		// Env variable!
 		// Twinfield accessToken and accessSecret
 		String token = System.getenv("TWINFIELD_TOKEN");
-		if (token == null) {
-			token = "818784741B7543C7AE95CE5BFB783DF2";
-		}
 		String secret = System.getenv("TWINFIELD_SECRET");
-		if (secret == null) {
-			secret = "F441FB65B6AA42C995F9FAF3662E8A10";
-		}
 		String softwareName = req.getParameter("softwareName");
 		Token checkToken = null;
 		try {
@@ -211,7 +200,7 @@ public class OAuthTwinfield extends Authenticate {
 					sessionID = array[0];
 					cluster = array[1];
 				}
-
+				
 				logger.info("session= " + sessionID);
 				logger.info("WBAToken= " + softwareToken);
 				if (sessionID != null) {
@@ -230,7 +219,7 @@ public class OAuthTwinfield extends Authenticate {
 						allUsers.put("name", split[1]);
 						users.add(allUsers);
 					}
-
+					
 					rd = req.getRequestDispatcher("twinfield.jsp");
 					req.getSession().setAttribute("session", sessionID);
 					req.getSession().setAttribute("cluster", cluster);
@@ -266,7 +255,7 @@ public class OAuthTwinfield extends Authenticate {
 				if (!newLogin) {
 					rd.forward(req, resp);
 				}
-
+				
 			}
 		} else {
 			rd = req.getRequestDispatcher("twinfield.jsp");
