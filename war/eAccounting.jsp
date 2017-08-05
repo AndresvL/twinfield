@@ -171,7 +171,7 @@
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
 								<input type="hidden" value="${softwareName}" name="softwareName" />
-								<input type="hidden" value="${softwareToken}"
+								<input type=hidden value="${softwareToken}"
 									name="softwareToken" />
 								<label>Selecteer objecten om te importeren</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"

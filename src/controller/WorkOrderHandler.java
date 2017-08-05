@@ -36,33 +36,25 @@ import object.workorder.WorkPeriod;
 public class WorkOrderHandler {
 	private static String version = "8";
 	// WorkOrder Api key
-	// Env variable!
-	// TWINFIELD
-	// final static String softwareToken =
-	// "622a8ef3a712344ef07a4427550ae1e2b38e5342";
-	// WEFACT
-	// final static String softwareToken =
-	// "872e5ad04c2607e59ba610712344ef07a4427550ae09bc33f1120a20ffe4";
-	// EAccounting
-	// final static String softwareToken =
-	// "9b39b7ab4178067360b9b39b7ab4178067360b8250d671fd448881e8db78250d671fd448881e8db7";
-	// Moloni
-	final static String softwareToken = "";
-	
+	//Set softwareToken for local use if null system.getenv() will be called
+	final static String softwareToken = null;
 	/**
 	* Returns a code that will be used to check if the token is valid.
-	* code 200 is success
-	*
-	* @param  token softwareToken received from WOA
-	* @version 1.0
-	* @since   2017-07-19
+	* <p>
+	* This method sends a request to the WOA API with parameters: version, object, token and software_token.
+	* The object in this case is employees.
+	* @param  token softwareToken of the current user
+	* @param  softwareName the name of the third-party application
+	* @return  the status code of the JSON response
 	*/
 	public static int checkWorkOrderToken(String token, String softwareName) {
-		String link = "";
-		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+		String link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
+				+ softwareToken;
+		if (softwareToken == null) {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
 			link = link.trim();
+			System.out.println("SOFTWARETOKEN_" + softwareName.toUpperCase());
 			System.out.println("GOOD link "+link);
 		}
 		int code = 0;
@@ -73,8 +65,10 @@ public class WorkOrderHandler {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
+//			Read inputsteam
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 			while ((output = br.readLine()) != null) {
+//				Write inputstream to json
 				JSONObject json = new JSONObject(output);
 				code = json.getInt("code");
 			}
@@ -85,11 +79,22 @@ public class WorkOrderHandler {
 		
 	}
 	
+	/**
+	* This method sets the workorder status from complete to handled if parameter status is true
+	* 
+	* @param  id row_id of the current workorder
+	* @param  workorderNr number of the current workorder
+	* @param  status true if workorder status needs to be changed to handled
+	* @param  type the API method/call type
+	* @param  token softwareToken of the current user
+	* @param  softwareName the name of the third-party application
+	*/
 	public static void setWorkorderStatus(String id, String workorderNr, Boolean status, String type, String token,
 			String softwareName) {
-		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-				+ "&software_token=" + softwareToken + "&row_id=" + id + "&update_status=" + status;
-		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
+				+ softwareToken + "&row_id=" + id + "&update_status="
+				+ status;
+		if (softwareToken == null) {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&row_id=" + id + "&update_status="
 					+ status;
@@ -101,8 +106,10 @@ public class WorkOrderHandler {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Content-Type", "application/json");
+//			Get inputsteam
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 			String output;
+//			No need to print the output.
 			while ((output = br.readLine()) != null) {
 				// System.out.println("setWorkorderStatus " + output);
 			}
@@ -111,11 +118,19 @@ public class WorkOrderHandler {
 		}
 		
 	}
-	
+	/**
+	* This method returns all types of work or payment methods from the WOA API.
+	* Returns a standaard arraylist of types of work and payment methods if the API call returns an empty array
+	* 
+	* @param  token softwareToken of the current user
+	* @param  softwareName the name of the third-party application
+	* @param  type the API method/call type
+	* @return an arraylist with the types of work or payment methods
+	*/
 	public static ArrayList<String> getTypeofwork(String token, String softwareName, String type) {
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken;
-		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+		if (softwareToken == null) {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
 		}
@@ -131,10 +146,10 @@ public class WorkOrderHandler {
 			JSONObject json = null;
 			while ((output = br.readLine()) != null) {
 				json = new JSONObject(output);
-				System.out.println("JSON " + json);
 			}
 			br.close();
 			JSONArray jsonArray = json.getJSONArray("response");
+//			Return ArrayList with worktype or paymentmethod
 			switch (type) {
 			case "worktypes":
 				Boolean activeBoolean = false;
@@ -185,14 +200,20 @@ public class WorkOrderHandler {
 		}
 		return types;
 	}
-	
+	/**
+	* This method sends a request with 
+	* Returns all WorkOrders with status complete.
+	* 
+	* @param  token softwareToken of the current user
+	* @param  type the API method/call type
+	* @param  stat workorder status (klaargezet, opgehaald, compleet or afgehandeld)
+	* @param  updateStatus true if all workorder statusses need to be changed to afgehandeld
+	* @param  softwareName the name of the third-party application
+	* @return an arraylist with all WorkOrders
+	* @see WorkOrder
+	*/
 	public static ArrayList<WorkOrder> getData(String token, String type, String stat, boolean updateStatus,
 			String softwareName) {
-		// Header
-		// ProjectNr, performancedate, invoiceaddressnumber,
-		// deliveraddressnumber, customercode, status, paymentmethod(cash, bank,
-		// cheque, cashondelivery, da)
-		// all content from getWorkorder
 		String projectNr, workDate = null, customerEmailInvoice, customerEmail, customerDebtorNr, status, paymentMethod,
 				creationDate, id, orderNr, workTime, workEndDate, workEndTime, externProjectNr, customerName,
 				customerStreet, customerStreetNo, customerZIP, customerCity, customerContactPerson, customerPhone,
@@ -201,21 +222,20 @@ public class WorkOrderHandler {
 				customerRemarkInvoice, typeOfWork, workDescription, beginTime, endTime, customerCityInvoice, pdfUrl,
 				workStatus;
 		String employeeNr = null, hourType = null, description = null, duration = null;
-		// line
 		String materialCode, materialNr, materialUnit, materialName;
 		double materialPrice;
 		
-		// Request to WorkOrderApp
+//		Request link with parameters version, type, token, softwareToken and status
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
-				+ "&software_token=" + softwareToken + "&status=" + stat + "&update_status=" + updateStatus;
-		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+				+ "&software_token=" + softwareToken + "&status=" + stat
+				+ "&update_status=" + updateStatus;
+		if (softwareToken == null) {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) + "&status=" + stat
 					+ "&update_status=" + updateStatus;
 		}
 		String output = null;
 		ArrayList<WorkOrder> allData = null;
-		System.out.println("LINK " + link);
 		try {
 			URL url = new URL(link);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -226,14 +246,15 @@ public class WorkOrderHandler {
 			while ((output = br.readLine()) != null) {
 				WorkOrder w = null;
 				JSONObject json = new JSONObject(output);
+//				Check if response is successful
 				if (json.getInt("code") == 200) {
 					allData = new ArrayList<WorkOrder>();
 					JSONArray array = json.getJSONArray("response");
 					for (int i = 0; i < array.length(); i++) {
-						// only choose recent workorders(not archieved or
-						// deleted)
 						JSONObject object = array.getJSONObject(i);
+//						Only check for recent workorders(not archieved or deleted)
 						if (object.getInt("Archived") == 0) {
+							
 							id = object.getString("id");
 							orderNr = object.getString("OrderNr");
 							workDate = object.getString("WorkDate");
@@ -271,7 +292,6 @@ public class WorkOrderHandler {
 							creationDate = object.getString("CreationDate");
 							pdfUrl = object.getString("PdfUrl");
 							workStatus = object.getString("WorkStatus");
-							// Set postal and invoice relation
 							ArrayList<Relation> allRelations = new ArrayList<Relation>();
 							ArrayList<Address> invoiceAddress = new ArrayList<Address>();
 							// id 1 is invoice
@@ -291,10 +311,9 @@ public class WorkOrderHandler {
 							postaleAddress.add(postal);
 							Relation customerRelationPostal = new Relation(customerName, customerDebtorNr,
 									customerContactPerson, customerEmail, postaleAddress, null, null);
-							// add Relations to ArrayList
+							// add addresses to Relation
 							allRelations.add(customerRelationInvoice);
 							allRelations.add(customerRelationPostal);
-							
 							// workperiods
 							ArrayList<WorkPeriod> allWorkPeriods = new ArrayList<WorkPeriod>();
 							JSONArray periods = object.getJSONArray("Workperiods");
@@ -307,7 +326,6 @@ public class WorkOrderHandler {
 									description = period.getString("WorkRemark");
 									workDate = period.getString("WorkDate");
 									endTime = period.getString("EndTime");
-									// travel = period.getString("Travel");
 									employeeNr = period.getString("EmployeeNr");
 									hourType = period.getString("HourType");
 									work = new WorkPeriod(employeeNr, hourType, workDate, projectNr, description,
@@ -316,8 +334,8 @@ public class WorkOrderHandler {
 								}
 							}
 							// materials
-							JSONArray materials = object.getJSONArray("Materials");
 							ArrayList<Material> alleMaterials = new ArrayList<Material>();
+							JSONArray materials = object.getJSONArray("Materials");							
 							for (int j = 0; j < materials.length(); j++) {
 								JSONObject material = materials.getJSONObject(j);
 								materialCode = material.getString("MaterialCode");
@@ -360,13 +378,33 @@ public class WorkOrderHandler {
 		return allData;
 		
 	}
+	/**
+	* This method sends a JSONObject to the WOA webservice
+	* JSONObjects that can be sent are:
+	* - Employees
+	* - Projects
+	* - Relations
+	* - Materials
+	* - Hourtypes
+	* - WorkOrders
+	* - WorkOrderStatus
+	*  
+	* @param  token softwareToken of the current user
+	* @param  array an ArrayList filled with information from one of the above objects
+	* @param  type the API method/call type
+	* @param  softwareName the name of the third-party application
+	* @param  clientToken optional clientToken
+	* @return an JSONObject with responseObject or an amount of workstatusses added to WOA
+	* @throws ServletException ServletException
+	* @throws IOException IOException
+	*/
 	
 	public static Object addData(String token, Object array, String type, String softwareName, String clientToken)
 			throws ServletException, IOException {
 		Object amount = 0;
 		String link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token
 				+ "&software_token=" + softwareToken;
-		if (System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase()) != null) {
+		if (softwareToken == null) {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/" + type + "/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
 		}
@@ -379,46 +417,54 @@ public class WorkOrderHandler {
 		conn.setRequestProperty("Content-Type", "application/json");
 		switch (type) {
 		case "employees":
+//			Create JSONObject with Employee objects
 			input = employeeInput(array) + "";
 			break;
 		case "projects":
+//			Create JSONObject with Project objects
 			input = projectInput(array) + "";
 			break;
 		case "relations":
+//			Create JSONObject with Relation objects
 			input = relationInput(array) + "";
 			break;
 		case "materials":
+//			Create JSONObject with Material objects
 			input = materialInput(array) + "";
 			break;
 		case "hourtypes":
+//			Create JSONObject with Hourtype objects
 			input = hourtypeInput(array) + "";
 			break;
 		case "PostWorkorders":
+//			Create JSONObject  with Workorder objects
 			input = workorderInput(array) + "";
 			break;
 		case "workstatusses":
-			// Array is JSONObject
+//			 Array is JSONObject
 			input = array + "";
 			break;
 		}
+//		Send JSONObject to WOA webservice
 		OutputStream os = conn.getOutputStream();
 		os.write(input.getBytes("UTF-8"));
-		System.out.println("input " + input);
 		os.flush();
-		
+//		get InputStream
 		BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 		String output;
 		System.out.println("Output from Server .... \n");
-		
+//		Read Response
 		while ((output = br.readLine()) != null) {
 			System.out.println("OUTPUT " + output + " type " + type);
 			try {
 				JSONObject json = new JSONObject(output);
 				if (!json.isNull("response")) {
-					// Check if array exist
+//					 Check if array exist
 					if (json.optJSONArray("response") != null) {
+//						Set amount with response JSONArray
 						amount = json.getJSONArray("response");
 					} else {
+//						Set amount of workstatusses
 						amount = json.getInt("response");
 					}
 				}
@@ -430,7 +476,12 @@ public class WorkOrderHandler {
 		return amount;
 		
 	}
-	
+	/**
+	* This method creates a JSONObject with Employee data
+	* @param  obj an ArrayList with Employee objects
+	* @return a JSONARRay with Employee JSONObjects
+	* @see Employee
+	*/
 	public static JSONArray employeeInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
@@ -446,11 +497,15 @@ public class WorkOrderHandler {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			
 		}
 		return JSONArray;
 	}
-	
+	/**
+	* This method creates a JSONObject with Project data
+	* @param  obj an ArrayList with Project objects
+	* @return a JSONARRay with Project JSONObjects
+	* @see Project
+	*/
 	public static JSONArray projectInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
@@ -477,14 +532,20 @@ public class WorkOrderHandler {
 		}
 		return JSONArray;
 	}
-	
+	/**
+	* This method creates a JSONObject with Relation data
+	* For every Address a new JSONObject will be created within the Relation JSONObject
+	* @param  obj an ArrayList with Relation objects
+	* @return a JSONARRay with Relation JSONObjects
+	* @see Relation
+	*/
 	public static JSONArray relationInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
 		@SuppressWarnings("unchecked")
 		ArrayList<Relation> array = (ArrayList<Relation>) obj;
 		for (Relation r : array) {
-			// Post the same relation with different addresses
+//			Create JSONObject for every other Address
 			for (Address a : r.getAddressess()) {
 				JSONObject = new JSONObject();
 				try {
@@ -508,7 +569,13 @@ public class WorkOrderHandler {
 		return JSONArray;
 	}
 	
-	// Create JSONArray from Materials
+	/**
+	* This method creates a JSONObject with Material data
+	* If a material contains a sub-article, the sub-materialCode will be used as materialCode
+	* @param  obj an ArrayList with Material objects
+	* @return a JSONARRay with Material JSONObjects
+	* @see Material
+	*/
 	public static JSONArray materialInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
@@ -517,7 +584,7 @@ public class WorkOrderHandler {
 		for (Material m : array) {
 			JSONObject = new JSONObject();
 			String code = null;
-			// Set code with subCode if subCode != null
+//			 Set code with subCode if subCode != null
 			if (m.getSubCode() != null && !m.getSubCode().equals("")) {
 				code = m.getSubCode();
 			} else {
@@ -536,6 +603,12 @@ public class WorkOrderHandler {
 		return JSONArray;
 	}
 	
+	/**
+	* This method creates a JSONObject with Hourtype data
+	* @param  obj an ArrayList with Hourtype objects
+	* @return a JSONARRay with Hourtype JSONObjects
+	* @see HourType
+	*/
 	public static JSONArray hourtypeInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONObject JSONObject = null;
@@ -559,6 +632,12 @@ public class WorkOrderHandler {
 		return JSONArray;
 	}
 	
+	/**
+	* This method creates a JSONObject with WorkOrder data
+	* @param  obj an ArrayList with WorkOrder objects
+	* @return a JSONARRay with WorkOrder JSONObjects
+	* @see WorkOrder
+	*/
 	public static JSONArray workorderInput(Object obj) {
 		JSONArray JSONArray = new JSONArray();
 		JSONArray JSONArrayMaterials = null;
@@ -581,11 +660,11 @@ public class WorkOrderHandler {
 				Address postal = null;
 				Address invoice = null;
 				if (r.getAddressess().size() > 1) {
-					// postal and invoice address
+//					Postal and invoice address
 					postal = r.getAddressess().get(1);
 					invoice = r.getAddressess().get(0);
 				} else {
-					// invoice
+//					Invoice
 					invoice = r.getAddressess().get(0);
 				}
 				if (postal != null) {

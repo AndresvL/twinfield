@@ -185,9 +185,16 @@ public class OAuthTwinfield extends Authenticate {
 						"softwareToken is al in gebruik door " + checkToken.getSoftwareName());
 				rd.forward(req, resp);
 			} else {
+				String sessionSession = (String)req.getSession().getAttribute("session");
+				String sessionCluster = (String)req.getSession().getAttribute("cluster");
 				String sessionID = null;
 				String cluster = null;
-				String[] array = SoapHandler.getSession(checkToken);
+				String[] array = null;
+				if(sessionSession == null){
+					array = SoapHandler.getSession(checkToken);
+				}else{
+				    array  = new String[]{sessionSession, sessionCluster};
+				}
 				if (array == null) {
 					newLogin = true;
 					try {
@@ -202,6 +209,7 @@ public class OAuthTwinfield extends Authenticate {
 				}
 				
 				logger.info("session= " + sessionID);
+				logger.info("cluster= " + cluster);
 				logger.info("WBAToken= " + softwareToken);
 				if (sessionID != null) {
 					@SuppressWarnings("unchecked")
@@ -212,6 +220,15 @@ public class OAuthTwinfield extends Authenticate {
 					ArrayList<Map<String, String>> users = new ArrayList<Map<String, String>>();
 					Search searchObject = new Search("USR", "*", 0, 1, 100, null);
 					ArrayList<String> responseArray = SoapHandler.createSOAPFinder(sessionID, cluster, searchObject);
+					System.out.println("RESULTS LIST" + responseArray.toString());
+					if(responseArray.isEmpty()){
+						System.out.println("TOKEN IS NIET MEER GELDIG");
+						array = SoapHandler.getSession(checkToken);
+						sessionID = array[0];
+						cluster = array[1];
+						System.out.println("TOKEN IS GELDIG sessionID" + sessionID);
+						responseArray = SoapHandler.createSOAPFinder(sessionID, cluster, searchObject);
+					}
 					for (String s : responseArray) {
 						Map<String, String> allUsers = new HashMap<String, String>();
 						String[] split = s.split(",");

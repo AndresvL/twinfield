@@ -19,6 +19,7 @@ import DAO.ObjectDAO;
 import DAO.TokenDAO;
 import DBUtil.DBConnection;
 import controller.WorkOrderHandler;
+import controller.drivefx.DriveFxHandler;
 import controller.eaccouting.EAccountingHandler;
 import controller.eaccouting.OAuthEAccounting;
 import controller.moloni.MoloniHandler;
@@ -34,17 +35,27 @@ public class SynchServlet extends HttpServlet {
 	private String redirect = System.getenv("REDIRECT");
 	private String[] messageArray = null;
 	
+	/**
+	 * This method is called after the user or the system triggers the sync
+	 * method, if softwareToken parameter is null the credentials from the
+	 * database will be used for sychronisation
+	 * 
+	 * @param req
+	 *            HttpServletRequest with request properties
+	 * @param resp
+	 *            HttpServletResponse with response properties
+	 */
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		String softwareToken = req.getParameter("token");
 		String softwareName = req.getParameter("softwareName");
 		ArrayList<Token> allTokens = null;
-		// Sync data from current user
+		// Check if user is logged in
 		if (softwareToken != null) {
 			try {
 				Token t = TokenDAO.getToken(softwareToken, softwareName);
 				if (t != null && !t.getAccessSecret().equals("invalid")) {
 					softwareName = t.getSoftwareName();
-					// setSync(true) because user is online
+					// setSyncMethods(true) because user is online
 					this.setSyncMethods(t, req, true);
 					if (redirect != null) {
 						resp.sendRedirect(
@@ -78,8 +89,9 @@ public class SynchServlet extends HttpServlet {
 					}
 				}
 			}
+			// Print total Users fetched from database
 			System.out.println("A total of " + allTokens.size() + " users are found in database");
-			int twinfieldCount = 0, wefactCount = 0, eaccountingCount = 0, moloniCount = 0;
+			int twinfieldCount = 0, wefactCount = 0, eaccountingCount = 0, moloniCount = 0, drivefxCount = 0;
 			for (Token t : allTokens) {
 				switch (t.getSoftwareName()) {
 				case "Twinfield":
@@ -94,17 +106,28 @@ public class SynchServlet extends HttpServlet {
 				case "Moloni":
 					moloniCount++;
 					break;
+				case "DriveFx":
+					drivefxCount++;
+					break;
 				}
 			}
 			System.out.println(twinfieldCount + " Twinfield users");
 			System.out.println(wefactCount + " WeFact users");
 			System.out.println(eaccountingCount + " eAccounting users");
 			System.out.println(moloniCount + " Moloni users");
+			System.out.println(drivefxCount + " DriveFx users");
 		}
 	}
 	
+	/**
+	 * This method is used to get the current Date
+	 * 
+	 * @param date
+	 *            a Date(yyyy-MM-dd HH:mm:ss) String
+	 * @return date with format yyyy-MM-dd HH:mm:ss
+	 */
 	public String getDate(String date) {
-		String timestamp;
+		String timestamp = null;
 		ZonedDateTime za = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		if (date != null) {
@@ -115,6 +138,19 @@ public class SynchServlet extends HttpServlet {
 		return timestamp;
 	}
 	
+	/**
+	 * This method calls different threads to start the synchronisation process.
+	 * For every softwareName a different thread will be started
+	 * 
+	 * @param t
+	 *            Token object of the current user
+	 * @param req
+	 *            HttpServletRequest
+	 * @param loggedIn
+	 *            true if user is logged in
+	 * @throws Exception
+	 *             createDatabaseConnection exception
+	 */
 	public void setSyncMethods(Token t, HttpServletRequest req, boolean loggedIn) throws Exception {
 		String date = null;
 		if (!loggedIn) {
@@ -122,7 +158,20 @@ public class SynchServlet extends HttpServlet {
 		}
 		switch (t.getSoftwareName()) {
 		case "Twinfield":
-			new TwinfieldThread(t, date).start();
+			String session = null;
+			String cluster = null;
+			// If req is null the system tries to synchronise and the
+			// session/cluster
+			// will be set with SoapHandler.getSession(t);
+			if (req != null) {
+				session = (String) req.getSession().getAttribute("session");
+				cluster = (String) req.getSession().getAttribute("cluster");
+			} else {
+				String[] array = SoapHandler.getSession(t);
+				session = array[0];
+				cluster = array[1];
+			}
+			new TwinfieldThread(t, date, session, cluster).start();
 			DBConnection.createDatabaseConnection(false);
 			break;
 		case "WeFact":
@@ -139,6 +188,11 @@ public class SynchServlet extends HttpServlet {
 			System.out.println("DATE " + date);
 			DBConnection.createDatabaseConnection(false);
 			break;
+		case "DriveFx":
+			new DriveFxThread(t, date).start();
+			System.out.println("DATE " + date);
+			DBConnection.createDatabaseConnection(false);
+			break;
 		default:
 			break;
 		}
@@ -146,33 +200,47 @@ public class SynchServlet extends HttpServlet {
 	}
 	
 	public class TwinfieldThread extends Thread {
-		Token t;
-		String date;
-		String errorMessage = "", errorDetails = "";
-		String checkUpdate = "false";
+		private Token t;
+		private String date;
+		private String session = null, cluster = null;
+		private String errorMessage = "", errorDetails = "";
+		private String checkUpdate = "false";
 		
-		TwinfieldThread(Token t, String date) {
+		TwinfieldThread(Token t, String date, String session, String cluster) {
 			this.t = t;
 			this.date = date;
+			this.session = session;
+			this.cluster = cluster;
 		}
 		
 		public void run() {
 			try {
 				System.out.println("Twinfield Thread Running");
-				String session = null, cluster = null;
 				TwinfieldHandler twinfield = new TwinfieldHandler();
 				Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
 				if (set != null) {
 					ArrayList<String> importTypes = set.getImportObjects();
 					// Import section
 					for (String type : importTypes) {
-						String[] array = SoapHandler.getSession(t);
+						String[] array = null;
+						if (session == null) {
+							// Get a new sessionObject if session is null
+							array = SoapHandler.getSession(t);
+						} else {
+							// Use existing session
+							array = new String[] { session, cluster };
+						}
+						
 						if (array != null) {
 							session = array[0];
 							cluster = array[1];
-							
+							// Switch for different import objects
 							switch (type) {
 							case "employees":
+								// Get all Employees from Twinfield and add them
+								// to WOA
+								// Returns an array with response message for
+								// log
 								messageArray = twinfield.getEmployees(set.getImportOffice(), session, cluster,
 										t.getSoftwareToken(), t.getSoftwareName(), date);
 								errorMessage += messageArray[0];
@@ -181,6 +249,9 @@ public class SynchServlet extends HttpServlet {
 								}
 								break;
 							case "projects":
+								// Get all Projects from Twinfield and add them
+								// to WOA
+								// Return an array with response message for log
 								messageArray = twinfield.getProjects(set.getImportOffice(), session, cluster,
 										t.getSoftwareToken(), t.getSoftwareName(), date);
 								errorMessage += messageArray[0];
@@ -189,6 +260,9 @@ public class SynchServlet extends HttpServlet {
 								}
 								break;
 							case "materials":
+								// Get all Materials from Twinfield and add them
+								// to WOA
+								// Return an array with response message for log
 								messageArray = twinfield.getMaterials(set.getImportOffice(), session, cluster,
 										t.getSoftwareToken(), t.getSoftwareName(), date);
 								errorMessage += messageArray[0];
@@ -197,6 +271,9 @@ public class SynchServlet extends HttpServlet {
 								}
 								break;
 							case "relations":
+								// Get all Relations from Twinfield and add them
+								// to WOA
+								// Return an array with response message for log
 								messageArray = twinfield.getRelations(set.getImportOffice(), session, cluster,
 										t.getSoftwareToken(), t.getSoftwareName(), date);
 								errorMessage += messageArray[0];
@@ -205,6 +282,9 @@ public class SynchServlet extends HttpServlet {
 								}
 								break;
 							case "hourtypes":
+								// Get all Projects from Twinfield and add them
+								// to WOA
+								// Return an array with response message for log
 								messageArray = twinfield.getHourTypes(set.getImportOffice(), session, cluster,
 										t.getSoftwareToken(), t.getSoftwareName(), date);
 								errorMessage += messageArray[0];
@@ -253,7 +333,6 @@ public class SynchServlet extends HttpServlet {
 		public void run() {
 			try {
 				System.out.println("WeFact Thread Running");
-				
 				WeFactHandler wefact = new WeFactHandler();
 				Settings set = ObjectDAO.getSettings(token);
 				if (set != null) {
@@ -275,6 +354,8 @@ public class SynchServlet extends HttpServlet {
 					for (String type : importTypes) {
 						switch (type) {
 						case "materials":
+							// Get all Materials from WeFact and add them to WOA
+							// Return an array with response message for log
 							messageArray = wefact.getMaterials(clientToken, token, date);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -282,6 +363,8 @@ public class SynchServlet extends HttpServlet {
 							}
 							break;
 						case "relations":
+							// Get all Relations from WeFact and add them to WOA
+							// Return an array with response message for log
 							messageArray = wefact.getRelations(clientToken, token, date);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -289,6 +372,8 @@ public class SynchServlet extends HttpServlet {
 							}
 							break;
 						case "hourtypes":
+							// Get all Hourtypes from WeFact and add them to WOA
+							// Return an array with response message for log
 							messageArray = wefact.getHourTypes(clientToken, token, date);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -296,6 +381,9 @@ public class SynchServlet extends HttpServlet {
 							}
 							break;
 						case "offertes":
+							// Get all Offertes from WeFact and add them as
+							// WorkOrder to WOA
+							// Return an array with response message for log
 							messageArray = wefact.getOffertes(clientToken, token, date);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -349,14 +437,13 @@ public class SynchServlet extends HttpServlet {
 		public void run() {
 			System.out.println("eAccounting Thread Running");
 			EAccountingHandler eaccounting = new EAccountingHandler();
-			// check if accessToken is still valid
+			// Check if accessToken is still valid
 			try {
 				if (t.getAccessSecret() != null && !eaccounting.checkAccessToken(t.getAccessToken())) {
 					// Get accessToken with refreshToken
 					t = OAuthEAccounting.getAccessToken(null, t.getAccessSecret(), t.getSoftwareName(),
 							t.getSoftwareToken());
 				}
-				
 				Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
 				if (set != null) {
 					if (date == null) {
@@ -381,6 +468,9 @@ public class SynchServlet extends HttpServlet {
 					for (String type : importTypes) {
 						switch (type) {
 						case "materials":
+							// Get all Materials from eAccounting and add them
+							// to WOA
+							// Return an array with response message for log
 							messageArray = eaccounting.getMaterials(t, date);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -388,6 +478,9 @@ public class SynchServlet extends HttpServlet {
 							}
 							break;
 						case "relations":
+							// Get all Relations from eAccounting and add them
+							// to WOA
+							// Return an array with response message for log
 							messageArray = eaccounting.getRelations(t, date);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -395,6 +488,9 @@ public class SynchServlet extends HttpServlet {
 							}
 							break;
 						case "projects":
+							// Get all Projects from eAccounting and add them to
+							// WOA
+							// Return an array with response message for log
 							messageArray = eaccounting.getProjects(t, date);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -402,6 +498,9 @@ public class SynchServlet extends HttpServlet {
 							}
 							break;
 						case "verkooporders":
+							// Get all Verkooporders from eAccounting and add
+							// them as WorkOrder to WOA
+							// Return an array with response message for log
 							messageArray = eaccounting.getOrders(t, date, set);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
@@ -412,7 +511,7 @@ public class SynchServlet extends HttpServlet {
 					}
 					// Export section
 					String[] exportMessageArray = null;
-					// Type is factuur
+					// Type is always factuur
 					if (set.getExportWerkbontype().equals("factuur")) {
 						exportMessageArray = eaccounting.setFactuur(t, set, date);
 						errorMessage += exportMessageArray[0];
@@ -420,7 +519,6 @@ public class SynchServlet extends HttpServlet {
 							errorDetails = exportMessageArray[1];
 						}
 					}
-					// setErrorMessageDetailsWeFact(exportMessageArray);
 					if (checkUpdate.equals("true")) {
 						TokenDAO.saveModifiedDate(getDate(null), t.getSoftwareToken());
 					}
@@ -430,9 +528,8 @@ public class SynchServlet extends HttpServlet {
 						ObjectDAO.saveLog("Niks te importeren", errorDetails, t.getSoftwareToken());
 					}
 				}
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			System.out.println("eAccounting Thread Finished");
 		}
@@ -452,7 +549,7 @@ public class SynchServlet extends HttpServlet {
 		public void run() {
 			System.out.println("Moloni Thread Running");
 			MoloniHandler moloni = new MoloniHandler();
-			// check if accessToken is still valid
+			// Check if accessToken is still valid
 			try {
 				if (t.getAccessSecret() != null && !moloni.checkAccessToken(t.getAccessToken())) {
 					// Get accessToken with refreshToken
@@ -504,20 +601,6 @@ public class SynchServlet extends HttpServlet {
 								checkUpdate = "true";
 							}
 							break;
-						// case "projects":
-						// messageArray = eaccounting.getProjects(t, date);
-						// errorMessage += messageArray[0];
-						// if (messageArray[1].equals("true")) {
-						// checkUpdate = "true";
-						// }
-						// break;
-						// case "verkooporders":
-						// messageArray = eaccounting.getOrders(t, date, set);
-						// errorMessage += messageArray[0];
-						// if (messageArray[1].equals("true")) {
-						// checkUpdate = "true";
-						// }
-						// break;
 						}
 					}
 					// Export section
@@ -539,11 +622,98 @@ public class SynchServlet extends HttpServlet {
 						ObjectDAO.saveLog("Nothing to import", errorDetails, t.getSoftwareToken());
 					}
 				}
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			System.out.println("Moloni Thread Finished");
+		}
+	};
+	
+	public class DriveFxThread extends Thread {
+		Token t;
+		String date;
+		String errorMessage = "", errorDetails = "";
+		String checkUpdate = "false";
+		
+		DriveFxThread(Token t, String date) {
+			this.t = t;
+			this.date = date;
+		}
+		
+		public void run() {
+			System.out.println("DriveFx Thread Running");
+			DriveFxHandler driveFx = new DriveFxHandler();
+			// check if accessToken is still valid
+			try {
+				Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
+				if (set != null) {
+					if (date == null) {
+						date = set.getSyncDate();
+						if (!date.equals("")) {
+							DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+							Date newDate = null;
+							try {
+								// String to date
+								newDate = format.parse(date);
+								Format formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+								date = formatter.format(newDate);
+							} catch (ParseException e) {
+								e.printStackTrace();
+							}
+						} else {
+							date = null;
+						}
+					}
+					ArrayList<String> importTypes = set.getImportObjects();
+					// Import section
+					for (String type : importTypes) {
+						switch (type) {
+						case "materials":
+							messageArray = driveFx.getMaterials(t, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "relations":
+							messageArray = driveFx.getRelations(t, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "employees":
+							messageArray = driveFx.getEmployees(t, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						}
+					}
+					// Export section
+					String[] exportMessageArray = null;
+					// Type is factuur
+					if (set.getExportWerkbontype().equals("factuur")) {
+						exportMessageArray = driveFx.setFactuur(t, set, date);
+						errorMessage += exportMessageArray[0];
+						if (exportMessageArray[1] != null) {
+							errorDetails = exportMessageArray[1];
+						}
+					}
+					if (checkUpdate.equals("true")) {
+						TokenDAO.saveModifiedDate(getDate(null), t.getSoftwareToken());
+					}
+					if (!errorMessage.equals("")) {
+						ObjectDAO.saveLog(errorMessage, errorDetails, t.getSoftwareToken());
+					} else {
+						ObjectDAO.saveLog("Niks te importeren", errorDetails, t.getSoftwareToken());
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			System.out.println("DriveFx Thread Finished");
 		}
 	};
 }

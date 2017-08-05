@@ -15,6 +15,14 @@ $(document).ready(function() {
 		    $('#verkooporders').on('change', function() {
 			    $('#verkooporders_extra').toggle(this.checked);
 		    })
+			if($('#softwareToken').val() === null || $('#softwareToken').val() === ""){
+				swal({
+					title : 'Error',
+					text : "Not logged in",
+					type : 'error',
+					showConfirmButton: false		
+				})
+			}			
 		
 			if($('#error').val() === "true"){
 				swal({

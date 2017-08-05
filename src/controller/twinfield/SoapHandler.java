@@ -127,7 +127,7 @@ public class SoapHandler {
 			e.printStackTrace();
 		}
 		int result = 0;
-		if (doc  == null){
+		if (doc == null) {
 			System.out.println("DOC IS NULL" + xmlString);
 		}
 		if (doc != null && doc.getChildNodes().item(0).hasAttributes()) {
@@ -230,7 +230,7 @@ public class SoapHandler {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			soapResponse.writeTo(baos);
 			String results = baos.toString();
-			 System.out.println("RESULTS " + results);
+			System.out.println("RESULTS " + results);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -447,7 +447,17 @@ public class SoapHandler {
 		h = new HourType(code, name, 0, 0, 0.0, 0.0, 1, null, null);
 		return h;
 	}
-	
+	public static boolean isInteger(String s) {
+	    try { 
+	        Integer.parseInt(s); 
+	    } catch(NumberFormatException e) { 
+	        return false; 
+	    } catch(NullPointerException e) {
+	        return false;
+	    }
+	    // only got here if we didn't return false
+	    return true;
+	}
 	public static ArrayList<String> setArrayList(SOAPMessage response) {
 		ArrayList<String> allItems = new ArrayList<String>();
 		try {
@@ -461,7 +471,11 @@ public class SoapHandler {
 			
 			NodeList allData = element.getChildNodes();
 			// <TotalRows>
-			int totalRows = Integer.parseInt(allData.item(0).getFirstChild().getTextContent());
+			String tempRows = allData.item(0).getFirstChild().getTextContent();
+			int totalRows = 0;
+			if(isInteger(tempRows)){
+				totalRows = Integer.parseInt(allData.item(0).getFirstChild().getTextContent());
+			}
 			if (totalRows > 0) {
 				// <Columns>
 				NodeList columns = allData.item(1).getChildNodes();
@@ -487,6 +501,8 @@ public class SoapHandler {
 				} else {
 					return null;
 				}
+			}else{
+				return null;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

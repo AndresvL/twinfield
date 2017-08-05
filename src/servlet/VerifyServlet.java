@@ -56,12 +56,12 @@ public class VerifyServlet extends HttpServlet {
 			req.getSession().setAttribute("users", users);
 			req.getSession().setAttribute("softwareToken", token.getSoftwareToken());
 			req.getSession().setAttribute("session", sessionID);
+			req.getSession().setAttribute("cluster", cluster);
 			if (redirect != null) {
 				resp.sendRedirect(
 						redirect + "OAuth.do?token=" + token.getSoftwareToken() + "&softwareName=" + softwareName);
 			} else {
-				resp.sendRedirect("https://localhost:8080/connect/OAuth.do?token=" + token.getSoftwareToken()
-						+ "&softwareName=" + softwareName);
+				resp.sendRedirect("https://www.localhost:8080/connect/OAuth.do?token=" + token.getSoftwareToken() + "&softwareName=" + softwareName);
 			}
 			break;
 		case "eAccounting":
@@ -83,9 +83,12 @@ public class VerifyServlet extends HttpServlet {
 			System.out.println("softwareToken " + t.getSoftwareToken());
 			System.out.println("softwareName " + t.getSoftwareName());
 			
-			resp.sendRedirect("https://localhost:8080/connect/OAuth.do?token=" + t.getSoftwareToken() + "&softwareName="
-					+ softwareName);
-			
+			if (redirect != null) {
+				resp.sendRedirect(
+						redirect + "OAuth.do?token=" + t.getSoftwareToken() + "&softwareName=" + softwareName);
+			} else {
+				resp.sendRedirect("https://www.localhost:8080/connect/OAuth.do?token=" + t.getSoftwareToken() + "&softwareName=" + softwareName);
+			}
 			req.getSession().setAttribute("errorMessage", "true");
 			break;
 		case "Moloni":

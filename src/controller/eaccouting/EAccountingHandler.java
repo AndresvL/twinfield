@@ -307,7 +307,6 @@ public class EAccountingHandler {
 				String id = jsonObj.getString("Id");
 				String modified = jsonObj.getString("ChangedUtc");
 				String productCode = jsonObj.getString("Number");
-				String unitName = jsonObj.getString("UnitName");
 				String description = jsonObj.getString("Name");
 				Double price = jsonObj.getDouble("NetPrice");
 				String unit = jsonObj.getString("UnitName");
@@ -316,7 +315,7 @@ public class EAccountingHandler {
 				String dbModifiedHourtype = ObjectDAO.getModifiedDate(t.getSoftwareToken(), null, productCode,
 						"hourtypes");
 				// Check if data is modified
-				if (unitName.equals("Uur")) {
+				if (unit.equals("Uur")) {
 					if (dbModifiedHourtype == null || date == null) {
 						importCount2++;
 					} else {

@@ -51,7 +51,15 @@ public class SettingsServlet extends HttpServlet {
 //			exportOffice = req.getParameter("paymentmethod");
 			req.getSession().setAttribute("errorMessage", "");
 			break;
+		case "DriveFx":
+			exportWerkbonType = req.getParameter("exportWerkbon");
+			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
+			exportOffice = req.getParameter("typeofwork");
+			exportOffice = req.getParameter("paymentmethod");
+			req.getSession().setAttribute("errorMessage", "");
+			break;
 		}
+		
 		
 		if (token != null) {
 			ArrayList<String> impTypes = new ArrayList<String>();

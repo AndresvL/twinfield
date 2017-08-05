@@ -4,7 +4,7 @@ $(document).ready(function() {
 			<!-- reload page every 1,5 - 2 min -->
 			setTimeout(function(){
 				  location.reload();
-			  },88000)
+			  },300000)
 			  // Date
 		    $('#datetimepicker1').datetimepicker({ format:'DD-MM-YYYY HH:mm:ss'
 		    });

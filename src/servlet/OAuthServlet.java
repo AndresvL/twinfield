@@ -1,6 +1,7 @@
 package servlet;
 
 import controller.WorkOrderHandler;
+import controller.drivefx.OAuthDriveFx;
 import controller.eaccouting.OAuthEAccounting;
 import controller.moloni.OAuthMoloni;
 import controller.twinfield.OAuthTwinfield;
@@ -67,6 +68,14 @@ public class OAuthServlet extends HttpServlet {
 				OAuthMoloni oauth4 = new OAuthMoloni();
 				oauth4.authenticate(softwareToken, req, resp);
 				break;
+			case "DriveFx":
+				//typeofwork
+				req.getSession().setAttribute("types", null);
+				//paymentmethod
+				req.getSession().setAttribute("paymentmethod", null);
+				OAuthDriveFx oauth5 = new OAuthDriveFx();
+				oauth5.authenticate(softwareToken, req, resp);
+				break;
 			}
 		}else{
 			switch (softwareName) {
@@ -93,6 +102,12 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
 				rd = req.getRequestDispatcher("moloni.jsp");
+				break;
+			case "DriveFx":
+				req.getSession().setAttribute("softwareToken", softwareToken);			
+				req.getSession().setAttribute("logs", null);
+				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				rd = req.getRequestDispatcher("driveFx.jsp");
 				break;
 			default:
 				break;

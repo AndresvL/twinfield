@@ -6,7 +6,7 @@ $(document).ready(function() {
 				  location.reload();
 			  },880000)
 			  
-//			//Date
+// //Date
 		   $('#datetimepicker1').datetimepicker({ format:'DD-MM-YYYY HH:mm:ss'
 		   });
 			

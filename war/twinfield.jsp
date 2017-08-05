@@ -56,15 +56,14 @@
 #syncbutton {
 	float: right;
 }
-
-
 </style>
 </head>
 <body>
-<!-- Settings Section -->
+	<!-- Settings Section -->
 	<div id="WBA-section">
-		<img src="./img/werkbonapp.png" height="60" width="170" id="WBA_logo"/>
-		<img src="./img/Twinfield-logo.png" height="80" width="180" id="boekhoud_logo"/>
+		<img src="./img/werkbonapp.png" height="60" width="170" id="WBA_logo" />
+		<img src="./img/Twinfield-logo.png" height="80" width="180"
+			id="boekhoud_logo" />
 	</div>
 	<!-- Settings Section -->
 	<div class="settings" style="display: none;">
@@ -278,10 +277,13 @@
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="De werkbonnen met status compleet worden opgehaald"
 									height="13" width="13" />
-								<input class="form-control" type="text" disabled
-									value="Compleet" />
-								<input class="form-control" type="hidden" name="factuurType"
-									value="Compleet" />
+								<select name="factuurType" class="form-control" id="uren"
+									required>
+									<option selected value="compleet"
+										${"compleet" == factuur ? 'selected="selected"' : ''}>Compleet</option>
+									<option value="afgehandeld"
+										${"afgehandeld" == factuur ? 'selected="selected"' : ''}>Afgehandeld</option>
+								</select>
 							</div>
 						</div>
 						<br>
