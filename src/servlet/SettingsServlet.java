@@ -14,7 +14,7 @@ public class SettingsServlet extends HttpServlet {
 	private String redirect = System.getenv("REDIRECT");
 	private String softwareName = null, factuurType = null, user = null, token = null;
 	private String importOffice = null, exportOffice = null, exportWerkbonType = null, syncDate = null,
-			materialCode = null;
+			materialCode = null, exportRelations = null;
 	private int roundedHours = 1;
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -22,6 +22,7 @@ public class SettingsServlet extends HttpServlet {
 		factuurType = req.getParameter("factuurType");
 		softwareName = req.getParameter("softwareName");
 		user = req.getParameter("users");
+		exportRelations = req.getParameter("exportRelations");
 		String[] importTypes = req.getParameterValues("importType");
 		token = req.getParameter("softwareToken");
 		
@@ -48,7 +49,7 @@ public class SettingsServlet extends HttpServlet {
 			exportWerkbonType = req.getParameter("exportWerkbon");
 			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
 			exportOffice = req.getParameter("typeofwork");
-//			exportOffice = req.getParameter("paymentmethod");
+			// exportOffice = req.getParameter("paymentmethod");
 			req.getSession().setAttribute("errorMessage", "");
 			break;
 		case "DriveFx":
@@ -58,8 +59,14 @@ public class SettingsServlet extends HttpServlet {
 			exportOffice = req.getParameter("paymentmethod");
 			req.getSession().setAttribute("errorMessage", "");
 			break;
+		case "SageOne":
+			exportWerkbonType = req.getParameter("exportWerkbon");
+			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
+			importOffice = req.getParameter("typeofwork");
+			exportOffice = req.getParameter("paymentmethod");
+			req.getSession().setAttribute("errorMessage", "");
+			break;
 		}
-		
 		
 		if (token != null) {
 			ArrayList<String> impTypes = new ArrayList<String>();
@@ -112,7 +119,7 @@ public class SettingsServlet extends HttpServlet {
 					impTypes.add(type);
 				}
 				Settings set = new Settings(importOffice, exportOffice, factuurType, impTypes, user, exportWerkbonType,
-						roundedHours, syncDate, materialCode);
+						roundedHours, syncDate, materialCode, exportRelations);
 				ObjectDAO.saveSettings(set, token);
 			} else {
 				// employees, projects, materials, relations and/or hourtypes
@@ -122,7 +129,7 @@ public class SettingsServlet extends HttpServlet {
 					checkboxes = checkbox.getImportObjects();
 					if (checkboxes != null) {
 						Settings set = new Settings(importOffice, exportOffice, factuurType, checkboxes, user,
-								exportWerkbonType, roundedHours, syncDate, materialCode);
+								exportWerkbonType, roundedHours, syncDate, materialCode, exportRelations);
 						ObjectDAO.saveSettings(set, token);
 					}
 				}

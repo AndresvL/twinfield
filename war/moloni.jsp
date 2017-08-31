@@ -241,7 +241,7 @@
 											<label>Synchronisation date</label>
 											<img src="./img/vraagteken.jpg" height="13" width="13"
 												data-toggle="tooltip"
-												title="Alle data will be importerd starting from this date" />
+												title="All data will be imported starting from this date" />
 											<input type='text' class="form-control" id='datetimepicker1'
 												name="syncDate" value="${savedDate}" />
 

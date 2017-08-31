@@ -5,11 +5,11 @@ import java.util.ArrayList;
 
 public class Settings implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private String importOffice, exportOffice, factuurType, user, exportWerkbontype, syncDate, materialCode;
+	private String importOffice, exportOffice, factuurType, user, exportWerkbontype, syncDate, materialCode, exportRelations;
 	private ArrayList<String> importObjects;
 	private int roundedHours;
 
-	public Settings(String iO, String eO, String fT, ArrayList<String> iObj, String sU, String eWT, int rH, String sD, String mC) {
+	public Settings(String iO, String eO, String fT, ArrayList<String> iObj, String sU, String eWT, int rH, String sD, String mC, String eR) {
 		setImportOffice(iO);
 		setExportOffice(eO);
 		setFactuurType(fT);
@@ -19,6 +19,7 @@ public class Settings implements Serializable {
 		setRoundedHours(rH);
 		setSyncDate(sD);
 		setMaterialCode(mC);
+		setExportRelations(eR);
 	}
 
 	public void setUser(String sU) {
@@ -91,5 +92,13 @@ public class Settings implements Serializable {
 
 	public void setMaterialCode(String materialCode) {
 		this.materialCode = materialCode;
+	}
+
+	public String getExportRelations() {
+		return exportRelations;
+	}
+
+	public void setExportRelations(String exportRelations) {
+		this.exportRelations = exportRelations;
 	}
 }

@@ -758,16 +758,7 @@ public class EAccountingHandler {
 				set.getFactuurType(), false, softwareName);
 		for (WorkOrder w : allData) {
 			exportAmount++;
-			// Check if projectnr is empty
-			// if empty create draftInvoice
-			// Else create voucher
 			Boolean b = false;
-			// if (w.getProjectNr().equals("") || w.getProjectNr() == null) {
-			// JSONObject = factuurJSON(w, t, set.getRoundedHours());
-			// } else {
-			// b = true;
-			// JSONObject = voucherJSON(w, t, set.getRoundedHours());
-			// }
 			JSONObject = factuurJSON(w, t, set.getRoundedHours());
 			String error = (String) JSONObject.opt("Error");
 			if (error != null) {
@@ -786,15 +777,6 @@ public class EAccountingHandler {
 				logger.info("RESPONSE " + response);
 				if (response.optString("Id") != null) {
 					successAmount++;
-					// Boolean b = null;
-					// try {
-					// b = setAttachement(t.getSoftwareToken(),
-					// setVerkoopFactuur.getString("Id"), w.getPdfUrl());
-					// } catch (Exception e) {
-					// e.printStackTrace();
-					// }
-					
-					// System.out.println("setAttachement = " + b);
 					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder",
 							t.getSoftwareToken(), softwareName);
 				}
@@ -809,91 +791,6 @@ public class EAccountingHandler {
 		}
 		return new String[] { errorMessage, errorDetails };
 	}
-	
-//	private JSONObject voucherJSON(WorkOrder w, Token t, int roundedHours) throws JSONException {
-//		JSONArray JSONArrayRows = null;
-//		String error = "";
-//		String hourNumber = "1800";
-//		JSONObject JSONObject = new JSONObject();
-//		try {
-//			// Map date
-//			String workDate = w.getWorkDate();
-//			String workEndDate = w.getWorkEndDate();
-//			try {
-//				SimpleDateFormat dt = new SimpleDateFormat("dd-MM-yyyy");
-//				
-//				if (workEndDate.equals("")) {
-//					workEndDate = getCurrentDate(null);
-//				} else {
-//					Date formatDate1 = dt.parse(w.getWorkEndDate());
-//					SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-//					workEndDate = dt1.format(formatDate1);
-//				}
-//				if (workDate.equals("")) {
-//					workDate = getCurrentDate(null);
-//				} else {
-//					Date formatDate = dt.parse(w.getWorkDate());
-//					SimpleDateFormat dt1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-//					workDate = dt1.format(formatDate);
-//				}
-//				
-//			} catch (ParseException e) {
-//				e.printStackTrace();
-//			}
-//			Relation r = w.getRelations().get(0);
-//			JSONObject.put("VoucherDate", workDate);
-//			JSONObject.put("VoucherText", "Verkoopfactuur voor " + r.getDebtorNumber() + " " + r.getCompanyName());
-//			JSONObject jsonRow = new JSONObject();
-//			jsonRow.put("AccountNumber", hourNumber);
-//			JSONArrayRows = new JSONArray();
-//			double hourAmount = 0;
-//			for (WorkPeriod p : w.getWorkPeriods()) {
-//				HourType h = ObjectDAO.getHourType(t.getSoftwareToken(), p.getHourType());
-//				// Get ID from db(hourtype)
-//				if (h == null) {
-//					error += "Hourtype " + p.getHourType()
-//							+ " not found in eAccounting or hourtype is not synchronized\n";
-//					return new JSONObject().put("Error", error);
-//				} else {
-//					double number = p.getDuration();
-//					double hours = roundedHours;
-//					double urenInteger = (number % hours);
-//					if (urenInteger < (hours / 2)) {
-//						number = number - urenInteger;
-//					} else {
-//						number = number - urenInteger + hours;
-//					}
-//					double quantity = (number / 60);
-//					hourAmount += quantity * h.getSalePrice();
-//					System.out.println("HourAmountPrice " + hourAmount);
-//				}
-//			}
-//			DecimalFormat df1 = new DecimalFormat("#.##");
-//			String formatted1 = df1.format(hourAmount);
-//			hourAmount = Double.parseDouble(formatted1.toString().replaceAll(",", "."));
-//			jsonRow.put("CreditAmount", hourAmount);
-//			Project dbProject = ObjectDAO.getProjectByCode(t.getSoftwareToken(), w.getProjectNr());
-//			if (dbProject != null) {
-//				jsonRow.put("ProjectId", dbProject.getCodeExt());
-//			}
-//			JSONArrayRows.put(jsonRow);
-//			jsonRow = new JSONObject();
-//			jsonRow.put("AccountNumber", 1200);
-//			jsonRow.put("DebitAmount", hourAmount);
-//			JSONArrayRows.put(jsonRow);
-//			JSONObject.put("Rows", JSONArrayRows);
-//			System.out.println("JSON VOUCHER OBJECT " + JSONObject);
-			
-//			
-//		} catch (JSONException | SQLException e) {
-//			e.printStackTrace();
-//		}
-//		if (error.equals("")) {
-//			return JSONObject;
-//		} else {
-//			return new JSONObject().put("Error", error);
-//		}
-//	}
 	
 	public JSONObject factuurJSON(WorkOrder w, Token t, int roundedHours) throws JSONException {
 		JSONArray JSONArrayMaterials = null;

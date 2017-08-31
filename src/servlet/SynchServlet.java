@@ -24,6 +24,8 @@ import controller.eaccouting.EAccountingHandler;
 import controller.eaccouting.OAuthEAccounting;
 import controller.moloni.MoloniHandler;
 import controller.moloni.OAuthMoloni;
+import controller.sageone.OAuthSageOne;
+import controller.sageone.SageOneHandler;
 import controller.twinfield.SoapHandler;
 import controller.twinfield.TwinfieldHandler;
 import controller.wefact.WeFactHandler;
@@ -91,7 +93,8 @@ public class SynchServlet extends HttpServlet {
 			}
 			// Print total Users fetched from database
 			System.out.println("A total of " + allTokens.size() + " users are found in database");
-			int twinfieldCount = 0, wefactCount = 0, eaccountingCount = 0, moloniCount = 0, drivefxCount = 0;
+			int twinfieldCount = 0, wefactCount = 0, eaccountingCount = 0, moloniCount = 0, drivefxCount = 0,
+					sageoneCount = 0;
 			for (Token t : allTokens) {
 				switch (t.getSoftwareName()) {
 				case "Twinfield":
@@ -109,6 +112,9 @@ public class SynchServlet extends HttpServlet {
 				case "DriveFx":
 					drivefxCount++;
 					break;
+				case "SageOne":
+					sageoneCount++;
+					break;
 				}
 			}
 			System.out.println(twinfieldCount + " Twinfield users");
@@ -116,6 +122,7 @@ public class SynchServlet extends HttpServlet {
 			System.out.println(eaccountingCount + " eAccounting users");
 			System.out.println(moloniCount + " Moloni users");
 			System.out.println(drivefxCount + " DriveFx users");
+			System.out.println(sageoneCount + " SageOne users");
 		}
 	}
 	
@@ -163,14 +170,16 @@ public class SynchServlet extends HttpServlet {
 			// If req is null the system tries to synchronise and the
 			// session/cluster
 			// will be set with SoapHandler.getSession(t);
+			String tempSession = null;
+			String tempCluster = null;
 			if (req != null) {
-				session = (String) req.getSession().getAttribute("session");
-				cluster = (String) req.getSession().getAttribute("cluster");
-			} else {
-				String[] array = SoapHandler.getSession(t);
-				session = array[0];
-				cluster = array[1];
+				tempSession = (String) req.getSession().getAttribute("session");
+				tempCluster = (String) req.getSession().getAttribute("cluster");
 			}
+			String[] array = SoapHandler.getSession(t, tempSession, tempCluster);
+			session = array[0];
+			cluster = array[1];
+			
 			new TwinfieldThread(t, date, session, cluster).start();
 			DBConnection.createDatabaseConnection(false);
 			break;
@@ -190,6 +199,11 @@ public class SynchServlet extends HttpServlet {
 			break;
 		case "DriveFx":
 			new DriveFxThread(t, date).start();
+			System.out.println("DATE " + date);
+			DBConnection.createDatabaseConnection(false);
+			break;
+		case "SageOne":
+			new SageOneThread(t, date).start();
 			System.out.println("DATE " + date);
 			DBConnection.createDatabaseConnection(false);
 			break;
@@ -222,83 +236,71 @@ public class SynchServlet extends HttpServlet {
 					ArrayList<String> importTypes = set.getImportObjects();
 					// Import section
 					for (String type : importTypes) {
-						String[] array = null;
-						if (session == null) {
-							// Get a new sessionObject if session is null
-							array = SoapHandler.getSession(t);
-						} else {
-							// Use existing session
-							array = new String[] { session, cluster };
+						// Switch for different import objects
+						switch (type) {
+						case "employees":
+							// Get all Employees from Twinfield and add them
+							// to WOA
+							// Returns an array with response message for
+							// log
+							messageArray = twinfield.getEmployees(set.getImportOffice(), session, cluster,
+									t.getSoftwareToken(), t.getSoftwareName(), date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "projects":
+							// Get all Projects from Twinfield and add them
+							// to WOA
+							// Returns an array with response message for log
+							messageArray = twinfield.getProjects(set.getImportOffice(), session, cluster,
+									t.getSoftwareToken(), t.getSoftwareName(), date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "materials":
+							// Get all Materials from Twinfield and add them
+							// to WOA
+							// Returns an array with response message for log
+							messageArray = twinfield.getMaterials(set.getImportOffice(), session, cluster,
+									t.getSoftwareToken(), t.getSoftwareName(), date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "relations":
+							// Get all Relations from Twinfield and add them
+							// to WOA
+							// Returns an array with response message for log
+							messageArray = twinfield.getRelations(set.getImportOffice(), session, cluster,
+									t.getSoftwareToken(), t.getSoftwareName(), date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "hourtypes":
+							// Get all Projects from Twinfield and add them
+							// to WOA
+							// Returns an array with response message for log
+							messageArray = twinfield.getHourTypes(set.getImportOffice(), session, cluster,
+									t.getSoftwareToken(), t.getSoftwareName(), date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						
 						}
 						
-						if (array != null) {
-							session = array[0];
-							cluster = array[1];
-							// Switch for different import objects
-							switch (type) {
-							case "employees":
-								// Get all Employees from Twinfield and add them
-								// to WOA
-								// Returns an array with response message for
-								// log
-								messageArray = twinfield.getEmployees(set.getImportOffice(), session, cluster,
-										t.getSoftwareToken(), t.getSoftwareName(), date);
-								errorMessage += messageArray[0];
-								if (messageArray[1].equals("true")) {
-									checkUpdate = "true";
-								}
-								break;
-							case "projects":
-								// Get all Projects from Twinfield and add them
-								// to WOA
-								// Return an array with response message for log
-								messageArray = twinfield.getProjects(set.getImportOffice(), session, cluster,
-										t.getSoftwareToken(), t.getSoftwareName(), date);
-								errorMessage += messageArray[0];
-								if (messageArray[1].equals("true")) {
-									checkUpdate = "true";
-								}
-								break;
-							case "materials":
-								// Get all Materials from Twinfield and add them
-								// to WOA
-								// Return an array with response message for log
-								messageArray = twinfield.getMaterials(set.getImportOffice(), session, cluster,
-										t.getSoftwareToken(), t.getSoftwareName(), date);
-								errorMessage += messageArray[0];
-								if (messageArray[1].equals("true")) {
-									checkUpdate = "true";
-								}
-								break;
-							case "relations":
-								// Get all Relations from Twinfield and add them
-								// to WOA
-								// Return an array with response message for log
-								messageArray = twinfield.getRelations(set.getImportOffice(), session, cluster,
-										t.getSoftwareToken(), t.getSoftwareName(), date);
-								errorMessage += messageArray[0];
-								if (messageArray[1].equals("true")) {
-									checkUpdate = "true";
-								}
-								break;
-							case "hourtypes":
-								// Get all Projects from Twinfield and add them
-								// to WOA
-								// Return an array with response message for log
-								messageArray = twinfield.getHourTypes(set.getImportOffice(), session, cluster,
-										t.getSoftwareToken(), t.getSoftwareName(), date);
-								errorMessage += messageArray[0];
-								if (messageArray[1].equals("true")) {
-									checkUpdate = "true";
-								}
-								break;
-							
-							}
-						}
 					}
 					// Export section
-					String[] exportMessageArray = twinfield.setWorkOrders(set.getExportOffice(), session, cluster,
-							t.getSoftwareToken(), set.getFactuurType(), t.getSoftwareName(), set.getUser());
+					String[] exportMessageArray = twinfield.setWorkOrders(session, cluster, t.getSoftwareToken(),
+							t.getSoftwareName(), set);
 					errorMessage += exportMessageArray[0];
 					if (exportMessageArray[1] != null) {
 						errorDetails = exportMessageArray[1];
@@ -714,6 +716,120 @@ public class SynchServlet extends HttpServlet {
 				e.printStackTrace();
 			}
 			System.out.println("DriveFx Thread Finished");
+		}
+	};
+	
+	public class SageOneThread extends Thread {
+		Token t;
+		String date;
+		String errorMessage = "", errorDetails = "";
+		String checkUpdate = "false";
+		
+		SageOneThread(Token t, String date) {
+			this.t = t;
+			this.date = date;
+		}
+		
+		public void run() {
+			System.out.println("SageOne Thread Running");
+			SageOneHandler sageone = new SageOneHandler();
+			// Check if accessToken is still valid
+			Token token = null;
+			try {
+				if (t.getAccessSecret() != null && !sageone.checkAccessToken(t)) {
+					// Get accessToken with refreshToken
+					token = OAuthSageOne.getAccessToken(null, t.getAccessSecret(), t.getSoftwareName(),
+							t.getSoftwareToken());
+				} else {
+					token = t;
+				}
+				Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
+				if (set != null) {
+					if (date == null) {
+						date = set.getSyncDate();
+						if (!date.equals("")) {
+							DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+							Date newDate = null;
+							try {
+								// String to date
+								newDate = format.parse(date);
+								Format formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+								date = formatter.format(newDate);
+							} catch (ParseException e) {
+								e.printStackTrace();
+							}
+						} else {
+							date = null;
+						}
+					}
+					ArrayList<String> importTypes = set.getImportObjects();
+					// Import section
+					for (String type : importTypes) {
+						switch (type) {
+						
+						case "materials":
+							// Get all Materials from SageOne
+							// Return an array with response message for log
+							messageArray = sageone.getMaterials(token, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "hourtypes":
+							// Get all Hourtypes from SageOne
+							// Return an array with response message for log
+							messageArray = sageone.getHourtypes(token, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "relations":
+							// Get all Hourtypes from SageOne
+							// Return an array with response message for log
+							messageArray = sageone.getRelations(token, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						// case "quotes":
+						// // Get all Hourtypes from SageOne
+						// // Return an array with response message for log
+						// messageArray = sageone.getOrders(token, date, set);
+						// errorMessage += messageArray[0];
+						// if (messageArray[1].equals("true")) {
+						// checkUpdate = "true";
+						// }
+						// break;
+						}						
+					}
+					// Export section
+					String[] exportMessageArray = null;
+					// Type is factuur
+					if (set.getExportWerkbontype().equals("factuur")) {
+						exportMessageArray = sageone.setInvoice(token, set, date);
+						errorMessage += exportMessageArray[0];
+						if (exportMessageArray[1] != null) {
+							errorDetails = exportMessageArray[1];
+						}
+					}
+					if (checkUpdate.equals("true")) {
+						TokenDAO.saveModifiedDate(getDate(null), t.getSoftwareToken());
+					}
+					if (!errorMessage.equals("")) {
+						ObjectDAO.saveLog(errorMessage, errorDetails, t.getSoftwareToken());
+					} else {
+						ObjectDAO.saveLog("Niks te importeren", errorDetails, t.getSoftwareToken());
+					}
+				}
+			} catch (
+			
+			Exception e) {
+				e.printStackTrace();
+			}
+			System.out.println("SageOne Thread Finished");
 		}
 	};
 }

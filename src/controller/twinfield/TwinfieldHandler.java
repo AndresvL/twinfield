@@ -16,6 +16,7 @@ import javax.servlet.ServletException;
 import DAO.ObjectDAO;
 import DBUtil.DBConnection;
 import controller.WorkOrderHandler;
+import object.Settings;
 import object.twinfield.Search;
 import object.workorder.Address;
 import object.workorder.Employee;
@@ -41,7 +42,6 @@ public class TwinfieldHandler {
 	private int urenError = 0;
 	private String oldProjectNr = null;
 	
-
 	public String getDateMinHour(String string) {
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = null;
@@ -61,7 +61,7 @@ public class TwinfieldHandler {
 		String s = formatter.format(date);
 		return s;
 	}
-
+	
 	public String[] getEmployees(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException, SQLException {
 		String errorMessage = "";
@@ -93,7 +93,7 @@ public class TwinfieldHandler {
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
 	}
-
+	
 	public String[] getProjects(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException {
 		String errorMessage = "";
@@ -119,7 +119,7 @@ public class TwinfieldHandler {
 			if (obj != null) {
 				Project p = (Project) obj;
 				projects.add(p);
-
+				
 			}
 		}
 		if (!projects.isEmpty()) {
@@ -131,14 +131,13 @@ public class TwinfieldHandler {
 			} else {
 				errorMessage += "Er ging iets mis met de projecten<br />";
 			}
-		}
-		else{
+		} else {
 			errorMessage += "Geen projecten voor import<br />";
 		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
 	}
-
+	
 	public String[] getMaterials(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException {
 		String errorMessage = "";
@@ -170,13 +169,13 @@ public class TwinfieldHandler {
 			} else {
 				errorMessage += "Er ging iets mis met de materialen<br />";
 			}
-		}else{
+		} else {
 			errorMessage += "Geen materialen voor import<br />";
 		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
 	}
-
+	
 	public String[] getRelations(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException {
 		String errorMessage = "";
@@ -212,14 +211,13 @@ public class TwinfieldHandler {
 			} else {
 				errorMessage += "Er ging iets mis met de relaties<br />";
 			}
-		}
-		else{
+		} else {
 			errorMessage += "Geen relaties voor import<br />";
 		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
 	}
-
+	
 	public String[] getHourTypes(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException {
 		String errorMessage = "";
@@ -255,16 +253,20 @@ public class TwinfieldHandler {
 			} else {
 				errorMessage += "Er ging iets mis met de uursoorten<br />";
 			}
-		}else{
+		} else {
 			errorMessage += "Geen uursoorten voor import<br />";
 		}
 		messageArray = new String[] { errorMessage, checkUpdate + "" };
 		return messageArray;
 	}
-
+	
 	@SuppressWarnings("unchecked")
-	public String[] setWorkOrders(String office, String session, String cluster, String token, String factuurType,
-			String softwareName, String user) throws SQLException {
+	public String[] setWorkOrders(String session, String cluster, String token, String softwareName, Settings set)
+			throws SQLException {
+		String user = set.getUser();
+		String factuurType = set.getFactuurType();
+		String office = set.getExportOffice();
+		String exportRelation = set.getExportRelations();
 		String errorMessage = "";
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,
 				softwareName);
@@ -276,22 +278,25 @@ public class TwinfieldHandler {
 		for (WorkOrder w : allData) {
 			if (w.getProjectNr().equals("")) {
 				factuurAmount++;
-				errorMessage = setFactuur(w, token, office, session, cluster, softwareName);
+				errorMessage = setFactuur(w, token, office, session, cluster, softwareName, exportRelation, null);
 			} else {
 				// set hourString
 				errorMessage = setUurboeking(w, office, tempUren, user);
 			}
 		}
 		hourString += "</teqs>";
-		//-- LOG MESSAGES --
+		// -- LOG MESSAGES --
 		// Factuur log
 		if (factuurAmount > 0) {
 			if (factuurError > 0) {
-				if(factuurSuccess > 0){
+				if (factuurSuccess > 0) {
 					errorMessage += factuurSuccess + " facturen aangemaakt<br />";
 				}
-				errorMessage += factuurError + " van de " + factuurAmount + " werkbonnen voor facturatie hebben errors. klik voor meer details<br />";
-//				errorFactuurDetails += "Zorg dat <b>alleen</b> de werkbonnen die je wilt <b>factureren</b> op status <b>compleet</b> staan";
+				errorMessage += factuurError + " van de " + factuurAmount
+						+ " werkbonnen voor facturatie hebben errors. klik voor meer details<br />";
+				// errorFactuurDetails += "Zorg dat <b>alleen</b> de werkbonnen
+				// die je wilt <b>factureren</b> op status <b>compleet</b>
+				// staan";
 			} else {
 				// Factuur
 				if (factuurSuccess > 0) {
@@ -314,18 +319,22 @@ public class TwinfieldHandler {
 					urenSuccess++;
 				} else {
 					urenError++;
-					if (s != null && urenError <  5) {
-						errorUrenDetails += s + "\n";;
+					if (s != null && urenError < 5) {
+						errorUrenDetails += s + "\n";
+						;
 					}
 				}
 			}
 			int urenAmount = urenSuccess + urenError;
 			if (urenError > 0) {
-//				errorUrenDetails += "Zorg dat <b>alleen</b> de werkbonnen waarvan je de uren wilt boeken op status <b>compleet</b> staan";
-					if(urenSuccess > 0){
-						errorMessage += urenSuccess + " uurboekingen aangemaakt<br />";
-					}
-					errorMessage += urenError + " van de " + urenAmount + " uurboekingen hebben errors. klik voor meer details<br />";
+				// errorUrenDetails += "Zorg dat <b>alleen</b> de werkbonnen
+				// waarvan je de uren wilt boeken op status <b>compleet</b>
+				// staan";
+				if (urenSuccess > 0) {
+					errorMessage += urenSuccess + " uurboekingen aangemaakt<br />";
+				}
+				errorMessage += urenError + " van de " + urenAmount
+						+ " uurboekingen hebben errors. klik voor meer details<br />";
 			} else {
 				if (urenSuccess > 0) {
 					errorMessage += urenSuccess + " uurboekingen aangemaakt<br />";
@@ -340,122 +349,163 @@ public class TwinfieldHandler {
 		String details = errorFactuurDetails + errorUrenDetails;
 		return new String[] { errorMessage, details };
 	}
-
+	
+	public static boolean isInteger(String s) {
+		try {
+			Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return false;
+		} catch (NullPointerException e) {
+			return false;
+		}
+		// only got here if we didn't return false
+		return true;
+	}
+	
 	private String setFactuur(WorkOrder w, String token, String office, String session, String cluster,
-			String softwareName) throws SQLException {
+			String softwareName, String exportRelation, String code) throws SQLException {
 		String errorMessage = "";
-		Address factuur = null;
-		Address post = null;
-		
+		int factuur = 0;
+		int post = 0;
+		boolean hasMaterial = true;
+		String debtorCode = null;
 		post = ObjectDAO.getAddressID(token, "postal", w.getCustomerDebtorNr());
 		factuur = ObjectDAO.getAddressID(token, "invoice", w.getCustomerDebtorNr());
-		if (post == null) {
+		if (post == 0) {
 			post = factuur;
-		} else if (factuur == null) {
+		} else if (factuur == 0) {
 			factuur = post;
+		}
+		if (code != null) {
+			debtorCode = code;
+			factuur = 1;
+			post = 1;
+		} else {
+			debtorCode = w.getCustomerDebtorNr();
 		}
 		// + "<performancedate>" + w.getWorkDate() +
 		// "</performancedate>"
-		if (factuur != null) {
-			//format date
-			String workDate = null;
-			try {
-				SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd");
-				Date date = dt.parse(w.getCreationDate());
-				SimpleDateFormat dt1 = new SimpleDateFormat("yyyyMMdd");
-				workDate = dt1.format(date);
-			} catch (ParseException e) {
-				e.printStackTrace();
+		
+		// format date
+		String workDate = null;
+		try {
+			SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd");
+			Date date = dt.parse(w.getCreationDate());
+			SimpleDateFormat dt1 = new SimpleDateFormat("yyyyMMdd");
+			workDate = dt1.format(date);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		String status = w.getStatus();
+		switch (status) {
+		case "Afgehandeld":
+			status = "final";
+			break;
+		case "Klaargezet":
+			status = "concept";
+			break;
+		default:
+			status = "concept";
+			break;
+		}
+		String paymentMethod = w.getPaymentMethod();
+		switch (paymentMethod) {
+		case "pin betaling":
+			paymentMethod = "bank";
+			break;
+		case "contant voldaan":
+			paymentMethod = "cash";
+			break;
+		default:
+			paymentMethod = "bank";
+			break;
+		}
+		
+		invoiceType = "FACTUUR";
+		factuurString = "<salesinvoice>" + "<header>" + "<office>" + office + "</office>" + "<invoicetype>"
+				+ invoiceType + "</invoicetype>" + "<invoicedate>" + workDate + "</invoicedate>" + "<customer>"
+				+ debtorCode + "</customer>" + "<status>" + status + "</status>" + "<paymentmethod>" + paymentMethod
+				+ "</paymentmethod>" + "<invoiceaddressnumber>" + factuur + "</invoiceaddressnumber>"
+				+ "<deliveraddressnumber>" + post + "</deliveraddressnumber>" + "</header>" + "<lines>";
+		int i = 0;
+		for (Material m : w.getMaterials()) {
+			String sub;
+			if (m != null) {
+				Material dbMaterial = ObjectDAO.getMaterials(token, m.getCode());
+				if(dbMaterial == null){
+					hasMaterial = false;
+				}
+				i++;
+				if (m.getSubCode() == null) {
+					sub = "";
+				} else {
+					sub = m.getSubCode();
+				}
+				factuurString += "<line id=\"" + i + "\">" + "<article>" + m.getCode() + "</article>" + "<subarticle>"
+						+ sub + "</subarticle>" + "<quantity>" + m.getQuantity() + "</quantity>" + "<units>"
+						+ m.getUnit() + "</units>" + "</line>";
+			} else {
+				errorMessage += "Een materiaal op werkbon " + w.getWorkorderNr() + " bestaat niet in Twinfield<br />";
+				factuurString = "";
 			}
-			String status = w.getStatus();
-			switch (status) {
-			case "Afgehandeld":
-				status = "final";
-				break;
-			case "Klaargezet":
-				status = "concept";
-				break;
-			default:
-				status = "concept";
-				break;
-			}
-			String paymentMethod = w.getPaymentMethod();
-			switch (paymentMethod) {
-			case "pin betaling":
-				paymentMethod = "bank";
-				break;
-			case "contant voldaan":
-				paymentMethod = "cash";
-				break;
-			default:
-				paymentMethod = "bank";
-				break;
-			}
-
-			invoiceType = "FACTUUR";
-			factuurString = "<salesinvoice>" + "<header>" + "<office>" + office + "</office>" + "<invoicetype>"
-					+ invoiceType + "</invoicetype>" + "<invoicedate>" + workDate + "</invoicedate>"
-					+ "<customer>" + w.getCustomerDebtorNr() + "</customer>" + "<status>" + status + "</status>"
-					+ "<paymentmethod>" + paymentMethod + "</paymentmethod>" + "<invoiceaddressnumber>"
-					+ factuur.getAddressId() + "</invoiceaddressnumber>" + "<deliveraddressnumber>"
-					+ post.getAddressId() + "</deliveraddressnumber>" + "</header>" + "<lines>";
-			int i = 0;
-			for (Material m : w.getMaterials()) {
-				String sub;
-				if (m != null) {
-					i++;
-					if (m.getSubCode() == null) {
-						sub = "";
+		}
+		factuurString += "</lines></salesinvoice>";
+		// If material exist
+		if (!factuurString.equals("</lines></salesinvoice>")) {
+			String resultsFactuur = (String) SoapHandler.createSOAPXML(session, cluster, factuurString,
+					"workorderFactuur");
+			if (resultsFactuur != null && resultsFactuur.equals("true")) {
+				WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder", token,
+						softwareName);
+				factuurSuccess++;
+			} else {
+				
+				if (w.getMaterials().size() > 0 && hasMaterial) {
+					if (factuur == 0 && exportRelation.equals("yes")) {
+						Relation r = w.getRelations().get(0);
+						Address a = r.getAddressess().get(0);
+						String relationString = "<dimension>" + "<office>" + office + "</office>" + "<type>DEB</type>"
+								+ "<name>" + r.getCompanyName() + "</name>" + "<addresses>"
+								+ "<address id=\"1\" type=\"invoice\" default=\"true\">" + "<name>" + r.getCompanyName()
+								+ "</name>" + "<country>NL</country>" + "<city>" + a.getCity() + "</city>"
+								+ "<postcode>" + a.getPostalCode() + "</postcode>" + "<telephone>" + a.getPhoneNumber()
+								+ "</telephone>" + "<email>" + a.getEmail() + "</email>" + "<field1>" + a.getName()
+								+ "</field1>" + "<field2>" + a.getStreet() + "</field2>" + "</address>" + "</addresses>"
+								+ "</dimension>";
+						System.out.println("RelationString " + relationString);
+						String resultsExportRelation = (String) SoapHandler.createSOAPXML(session, cluster,
+								relationString, "workorderRelation");
+						if (resultsExportRelation != null && isInteger(resultsExportRelation)) {
+							setFactuur(w, token, office, session, cluster, softwareName, exportRelation,
+									resultsExportRelation);
+						}
 					} else {
-						sub = m.getSubCode();
+						// Twinfield soapResponse
+						factuurError++;
+						if (resultsFactuur != null && factuurError < 5) {
+							errorFactuurDetails += resultsFactuur + "\n";
+						}
 					}
-					factuurString += "<line id=\"" + i + "\">" + "<article>" + m.getCode() + "</article>"
-							+ "<subarticle>" + sub + "</subarticle>" + "<quantity>" + m.getQuantity() + "</quantity>"
-							+ "<units>" + m.getUnit() + "</units>" + "</line>";
 				} else {
-					errorMessage += "Een materiaal op werkbon " + w.getWorkorderNr()
-							+ " bestaat niet in Twinfield<br />";
-					factuurString = "";
-				}
-			}
-			factuurString += "</lines></salesinvoice>";
-			// If material exist
-			if (!factuurString.equals("</lines></salesinvoice>")) {
-				String resultsFactuur = (String) SoapHandler.createSOAPXML(session, cluster, factuurString,
-						"workorderFactuur");
-				System.out.println("FactuurReponse " + factuurString);
-				if (resultsFactuur.equals("true")) {
-					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder", token,
-							softwareName);
-					factuurSuccess++;
-				} else {
-					// twinfield soapResponse
 					factuurError++;
-					if (resultsFactuur != null && factuurError <  5) {
-						errorFactuurDetails += resultsFactuur + "\n";
-					}
+					errorFactuurDetails += "Geen materialen gevonden op werkbon " + w.getWorkorderNr() + ",\n Of materialen bestaan niet in Twinfield\n";
 				}
-			}
-		} else {
-			factuurError++;
-			if (factuurError < 5) {
-				errorFactuurDetails += "Relatie " + w.getCustomerDebtorNr() + " bestaat niet in Twinfield of is niet gesynchroniseerd.\n";
-//				errorFactuurDetails += "De synchronisatie van de relaties moet aangevinkt zijn";
 			}
 		}
 		return errorMessage;
+		
 	}
-
+	
 	private String setUurboeking(WorkOrder w, String office, ArrayList<WorkOrder> tempUren, String user) {
 		String code = "DIRECT";
 		String errorMessage = "";
-		for(WorkPeriod period : w.getWorkPeriods()){
+		for (WorkPeriod period : w.getWorkPeriods()) {
 			if (!period.getHourType().equals("")) {
 				if (user.equals("Geen")) {
 					user = period.getEmployeeNr();
 				}
 				if (!user.equals("") && user != null) {
-					//format date
+					// format date
 					String workDate = null;
 					try {
 						SimpleDateFormat dt = new SimpleDateFormat("dd-MM-yyyy");
@@ -469,10 +519,10 @@ public class TwinfieldHandler {
 					hourString += "<teq>" + "<header>" + "<office>" + office + "</office>"
 					// Check this later
 							+ "<code>" + code + "</code>" + "<user>" + user + "</user>" + "<date>" + workDate
-							+ "</date>" + "<prj1>" + period.getProjectNr() + "</prj1>" + "<prj2>" + period.getHourType() + "</prj2>"
-							+ "</header>" + "<lines>" + "<line type= \"TIME\">" + "<duration>" + period.getDuration()
-							+ "</duration>" + "<description>" + period.getDescription() + "</description>" + "</line>"
-							+ "<line type=\"QUANTITY\">" + "</line>" + "</lines></teq>";
+							+ "</date>" + "<prj1>" + period.getProjectNr() + "</prj1>" + "<prj2>" + period.getHourType()
+							+ "</prj2>" + "</header>" + "<lines>" + "<line type= \"TIME\">" + "<duration>"
+							+ period.getDuration() + "</duration>" + "<description>" + period.getDescription()
+							+ "</description>" + "</line>" + "<line type=\"QUANTITY\">" + "</line>" + "</lines></teq>";
 				} else {
 					urenError++;
 					if (urenError < 5) {
@@ -482,7 +532,7 @@ public class TwinfieldHandler {
 				}
 			} else {
 				urenError++;
-				//Filter the results a little bit
+				// Filter the results a little bit
 				if (!w.getProjectNr().equals(oldProjectNr)) {
 					if (urenError < 5) {
 						errorMessage += "Een werkbon met projectnummer " + w.getProjectNr()

@@ -4,6 +4,7 @@ import controller.WorkOrderHandler;
 import controller.drivefx.OAuthDriveFx;
 import controller.eaccouting.OAuthEAccounting;
 import controller.moloni.OAuthMoloni;
+import controller.sageone.OAuthSageOne;
 import controller.twinfield.OAuthTwinfield;
 import controller.wefact.OAuthWeFact;
 import java.io.IOException;
@@ -13,37 +14,34 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-
-
 public class OAuthServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-
+	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String softwareToken = req.getParameter("token");
 		String softwareName = req.getParameter("softwareName");
-		//Get checkSaved from session every time oauth is called		
+		// Get checkSaved from session every time oauth is called
 		String checkSaved = (String) req.getSession().getAttribute("checkSaved");
-		if(checkSaved != null){
+		if (checkSaved != null) {
 			req.getSession().setAttribute("saved", checkSaved);
 			req.getSession().setAttribute("checkSaved", null);
-		}else{
+		} else {
 			req.getSession().setAttribute("saved", "");
 		}
 		
 		RequestDispatcher rd = null;
 		// Set session with software name and token
 		int code = WorkOrderHandler.checkWorkOrderToken(softwareToken, softwareName);
-		System.out.println("WEB code " + code);
 		if (code == 200) {
 			req.getSession().setAttribute("softwareToken", softwareToken);
 			req.getSession().setAttribute("softwareName", softwareName);
 			req.getSession().setAttribute("checkboxes", null);
 			req.getSession().setAttribute("logs", null);
-
+			
 			switch (softwareName) {
 			case "Twinfield":
 				OAuthTwinfield oauth = new OAuthTwinfield();
-				oauth.authenticate(softwareToken, req, resp);	
+				oauth.authenticate(softwareToken, req, resp);
 				req.getSession().setAttribute("offices", null);
 				req.getSession().setAttribute("users", null);
 				break;
@@ -52,32 +50,40 @@ public class OAuthServlet extends HttpServlet {
 				oauth2.authenticate(softwareToken, req, resp);
 				break;
 			case "eAccounting":
-				//typeofwork
+				// typeofwork
 				req.getSession().setAttribute("types", null);
-				//paymentmethod
+				// paymentmethod
 				req.getSession().setAttribute("paymentmethod", null);
 				OAuthEAccounting oauth3 = new OAuthEAccounting();
 				oauth3.authenticate(softwareToken, req, resp);
 				break;
 			case "Moloni":
 				req.getSession().setAttribute("offices", null);
-				//typeofwork
+				// typeofwork
 				req.getSession().setAttribute("types", null);
-				//paymentmethod
+				// paymentmethod
 				req.getSession().setAttribute("paymentmethod", null);
 				OAuthMoloni oauth4 = new OAuthMoloni();
 				oauth4.authenticate(softwareToken, req, resp);
 				break;
 			case "DriveFx":
-				//typeofwork
+				// typeofwork
 				req.getSession().setAttribute("types", null);
-				//paymentmethod
+				// paymentmethod
 				req.getSession().setAttribute("paymentmethod", null);
 				OAuthDriveFx oauth5 = new OAuthDriveFx();
 				oauth5.authenticate(softwareToken, req, resp);
 				break;
+			case "SageOne":
+				// typeofwork
+				req.getSession().setAttribute("types", null);
+				// paymentmethod
+				req.getSession().setAttribute("paymentmethod", null);
+				OAuthSageOne oauth6 = new OAuthSageOne();
+				oauth6.authenticate(softwareToken, req, resp);
+				break;
 			}
-		}else{
+		} else {
 			switch (softwareName) {
 			case "Twinfield":
 				rd = req.getRequestDispatcher("twinfield.jsp");
@@ -86,28 +92,34 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("error", "Token is invalid");
 				break;
 			case "WeFact":
-				req.getSession().setAttribute("softwareToken", softwareToken);			
+				req.getSession().setAttribute("softwareToken", softwareToken);
 				req.getSession().setAttribute("logs", null);
-				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
 				rd = req.getRequestDispatcher("weFact.jsp");
 				break;
 			case "eAccounting":
-				req.getSession().setAttribute("softwareToken", softwareToken);			
+				req.getSession().setAttribute("softwareToken", softwareToken);
 				req.getSession().setAttribute("logs", null);
-				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
 				rd = req.getRequestDispatcher("eAccounting.jsp");
 				break;
 			case "Moloni":
-				req.getSession().setAttribute("softwareToken", softwareToken);			
+				req.getSession().setAttribute("softwareToken", softwareToken);
 				req.getSession().setAttribute("logs", null);
-				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
 				rd = req.getRequestDispatcher("moloni.jsp");
 				break;
 			case "DriveFx":
-				req.getSession().setAttribute("softwareToken", softwareToken);			
+				req.getSession().setAttribute("softwareToken", softwareToken);
 				req.getSession().setAttribute("logs", null);
-				req.getSession().setAttribute("errorMessage", "Error " +  code + ": Token is invalid");
+				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
 				rd = req.getRequestDispatcher("driveFx.jsp");
+				break;
+			case "SageOne":
+				req.getSession().setAttribute("softwareToken", softwareToken);
+				req.getSession().setAttribute("logs", null);
+				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
+				rd = req.getRequestDispatcher("sageOne.jsp");
 				break;
 			default:
 				break;

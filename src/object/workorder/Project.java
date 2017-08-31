@@ -41,7 +41,7 @@ public class Project {
 	}
 	public String getDebtorNumber() {
 		if(debtorNumber == null || debtorNumber.equals("")){
-			debtorNumber = "leeg";
+			debtorNumber = "empty";
 		}
 		return debtorNumber;
 	}

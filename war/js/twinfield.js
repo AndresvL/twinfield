@@ -100,3 +100,9 @@ $(document).ready(function() {
 			$("#officeExportList").val($("#officelist").val());
 			$("#exportOfficeValue").val($("#officelist").val());
 		});
+		$(".exportRelation").on('change', function() {
+			if ($("input[name='exportRelations']:checked").val() == "yes") {
+				$('#relations').attr('checked', true);
+			}
+		});
+		

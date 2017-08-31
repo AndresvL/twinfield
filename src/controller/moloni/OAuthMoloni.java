@@ -74,10 +74,10 @@ public class OAuthMoloni extends Authenticate {
 			}
 			// get all typeofwork and paymendmethods
 			ArrayList<String> typeofwork = (ArrayList<String>) WorkOrderHandler.getTypeofwork(softwareToken,
-					softwareName, "worktypes");
+					softwareName, "worktypes", "PT");
 			
 			ArrayList<String> paymentMethod = (ArrayList<String>) WorkOrderHandler.getTypeofwork(softwareToken,
-					softwareName, "paymentmethods");
+					softwareName, "paymentmethods", "PT");
 			
 			Settings set = ObjectDAO.getSettings(softwareToken);
 			if (set != null) {

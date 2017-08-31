@@ -156,6 +156,7 @@ public class OAuthTwinfield extends Authenticate {
 		return token;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void authenticate(String softwareToken, HttpServletRequest req, HttpServletResponse resp)
 			throws ClientProtocolException, IOException, ServletException {
@@ -184,17 +185,16 @@ public class OAuthTwinfield extends Authenticate {
 				req.getSession().setAttribute("error",
 						"softwareToken is al in gebruik door " + checkToken.getSoftwareName());
 				rd.forward(req, resp);
+				// normal login
 			} else {
-				String sessionSession = (String)req.getSession().getAttribute("session");
-				String sessionCluster = (String)req.getSession().getAttribute("cluster");
+				String sessionSession = (String) req.getSession().getAttribute("session");
+				String sessionCluster = (String) req.getSession().getAttribute("cluster");
 				String sessionID = null;
 				String cluster = null;
 				String[] array = null;
-				if(sessionSession == null){
-					array = SoapHandler.getSession(checkToken);
-				}else{
-				    array  = new String[]{sessionSession, sessionCluster};
-				}
+				
+				array = SoapHandler.getSession(checkToken, sessionSession, sessionCluster);
+//				Redirect user to login for the first time
 				if (array == null) {
 					newLogin = true;
 					try {
@@ -212,7 +212,6 @@ public class OAuthTwinfield extends Authenticate {
 				logger.info("cluster= " + cluster);
 				logger.info("WBAToken= " + softwareToken);
 				if (sessionID != null) {
-					@SuppressWarnings("unchecked")
 					// get all administrations
 					ArrayList<String> offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID, cluster,
 							"<list><type>offices</type></list>", "office");
@@ -221,13 +220,16 @@ public class OAuthTwinfield extends Authenticate {
 					Search searchObject = new Search("USR", "*", 0, 1, 100, null);
 					ArrayList<String> responseArray = SoapHandler.createSOAPFinder(sessionID, cluster, searchObject);
 					System.out.println("RESULTS LIST" + responseArray.toString());
-					if(responseArray.isEmpty()){
+					if (responseArray.isEmpty()) {
 						System.out.println("TOKEN IS NIET MEER GELDIG");
-						array = SoapHandler.getSession(checkToken);
+						array = SoapHandler.getSession(checkToken, null, null);
 						sessionID = array[0];
 						cluster = array[1];
 						System.out.println("TOKEN IS GELDIG sessionID" + sessionID);
 						responseArray = SoapHandler.createSOAPFinder(sessionID, cluster, searchObject);
+						// get all administrations
+						offices = (ArrayList<String>) SoapHandler.createSOAPXML(sessionID, cluster,
+								"<list><type>offices</type></list>", "office");
 					}
 					for (String s : responseArray) {
 						Map<String, String> allUsers = new HashMap<String, String>();
@@ -257,6 +259,8 @@ public class OAuthTwinfield extends Authenticate {
 						req.getSession().setAttribute("factuur", set.getFactuurType());
 						req.getSession().setAttribute("importOffice", set.getImportOffice());
 						req.getSession().setAttribute("setUser", set.getUser());
+						req.getSession().setAttribute("exportRelations", set.getExportRelations());
+						System.out.println("exportRelations " + set.getExportRelations());
 					}
 					// if session is null
 				} else {

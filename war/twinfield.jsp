@@ -220,7 +220,7 @@
 									<label>
 										<input type="checkbox" value="relations"
 											${"selected" == checkboxes.relations  ? 'checked' : ''}
-											name="importType">
+											name="importType" id="relations">
 										Relaties
 									</label>
 								</div>
@@ -255,6 +255,20 @@
 										</option>
 									</c:forEach>
 								</select><br>
+								<label>Relaties exporteren</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="Selecteer ja, om nieuwe relaties op een werkbon te exporteren naar Twinfield"
+									height="13" width="13" />
+								<br>
+								<input type="radio" name="exportRelations" value="no"
+									class="exportRelation"
+									${"no" == exportRelations  ? 'checked' : ''} checked>
+								Nee<br>
+								<input type="radio" name="exportRelations" value="yes"
+									class="exportRelation"
+									${"yes" == exportRelations  ? 'checked' : ''}>
+								Ja<br> <br>
+
 								<label>Medewerker</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="Deze medewerker wordt gekoppeld aan alle uurboekingen"
@@ -285,6 +299,7 @@
 										${"afgehandeld" == factuur ? 'selected="selected"' : ''}>Afgehandeld</option>
 								</select>
 							</div>
+							<br>
 						</div>
 						<br>
 						<div class="row">

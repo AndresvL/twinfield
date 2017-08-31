@@ -28,30 +28,40 @@ import object.workorder.Relation;
 public class SoapHandler {
 	private final static Logger logger = Logger.getLogger(SoapHandler.class.getName());
 	
-	public static String[] getSession(Token token) {
+	public static String[] getSession(Token token, String session, String clus) {
 		String sessionID = null;
 		String cluster = null;
-		try {
-			// Create SOAP Connection
-			SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
-			SOAPConnection soapConnection = soapConnectionFactory.createConnection();
-			// Send SOAP Message to SOAP Server
-			String url = "https://login.twinfield.com/webservices/session.asmx?wsdl";
-			SOAPMessage soapResponse = soapConnection.call(createSOAPSession(token), url);
-			SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
-			if (soapPart != null && soapPart.getHeader() != null) {
-				sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
-				cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
-			} else {
-				return null;
-			}
-			soapConnection.close();
-		} catch (Exception e) {
-			System.err.println("Error occurred while sending SOAP Request to Server");
-			e.printStackTrace();
+		String[] sessionArray = null;
+		Object checkToken = null;
+		if (session != null) {
+			checkToken = createSOAPXML(session, clus, "<list><type>offices</type></list>", "office");
 		}
-		System.out.println("SESSIONID CREATED " + sessionID);
-		String[] sessionArray = new String[] { sessionID, cluster };
+		if (checkToken != null) {
+			sessionArray = new String[] { session, clus };
+		} else {
+			try {
+				// Create SOAP Connection
+				SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+				SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+				// Send SOAP Message to SOAP Server
+				String url = "https://login.twinfield.com/webservices/session.asmx?wsdl";
+				SOAPMessage soapResponse = soapConnection.call(createSOAPSession(token), url);
+				SOAPEnvelope soapPart = soapResponse.getSOAPPart().getEnvelope();
+				if (soapPart != null && soapPart.getHeader() != null) {
+					sessionID = soapPart.getHeader().getFirstChild().getFirstChild().getTextContent();
+					cluster = soapPart.getBody().getFirstChild().getLastChild().getTextContent();
+				} else {
+					return null;
+				}
+				soapConnection.close();
+				System.out.println("SESSIONID CREATED " + sessionID);
+			} catch (Exception e) {
+				System.err.println("Error occurred while sending SOAP Request to Server");
+				e.printStackTrace();
+			}
+			sessionArray = new String[] { sessionID, cluster };
+			
+		}
 		return sessionArray;
 	}
 	
@@ -110,8 +120,11 @@ public class SoapHandler {
 			// SOAP Body
 			setXMLBody(envelope, data);
 			soapMessage.saveChanges();
-			
 			soapResponse = soapConnection.call(soapMessage, url);
+			if (soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getNodeName().equals("soap:Fault")) {
+				System.out.println("ERROR FAULTCODE");
+				return null;
+			}
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
 					.getTextContent();
 			soapConnection.close();
@@ -119,7 +132,7 @@ public class SoapHandler {
 			soapMessage.writeTo(out);
 			String strMsg = new String(out.toByteArray());
 			System.out.println("SOAPREQUEST " + strMsg);
-			System.out.println("SOAPRESPONSE" + xmlString);
+			System.out.println("SOAPRESPONSE " + xmlString);
 			builder = factory.newDocumentBuilder();
 			doc = builder.parse(new InputSource(new StringReader(xmlString)));
 			
@@ -128,7 +141,7 @@ public class SoapHandler {
 		}
 		int result = 0;
 		if (doc == null) {
-			System.out.println("DOC IS NULL" + xmlString);
+			System.out.println("DOC IS NULL " + xmlString);
 		}
 		if (doc != null && doc.getChildNodes().item(0).hasAttributes()) {
 			result = Integer
@@ -156,6 +169,16 @@ public class SoapHandler {
 			logger.info("FactuurResponse " + xmlString);
 			if (result > 0) {
 				return "true";
+			} else {
+				return xmlString;
+			}
+		}
+		if (type.equals("workorderRelation")) {
+			logger.info("workorderRelationRequest " + data);
+			logger.info("workorderRelationResponse " + xmlString);
+			if (result > 0) {
+				String code = doc.getChildNodes().item(0).getChildNodes().item(4).getTextContent();
+				return code;
 			} else {
 				return xmlString;
 			}
@@ -447,17 +470,19 @@ public class SoapHandler {
 		h = new HourType(code, name, 0, 0, 0.0, 0.0, 1, null, null);
 		return h;
 	}
+	
 	public static boolean isInteger(String s) {
-	    try { 
-	        Integer.parseInt(s); 
-	    } catch(NumberFormatException e) { 
-	        return false; 
-	    } catch(NullPointerException e) {
-	        return false;
-	    }
-	    // only got here if we didn't return false
-	    return true;
+		try {
+			Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return false;
+		} catch (NullPointerException e) {
+			return false;
+		}
+		// only got here if we didn't return false
+		return true;
 	}
+	
 	public static ArrayList<String> setArrayList(SOAPMessage response) {
 		ArrayList<String> allItems = new ArrayList<String>();
 		try {
@@ -473,7 +498,7 @@ public class SoapHandler {
 			// <TotalRows>
 			String tempRows = allData.item(0).getFirstChild().getTextContent();
 			int totalRows = 0;
-			if(isInteger(tempRows)){
+			if (isInteger(tempRows)) {
 				totalRows = Integer.parseInt(allData.item(0).getFirstChild().getTextContent());
 			}
 			if (totalRows > 0) {
@@ -501,7 +526,7 @@ public class SoapHandler {
 				} else {
 					return null;
 				}
-			}else{
+			} else {
 				return null;
 			}
 		} catch (Exception e) {

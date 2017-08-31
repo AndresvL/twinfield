@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import controller.eaccouting.OAuthEAccounting;
 import controller.moloni.MoloniHandler;
 import controller.moloni.OAuthMoloni;
+import controller.sageone.OAuthSageOne;
 import controller.twinfield.OAuthTwinfield;
 import controller.twinfield.SoapHandler;
 import object.Token;
@@ -25,6 +26,10 @@ public class VerifyServlet extends HttpServlet {
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String softwareName = (String) req.getSession().getAttribute("softwareName");
+		String softwareToken = null;
+		String code = null;
+		String error = null;
+		Token t = null;
 		switch (softwareName) {
 		case "Twinfield":
 			String temporaryToken = req.getParameter("oauth_token");
@@ -34,7 +39,7 @@ public class VerifyServlet extends HttpServlet {
 			Token token = oauth.getAccessToken(temporaryToken, temporaryVerifier, softwareName);
 			String sessionID = null;
 			String cluster = null;
-			String[] array = SoapHandler.getSession(token);
+			String[] array = SoapHandler.getSession(token, sessionID, cluster);
 			sessionID = array[0];
 			cluster = array[1];
 			@SuppressWarnings("unchecked")
@@ -61,14 +66,14 @@ public class VerifyServlet extends HttpServlet {
 				resp.sendRedirect(
 						redirect + "OAuth.do?token=" + token.getSoftwareToken() + "&softwareName=" + softwareName);
 			} else {
-				resp.sendRedirect("https://www.localhost:8080/connect/OAuth.do?token=" + token.getSoftwareToken() + "&softwareName=" + softwareName);
+				resp.sendRedirect("https://www.localhost:8080/connect/OAuth.do?token=" + token.getSoftwareToken()
+						+ "&softwareName=" + softwareName);
 			}
 			break;
 		case "eAccounting":
-			String softwareToken = (String) req.getSession().getAttribute("softwareToken");
-			String code = req.getParameter("code");
-			String error = req.getParameter("error");
-			Token t = null;
+			softwareToken = (String) req.getSession().getAttribute("softwareToken");
+			code = req.getParameter("code");
+			error = req.getParameter("error");
 			if (code != null) {
 				System.out.println("CODE " + code);
 				t = OAuthEAccounting.getAccessToken(code, null, softwareName, softwareToken);
@@ -87,7 +92,8 @@ public class VerifyServlet extends HttpServlet {
 				resp.sendRedirect(
 						redirect + "OAuth.do?token=" + t.getSoftwareToken() + "&softwareName=" + softwareName);
 			} else {
-				resp.sendRedirect("https://www.localhost:8080/connect/OAuth.do?token=" + t.getSoftwareToken() + "&softwareName=" + softwareName);
+				resp.sendRedirect("https://www.localhost:8080/connect/OAuth.do?token=" + t.getSoftwareToken()
+						+ "&softwareName=" + softwareName);
 			}
 			req.getSession().setAttribute("errorMessage", "true");
 			break;
@@ -96,7 +102,6 @@ public class VerifyServlet extends HttpServlet {
 			code = req.getParameter("code");
 			System.out.println("CODE " + code);
 			error = req.getParameter("error");
-			t = null;
 			if (code != null) {
 				t = OAuthMoloni.getAccessToken(code, null, softwareName, softwareToken);
 			} else if (error != null) {
@@ -111,6 +116,33 @@ public class VerifyServlet extends HttpServlet {
 			System.out.println("clientSecret " + t.getConsumerSecret());
 			System.out.println("softwareToken " + t.getSoftwareToken());
 			System.out.println("softwareName " + t.getSoftwareName());
+			if (redirect != null) {
+				resp.sendRedirect(
+						redirect + "OAuth.do?token=" + t.getSoftwareToken() + "&softwareName=" + softwareName);
+			} else {
+				resp.sendRedirect("https://www.localhost:8080/connect/OAuth.do?token=" + t.getSoftwareToken()
+						+ "&softwareName=" + softwareName);
+			}
+			req.getSession().setAttribute("errorMessage", "true");
+			break;
+		case "SageOne":
+			softwareToken = (String) req.getSession().getAttribute("softwareToken");
+			code = req.getParameter("code");
+			error = req.getParameter("error");
+			if (code != null) {
+				System.out.println("CODE " + code);
+				t = OAuthSageOne.getAccessToken(code, null, softwareName, softwareToken);
+			} else if (error != null) {
+				System.out.println("Error SageOne authentication: " + error);
+				break;
+			}
+			System.out.println("accessToken " + t.getAccessToken());
+			System.out.println("refreshToken(secret) " + t.getAccessSecret());
+			System.out.println("clientID " + t.getConsumerToken());
+			System.out.println("clientSecret " + t.getConsumerSecret());
+			System.out.println("softwareToken " + t.getSoftwareToken());
+			System.out.println("softwareName " + t.getSoftwareName());
+			
 			if (redirect != null) {
 				resp.sendRedirect(
 						redirect + "OAuth.do?token=" + t.getSoftwareToken() + "&softwareName=" + softwareName);

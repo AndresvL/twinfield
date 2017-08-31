@@ -30,7 +30,7 @@ public class Material {
 	
 	public String getUnit() {
 		if (unit.equals("")) {
-			unit = "<leeg>";
+			unit = "<empty>";
 		}
 		return unit;
 	}
@@ -41,7 +41,7 @@ public class Material {
 	
 	public String getDescription() {
 		if (description.equals("")) {
-			description = "<leeg>";
+			description = "<empty>";
 		}
 		return description;
 	}

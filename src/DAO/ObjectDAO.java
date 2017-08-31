@@ -336,17 +336,16 @@ public class ObjectDAO {
 		return t;
 	}
 	
-	public static Address getAddressID(String softwareToken, String addressType, String codeString) {
-		Address a = null;
+	public static int getAddressID(String softwareToken, String addressType, String codeString) {
+		int a = 0;
 		try {
 			Connection con = DBConnection.createDatabaseConnection(true);
 			Statement statement = con.createStatement();
 			ResultSet output = statement.executeQuery("SELECT * FROM relations WHERE softwareToken =\"" + softwareToken
 					+ "\" AND type=\"" + addressType + "\"AND code=\"" + codeString + "\"");
 			if (output.next()) {
-				a = new Address();
 				String addressId = output.getString("addressId");
-				a.setAddressId(Integer.parseInt(addressId));
+				a = Integer.parseInt(addressId);
 			}
 			statement.close();
 			
@@ -364,7 +363,7 @@ public class ObjectDAO {
 			try {
 				con = DBConnection.createDatabaseConnection(true);
 				stmt = con.prepareStatement(
-						"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, sync_date, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, export_relations, sync_date, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				stmt.setString(1, set.getImportOffice());
 				stmt.setString(2, set.getExportOffice());
 				stmt.setString(3, set.getFactuurType());
@@ -375,9 +374,10 @@ public class ObjectDAO {
 					stmt.setString(5, set.getUser());
 				}				
 				stmt.setString(6, set.getExportWerkbontype());
-				stmt.setInt(7, set.getRoundedHours());
-				stmt.setString(8, set.getSyncDate());
-				stmt.setString(9, token);
+				stmt.setInt(7, set.getRoundedHours());	
+				stmt.setString(8, set.getExportRelations());
+				stmt.setString(9, set.getSyncDate());
+				stmt.setString(10, token);
 				stmt.executeUpdate();
 				stmt.close();
 			} catch (SQLException e) {
@@ -406,9 +406,10 @@ public class ObjectDAO {
 				String user = output.getString("user");
 				String exportWerkbonType = output.getString("werkbon_type");
 				int roundedHours = output.getInt("rounded_hours");
+				String exportRelations = output.getString("export_relations");
 				String syncDate = output.getString("sync_date");
 				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType,
-						roundedHours, syncDate, user);
+						roundedHours, syncDate, user, exportRelations);
 			}
 			statement.close();
 			

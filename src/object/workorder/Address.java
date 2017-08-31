@@ -48,7 +48,7 @@ public class Address {
 
 	public String getStreet() {
 		if(street.equals("") || street == null){
-			street = "<leeg>";
+			street = "<empty>";
 		}
 		return street;
 	}
@@ -67,7 +67,7 @@ public class Address {
 
 	public String getPostalCode() {
 		if(postalCode.equals("") || postalCode == null){
-			postalCode = "<leeg>";
+			postalCode = "<empty>";
 		}
 		return postalCode;
 	}
@@ -78,7 +78,7 @@ public class Address {
 
 	public String getCity() {
 		if(city.equals("") || city == null){
-			city = "<leeg>";
+			city = "<empty>";
 		}
 		return city;
 	}
