@@ -108,13 +108,18 @@ public class OAuthSageOne extends Authenticate {
 				}
 				Map<String, String> exportWerkbonType = new HashMap<String, String>();
 				exportWerkbonType.put(set.getExportWerkbontype(), "selected");
-				
+				Map<String, String> allExports = new HashMap<String, String>();
+				if (set.getExportObjects() != null) {
+					for (String s : set.getExportObjects()) {
+						allExports.put(s, "selected");
+					}
+				}
+				req.getSession().setAttribute("exportCheckboxes", allExports);
 				req.getSession().setAttribute("savedDate", set.getSyncDate());
 				req.getSession().setAttribute("checkboxes", allImports);
 				req.getSession().setAttribute("exportWerkbonType", exportWerkbonType);
 				req.getSession().setAttribute("roundedHours", set.getRoundedHours());
 				req.getSession().setAttribute("factuur", set.getFactuurType());
-				req.getSession().setAttribute("exportRelations", set.getExportRelations());
 			} else {
 				Map<String, String> typeofworkSelected = new HashMap<String, String>();
 				for (String s : typeofwork) {

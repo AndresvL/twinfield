@@ -26,6 +26,7 @@ import controller.moloni.MoloniHandler;
 import controller.moloni.OAuthMoloni;
 import controller.sageone.OAuthSageOne;
 import controller.sageone.SageOneHandler;
+import controller.snelstart.SnelStartHandler;
 import controller.twinfield.SoapHandler;
 import controller.twinfield.TwinfieldHandler;
 import controller.wefact.WeFactHandler;
@@ -94,7 +95,7 @@ public class SynchServlet extends HttpServlet {
 			// Print total Users fetched from database
 			System.out.println("A total of " + allTokens.size() + " users are found in database");
 			int twinfieldCount = 0, wefactCount = 0, eaccountingCount = 0, moloniCount = 0, drivefxCount = 0,
-					sageoneCount = 0;
+					snelstartCount = 0, sageoneCount = 0;
 			for (Token t : allTokens) {
 				switch (t.getSoftwareName()) {
 				case "Twinfield":
@@ -115,6 +116,9 @@ public class SynchServlet extends HttpServlet {
 				case "SageOne":
 					sageoneCount++;
 					break;
+				case "SnelStart":
+					snelstartCount++;
+					break;
 				}
 			}
 			System.out.println(twinfieldCount + " Twinfield users");
@@ -123,6 +127,7 @@ public class SynchServlet extends HttpServlet {
 			System.out.println(moloniCount + " Moloni users");
 			System.out.println(drivefxCount + " DriveFx users");
 			System.out.println(sageoneCount + " SageOne users");
+			System.out.println(snelstartCount + " SnelStart users");
 		}
 	}
 	
@@ -204,6 +209,11 @@ public class SynchServlet extends HttpServlet {
 			break;
 		case "SageOne":
 			new SageOneThread(t, date).start();
+			System.out.println("DATE " + date);
+			DBConnection.createDatabaseConnection(false);
+			break;
+		case "SnelStart":
+			new SnelStartThread(t, date).start();
 			System.out.println("DATE " + date);
 			DBConnection.createDatabaseConnection(false);
 			break;
@@ -803,7 +813,7 @@ public class SynchServlet extends HttpServlet {
 						// checkUpdate = "true";
 						// }
 						// break;
-						}						
+						}
 					}
 					// Export section
 					String[] exportMessageArray = null;
@@ -830,6 +840,108 @@ public class SynchServlet extends HttpServlet {
 				e.printStackTrace();
 			}
 			System.out.println("SageOne Thread Finished");
+		}
+	};
+	
+	public class SnelStartThread extends Thread {
+		Token t;
+		String date;
+		String errorMessage = "", errorDetails = "";
+		String checkUpdate = "false";
+		
+		SnelStartThread(Token t, String date) {
+			this.t = t;
+			this.date = date;
+		}
+		
+		public void run() {
+			System.out.println("SnelStart Thread Running");
+			SnelStartHandler snelstart = new SnelStartHandler();
+			// Check if accessToken is still valid
+			try {
+				if (!snelstart.checkAccessToken(t.getAccessToken())) {
+					// Get accessToken with koppelingssleutel					
+					String access = snelstart.getAccessToken(t.getAccessSecret());
+					t.setAccessToken(access);
+				}
+				Settings set = ObjectDAO.getSettings(t.getSoftwareToken());
+				if (set != null) {
+					if (date == null) {
+						date = set.getSyncDate();
+						if (!date.equals("")) {
+							DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+							Date newDate = null;
+							try {
+								// String to date
+								newDate = format.parse(date);
+								Format formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+								date = formatter.format(newDate);
+							} catch (ParseException e) {
+								e.printStackTrace();
+							}
+						} else {
+							date = null;
+						}
+					}
+					ArrayList<String> importTypes = set.getImportObjects();
+					// Import section
+					for (String type : importTypes) {
+						switch (type) {
+						
+						case "materials":
+							// Get all Materials from SageOne
+							// Return an array with response message for log
+							messageArray = snelstart.getMaterials(t, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						case "relations":
+							// Get all Hourtypes from SageOne
+							// Return an array with response message for log
+							messageArray = snelstart.getRelations(t, date);
+							errorMessage += messageArray[0];
+							if (messageArray[1].equals("true")) {
+								checkUpdate = "true";
+							}
+							break;
+						// case "quotes":
+						// // Get all Hourtypes from SageOne
+						// // Return an array with response message for log
+						// messageArray = sageone.getOrders(token, date, set);
+						// errorMessage += messageArray[0];
+						// if (messageArray[1].equals("true")) {
+						// checkUpdate = "true";
+						// }
+						// break;
+						}
+					}
+					// Export section
+					String[] exportMessageArray = null;
+					// Type is factuur
+					if (set.getExportWerkbontype().equals("factuur")) {
+						exportMessageArray = snelstart.setInvoice(t, set, date);
+						errorMessage += exportMessageArray[0];
+						if (exportMessageArray[1] != null) {
+							errorDetails = exportMessageArray[1];
+						}
+					}
+					if (checkUpdate.equals("true")) {
+						TokenDAO.saveModifiedDate(getDate(null), t.getSoftwareToken());
+					}
+					if (!errorMessage.equals("")) {
+						ObjectDAO.saveLog(errorMessage, errorDetails, t.getSoftwareToken());
+					} else {
+						ObjectDAO.saveLog("Niks te importeren", errorDetails, t.getSoftwareToken());
+					}
+				}
+			} catch (
+			
+			Exception e) {
+				e.printStackTrace();
+			}
+			System.out.println("SnelStart Thread Finished");
 		}
 	};
 }

@@ -177,7 +177,7 @@
 								</div>
 								<div class="checkbox">
 									<label>
-										<input type="checkbox" id="relations " value="relations"
+										<input type="checkbox" id="relations" value="relations"
 											${"selected" == checkboxes.relations  ? 'checked' : ''}
 											name="importType">
 										Relations
@@ -219,19 +219,21 @@
 								<input class="form-control" type="hidden" name="factuurType"
 									value="Compleet" />
 								<br>
-								<label>Export new relations</label>
+								<label>Workorder options</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Select yes to export new relations on a workorder to SageOne"
+									title="Select the objects you want to create in SageOne"
 									height="13" width="13" />
+							
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" class ="exportRelation" value="relations"
+											${"selected" == exportCheckboxes.relations  ? 'checked' : ''}
+											name="exportType">
+										New relations
+									</label>
+								</div>
+								
 								<br>
-								<input type="radio" name="exportRelations" value="no"
-									class="exportRelation"
-									${"no" == exportRelations  ? 'checked' : ''} checked>
-								No<br>
-								<input type="radio" name="exportRelations" value="yes"
-									class="exportRelation"
-									${"yes" == exportRelations  ? 'checked' : ''}>
-								Yes<br> <br>
 								<label>Export workorder as</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="A workorder will be exporterd as an invoice" height="13"

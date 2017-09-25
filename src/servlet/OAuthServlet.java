@@ -5,6 +5,7 @@ import controller.drivefx.OAuthDriveFx;
 import controller.eaccouting.OAuthEAccounting;
 import controller.moloni.OAuthMoloni;
 import controller.sageone.OAuthSageOne;
+import controller.snelstart.OAuthSnelStart;
 import controller.twinfield.OAuthTwinfield;
 import controller.wefact.OAuthWeFact;
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class OAuthServlet extends HttpServlet {
 			req.getSession().setAttribute("softwareToken", softwareToken);
 			req.getSession().setAttribute("softwareName", softwareName);
 			req.getSession().setAttribute("checkboxes", null);
+			req.getSession().setAttribute("exportCheckboxes", null);
 			req.getSession().setAttribute("logs", null);
 			
 			switch (softwareName) {
@@ -82,6 +84,14 @@ public class OAuthServlet extends HttpServlet {
 				OAuthSageOne oauth6 = new OAuthSageOne();
 				oauth6.authenticate(softwareToken, req, resp);
 				break;
+			case "SnelStart":
+				// typeofwork
+				req.getSession().setAttribute("types", null);
+				// paymentmethod
+				req.getSession().setAttribute("paymentmethod", null);
+				OAuthSnelStart oauth7 = new OAuthSnelStart();
+				oauth7.authenticate(softwareToken, req, resp);
+				break;
 			}
 		} else {
 			switch (softwareName) {
@@ -120,6 +130,12 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
 				rd = req.getRequestDispatcher("sageOne.jsp");
+				break;
+			case "SnelStart":
+				req.getSession().setAttribute("softwareToken", softwareToken);
+				req.getSession().setAttribute("logs", null);
+				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
+				rd = req.getRequestDispatcher("snelStart.jsp");
 				break;
 			default:
 				break;

@@ -254,13 +254,20 @@ public class OAuthTwinfield extends Authenticate {
 						for (String s : set.getImportObjects()) {
 							allImports.put(s, "selected");
 						}
+						Map<String, String> allExports = new HashMap<String, String>();
+						if (set.getExportObjects() != null) {
+							for (String s : set.getExportObjects()) {
+								allExports.put(s, "selected");
+							}
+						}
+						req.getSession().setAttribute("exportCheckboxes", allExports);
 						req.getSession().setAttribute("checkboxes", allImports);
 						req.getSession().setAttribute("exportOffice", set.getExportOffice());
 						req.getSession().setAttribute("factuur", set.getFactuurType());
 						req.getSession().setAttribute("importOffice", set.getImportOffice());
 						req.getSession().setAttribute("setUser", set.getUser());
-						req.getSession().setAttribute("exportRelations", set.getExportRelations());
-						System.out.println("exportRelations " + set.getExportRelations());
+						req.getSession().setAttribute("exportRelations", set.getExportObjects());
+						System.out.println("exportRelations " + set.getExportObjects());
 					}
 					// if session is null
 				} else {

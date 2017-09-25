@@ -122,7 +122,7 @@ public class SoapHandler {
 			soapMessage.saveChanges();
 			soapResponse = soapConnection.call(soapMessage, url);
 			if (soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getNodeName().equals("soap:Fault")) {
-				System.out.println("ERROR FAULTCODE");
+				System.out.println("ERROR FAULTCODE " + soapResponse.toString());
 				return null;
 			}
 			xmlString = soapResponse.getSOAPPart().getEnvelope().getBody().getFirstChild().getFirstChild()
@@ -179,6 +179,15 @@ public class SoapHandler {
 			if (result > 0) {
 				String code = doc.getChildNodes().item(0).getChildNodes().item(4).getTextContent();
 				return code;
+			} else {
+				return xmlString;
+			}
+		}
+		if (type.equals("workorderRelationDelete")) {
+			logger.info("workorderRelationRequestDelete " + data);
+			logger.info("workorderRelationResponseDelete " + xmlString);
+			if (result > 0) {
+				return result;
 			} else {
 				return xmlString;
 			}

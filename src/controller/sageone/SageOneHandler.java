@@ -450,7 +450,7 @@ public class SageOneHandler {
 				set.getFactuurType(), false, softwareName);
 		for (WorkOrder w : allData) {
 			exportAmount++;
-			JSONObject = invoiceJSON(w, t, set.getRoundedHours(), set.getExportRelations());
+			JSONObject = invoiceJSON(w, t, set.getRoundedHours(), set.getExportObjects());
 			String error = (String) JSONObject.opt("Error");
 			if (error != null) {
 				errorDetails += error;
@@ -490,17 +490,27 @@ public class SageOneHandler {
 		return new String[] { errorMessage, errorDetails };
 	}
 	
-	public JSONObject invoiceJSON(WorkOrder w, Token t, int roundedHours, String exportRelation) throws JSONException {
+	public JSONObject invoiceJSON(WorkOrder w, Token t, int roundedHours, ArrayList<String> exportObjects) throws JSONException {
 		String error = "";
 		JSONObject JSONObject = new JSONObject();
 		String debtorNr = null;
 		
 		try {
 			int i = 0;
+			if (w.getMaterials().size() == 0 && w.getWorkPeriods().size() == 0) {
+				error += "No materials or workperiods found on workorder " + w.getWorkorderNr() + "\n";
+				return new JSONObject().put("Error", error);
+			}
 			for (Material m : w.getMaterials()) {
 				Material dbMaterial = ObjectDAO.getMaterials(t.getSoftwareToken(), m.getCode());
+				if (Double.parseDouble(m.getQuantity()) == 0) {
+					error += "The quantity of material " + m.getCode() + " on workorder " + w.getWorkorderNr()
+							+ " has to be greater then 0\n";
+					return new JSONObject().put("Error", error);
+				}
 				if (dbMaterial == null) {
-					error += "Material " + m.getCode() + " not found in SageOne or material is not synchronized\n";
+					error += "Material " + m.getCode() + " on workorder " + w.getWorkorderNr()
+							+ " not found in SageOne or this material is not synchronized\n";
 					return new JSONObject().put("Error", error);
 				} else {
 					String lineItems = "sales_invoice[line_items_attributes][" + i + "]";
@@ -523,7 +533,8 @@ public class SageOneHandler {
 				i++;
 				// Get ID from db(hourtype)
 				if (h == null) {
-					error += "Hourtype " + p.getHourType() + " not found in SageOne or hourtype is not synchronized\n";
+					error += "Hourtype " + p.getHourType() + " on workorder " + w.getWorkorderNr()
+							+ " not found in SageOne or this hourtype is not synchronized\n";
 					return new JSONObject().put("Error", error);
 				} else {
 					i++;
@@ -552,12 +563,12 @@ public class SageOneHandler {
 			}
 			Relation dbRelation = ObjectDAO.getRelation(t.getSoftwareToken(), w.getCustomerDebtorNr(), "invoice");
 			if (dbRelation == null) {
-				if (exportRelation.equals("yes")) {
+				if (exportObjects != null && exportObjects.contains("relations")) {
 					JSONObject object = setRelation(t, w);
 					debtorNr = object.getInt("id") + "";
 					newRelation++;
 				} else {
-					error += "Relation " + w.getCustomerDebtorNr()
+					error += "Relation " + w.getCustomerDebtorNr() + " on workorder " + w.getWorkorderNr()
 							+ " not found in SageOne or relation is not synchronized\n";
 					return new JSONObject().put("Error", error);
 				}
@@ -601,6 +612,7 @@ public class SageOneHandler {
 				Address a = r.getAddressess().get(0);
 				if (a.getType().equals("invoice")) {
 					JSONObject.put("contact[name]", a.getName());
+					// JSONObject.put("contact[id]", w.getCustomerDebtorNr());
 					JSONObject.put("contact[company]", r.getCompanyName());
 					JSONObject.put("contact[contact_type_id]", 1);
 					JSONObject.put("contact[email]", r.getEmailWorkorder());

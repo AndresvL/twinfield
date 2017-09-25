@@ -61,6 +61,7 @@ public class WorkOrderHandler {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
 			link = link.trim();
+			System.out.println("CHECKWBATOKEN " + link);
 		}
 		int code = 0;
 		String output = null;
@@ -392,7 +393,7 @@ public class WorkOrderHandler {
 							JSONArray materials = object.getJSONArray("Materials");
 							for (int j = 0; j < materials.length(); j++) {
 								JSONObject material = materials.getJSONObject(j);
-								materialCode = material.getString("MaterialCode");
+								materialCode = material.optString("MaterialCode", "");
 								materialNr = material.getString("MaterialNr");
 								materialUnit = material.getString("MaterialUnit");
 								materialName = material.getString("MaterialName");

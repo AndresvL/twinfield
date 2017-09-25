@@ -42,6 +42,14 @@ public class TwinfieldHandler {
 	private int urenError = 0;
 	private String oldProjectNr = null;
 	
+	/**
+	 * Returns a the current date minus 2 hours This method is used to set the
+	 * sync date 2 hours before the system date
+	 * 
+	 * @param string
+	 *            current date
+	 * @return a new date minus 2 hours
+	 */
 	public String getDateMinHour(String string) {
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = null;
@@ -62,6 +70,26 @@ public class TwinfieldHandler {
 		return s;
 	}
 	
+	/**
+	 * Returns an array with error message and error details This method gets
+	 * all the employees from Twinfield
+	 * 
+	 * @param office
+	 *            the office in Twinfield from where the data is fetched
+	 * @param session
+	 *            the current session of the user
+	 * @param cluster
+	 *            the current cluster of the user
+	 * @param token
+	 *            the current softwareToken of the user
+	 * @param softwareName
+	 *            the softwareName of the integration
+	 * @param date
+	 *            the current sync date
+	 * @throws Exception
+	 *             exception handling
+	 * @return an array with error message and details
+	 */
 	public String[] getEmployees(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException, SQLException {
 		String errorMessage = "";
@@ -94,6 +122,26 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 	
+	/**
+	 * Returns an array with error message and error details This method gets
+	 * all the projects from Twinfield
+	 * 
+	 * @param office
+	 *            the office in Twinfield from where the data is fetched
+	 * @param session
+	 *            the current session of the user
+	 * @param cluster
+	 *            the current cluster of the user
+	 * @param token
+	 *            the current softwareToken of the user
+	 * @param softwareName
+	 *            the softwareName of the integration
+	 * @param date
+	 *            the current sync date
+	 * @throws Exception
+	 *             exception handling
+	 * @return an array with error message and details
+	 */
 	public String[] getProjects(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException {
 		String errorMessage = "";
@@ -138,6 +186,26 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 	
+	/**
+	 * Returns an array with error message and error details This method gets
+	 * all the materials from Twinfield
+	 * 
+	 * @param office
+	 *            the office in Twinfield from where the data is fetched
+	 * @param session
+	 *            the current session of the user
+	 * @param cluster
+	 *            the current cluster of the user
+	 * @param token
+	 *            the current softwareToken of the user
+	 * @param softwareName
+	 *            the softwareName of the integration
+	 * @param date
+	 *            the current sync date
+	 * @throws Exception
+	 *             exception handling
+	 * @return an array with error message and details
+	 */
 	public String[] getMaterials(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException {
 		String errorMessage = "";
@@ -176,17 +244,38 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 	
+	/**
+	 * Returns an array with error message and error details This method gets
+	 * all the relations from Twinfield
+	 * 
+	 * @param office
+	 *            the office in Twinfield from where the data is fetched
+	 * @param session
+	 *            the current session of the user
+	 * @param cluster
+	 *            the current cluster of the user
+	 * @param token
+	 *            the current softwareToken of the user
+	 * @param softwareName
+	 *            the softwareName of the integration
+	 * @param date
+	 *            the current sync date
+	 * @throws Exception
+	 *             exception handling
+	 * @return an array with error message and details
+	 */
 	public String[] getRelations(String office, String session, String cluster, String token, String softwareName,
 			String date) throws ServletException, IOException {
 		String errorMessage = "";
+		String dimType = "DEB";
 		// Create search object
 		// Parameters: type, pattern, field, firstRow, maxRows, options
 		if (date != null) {
-			options = new String[][] { { "ArrayOfString", "string", "dimtype", "DEB" },
+			options = new String[][] { { "ArrayOfString", "string", "dimtype", dimType },
 					{ "ArrayOfString", "string", "office", office },
 					{ "ArrayOfString", "string", "modifiedsince", getDateMinHour(date) } };
 		} else {
-			options = new String[][] { { "ArrayOfString", "string", "dimtype", "DEB" },
+			options = new String[][] { { "ArrayOfString", "string", "dimtype", dimType },
 					{ "ArrayOfString", "string", "office", office } };
 		}
 		searchObject = new Search("DIM", "*", 0, 1, 100, options);
@@ -194,8 +283,8 @@ public class TwinfieldHandler {
 		ArrayList<Relation> relations = new ArrayList<Relation>();
 		for (int i = 0; i < responseArray.size(); i++) {
 			String[] parts = responseArray.get(i).split(",");
-			String string = "<read><type>dimensions</type><office>" + office + "</office><dimtype>DEB</dimtype><code>"
-					+ parts[0] + "</code></read>";
+			String string = "<read><type>dimensions</type><office>" + office + "</office><dimtype>" + dimType
+					+ "</dimtype><code>" + parts[0] + "</code></read>";
 			Object obj = SoapHandler.createSOAPXML(session, cluster, string, "relation");
 			if (obj != null) {
 				Relation r = (Relation) obj;
@@ -260,13 +349,31 @@ public class TwinfieldHandler {
 		return messageArray;
 	}
 	
+	/**
+	 * Returns an array with error message and error details This method gets
+	 * all the workorders from WorkOrderApp
+	 *
+	 * @param session
+	 *            the current session of the user
+	 * @param cluster
+	 *            the current cluster of the user
+	 * @param token
+	 *            the current softwareToken of the user
+	 * @param softwareName
+	 *            the softwareName of the integration
+	 * @param set
+	 *            the saved settings of the user
+	 * @throws Exception
+	 *             exception handling
+	 * @return an array with error message and details
+	 */
 	@SuppressWarnings("unchecked")
 	public String[] setWorkOrders(String session, String cluster, String token, String softwareName, Settings set)
 			throws SQLException {
 		String user = set.getUser();
 		String factuurType = set.getFactuurType();
 		String office = set.getExportOffice();
-		String exportRelation = set.getExportRelations();
+		ArrayList<String> exportObjects = set.getExportObjects();
 		String errorMessage = "";
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,
 				softwareName);
@@ -278,7 +385,7 @@ public class TwinfieldHandler {
 		for (WorkOrder w : allData) {
 			if (w.getProjectNr().equals("")) {
 				factuurAmount++;
-				errorMessage = setFactuur(w, token, office, session, cluster, softwareName, exportRelation, null);
+				errorMessage = setFactuur(w, token, office, session, cluster, softwareName, exportObjects, null);
 			} else {
 				// set hourString
 				errorMessage = setUurboeking(w, office, tempUren, user);
@@ -311,19 +418,22 @@ public class TwinfieldHandler {
 			ArrayList<String> results = (ArrayList<String>) SoapHandler.createSOAPXML(session, cluster, hourString,
 					"workorder");
 			int urenSuccess = 0;
-			for (String s : results) {
-				if (s.equals("true")) {
-					WorkOrder o = tempUren.get(urenSuccess);
-					WorkOrderHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), true, "GetWorkorder", token,
-							softwareName);
-					urenSuccess++;
-				} else {
-					urenError++;
-					if (s != null && urenError < 5) {
-						errorUrenDetails += s + "\n";
-						;
+			if (results != null) {
+				for (String s : results) {
+					if (s.equals("true")) {
+						WorkOrder o = tempUren.get(urenSuccess);
+						WorkOrderHandler.setWorkorderStatus(o.getId(), o.getWorkorderNr(), true, "GetWorkorder", token,
+								softwareName);
+						urenSuccess++;
+					} else {
+						urenError++;
+						if (s != null && urenError < 5) {
+							errorUrenDetails += s + "\n";
+						}
 					}
 				}
+			} else {
+				errorUrenDetails += "Onbekende fout opgetreden" + "\n";
 			}
 			int urenAmount = urenSuccess + urenError;
 			if (urenError > 0) {
@@ -362,8 +472,28 @@ public class TwinfieldHandler {
 		return true;
 	}
 	
+	/**
+	 * Returns a string with error messagesThis method gets all the employees
+	 * from Twinfield
+	 * 
+	 * @param office
+	 *            the office in Twinfield from where the data is fetched
+	 * @param session
+	 *            the current session of the user
+	 * @param cluster
+	 *            the current cluster of the user
+	 * @param token
+	 *            the current softwareToken of the user
+	 * @param softwareName
+	 *            the softwareName of the integration
+	 * @param date
+	 *            the current sync date
+	 * @throws Exception
+	 *             exception handling
+	 * @return an array with error message and details
+	 */
 	private String setFactuur(WorkOrder w, String token, String office, String session, String cluster,
-			String softwareName, String exportRelation, String code) throws SQLException {
+			String softwareName, ArrayList<String> exportObjects, String code) throws SQLException {
 		String errorMessage = "";
 		int factuur = 0;
 		int post = 0;
@@ -432,7 +562,7 @@ public class TwinfieldHandler {
 			String sub;
 			if (m != null) {
 				Material dbMaterial = ObjectDAO.getMaterials(token, m.getCode());
-				if(dbMaterial == null){
+				if (dbMaterial == null) {
 					hasMaterial = false;
 				}
 				i++;
@@ -459,11 +589,12 @@ public class TwinfieldHandler {
 						softwareName);
 				factuurSuccess++;
 			} else {
-				
+				// Create new Relation
 				if (w.getMaterials().size() > 0 && hasMaterial) {
-					if (factuur == 0 && exportRelation.equals("yes")) {
+					if (factuur == 0 && exportObjects != null && exportObjects.contains("relations")) {
 						Relation r = w.getRelations().get(0);
 						Address a = r.getAddressess().get(0);
+						
 						String relationString = "<dimension>" + "<office>" + office + "</office>" + "<type>DEB</type>"
 								+ "<name>" + r.getCompanyName() + "</name>" + "<addresses>"
 								+ "<address id=\"1\" type=\"invoice\" default=\"true\">" + "<name>" + r.getCompanyName()
@@ -472,23 +603,35 @@ public class TwinfieldHandler {
 								+ "</telephone>" + "<email>" + a.getEmail() + "</email>" + "<field1>" + a.getName()
 								+ "</field1>" + "<field2>" + a.getStreet() + "</field2>" + "</address>" + "</addresses>"
 								+ "</dimension>";
-						System.out.println("RelationString " + relationString);
 						String resultsExportRelation = (String) SoapHandler.createSOAPXML(session, cluster,
 								relationString, "workorderRelation");
+						System.out.println("RELATION CREATED");
 						if (resultsExportRelation != null && isInteger(resultsExportRelation)) {
-							setFactuur(w, token, office, session, cluster, softwareName, exportRelation,
+							setFactuur(w, token, office, session, cluster, softwareName, exportObjects,
 									resultsExportRelation);
 						}
 					} else {
 						// Twinfield soapResponse
 						factuurError++;
 						if (resultsFactuur != null && factuurError < 5) {
+							if (code != null) {
+								String relationString = "<dimension status='delete'>" + "<office>" + office
+										+ "</office>" + "<type>DEB</type><code>" + code + "</code>" + "</dimension>";
+								String resultsExportRelation = (String) SoapHandler.createSOAPXML(session, cluster,
+										relationString, "workorderRelationDelete");
+								if (isInteger(resultsExportRelation)) {
+									System.out.println("RELATION VERWIJDERD");
+								} else {
+									System.out.println("RELATION NIET VERWIJDERD " + resultsExportRelation);
+								}
+							}
 							errorFactuurDetails += resultsFactuur + "\n";
 						}
 					}
 				} else {
 					factuurError++;
-					errorFactuurDetails += "Geen materialen gevonden op werkbon " + w.getWorkorderNr() + ",\n Of materialen bestaan niet in Twinfield\n";
+					errorFactuurDetails += "Geen materialen gevonden op werkbon " + w.getWorkorderNr()
+							+ ",\n Of materialen bestaan niet in Twinfield\n";
 				}
 			}
 		}

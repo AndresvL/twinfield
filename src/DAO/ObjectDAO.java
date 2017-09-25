@@ -42,10 +42,9 @@ public class ObjectDAO {
 			}
 			
 			stmt.close();
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
-			
 		}
 	}
 	
@@ -72,6 +71,7 @@ public class ObjectDAO {
 				stmt.setString(8, token);
 				stmt.executeUpdate();
 			}
+			
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -114,7 +114,9 @@ public class ObjectDAO {
 					m = new Material(subCode, null, unit, description, price, null, null, id);
 				}
 			}
+			output.close();
 			stmt.close();
+			
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -148,6 +150,7 @@ public class ObjectDAO {
 			e.printStackTrace();
 		}
 	}
+	
 	public static Project getProjectByCode(String softwareToken, String code) {
 		Project p = null;
 		PreparedStatement stmt = null;
@@ -168,6 +171,7 @@ public class ObjectDAO {
 				String dateEnd = output.getString("date_end");
 				p = new Project(code, id, debtorNumber, status, name, dateStart, dateEnd, description, 0, 1, null);
 			}
+			output.close();
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -196,6 +200,7 @@ public class ObjectDAO {
 				String dateEnd = output.getString("date_end");
 				p = new Project(code, id, debtorNumber, status, name, dateStart, dateEnd, description, 0, 1, null);
 			}
+			output.close();
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -276,6 +281,7 @@ public class ObjectDAO {
 				allAddresses.add(adr);
 				r = new Relation(companyName, debtorCode, contact, emailWorkorder, allAddresses, modified, id);
 			}
+			output.close();
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -303,6 +309,7 @@ public class ObjectDAO {
 				stmt.setString(10, token);
 				stmt.executeUpdate();
 			}
+			
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -310,7 +317,6 @@ public class ObjectDAO {
 		}
 	}
 	
-
 	public static HourType getHourType(String softwareToken, String code) throws SQLException {
 		HourType t = null;
 		PreparedStatement stmt = null;
@@ -328,6 +334,7 @@ public class ObjectDAO {
 				String modified = output.getString("modified");
 				t = new HourType(code, name, 0, 0, 0, price, 1, modified, id);
 			}
+			output.close();
 			stmt.close();
 			
 		} catch (SQLException e) {
@@ -347,6 +354,7 @@ public class ObjectDAO {
 				String addressId = output.getString("addressId");
 				a = Integer.parseInt(addressId);
 			}
+			output.close();
 			statement.close();
 			
 		} catch (SQLException e) {
@@ -363,23 +371,24 @@ public class ObjectDAO {
 			try {
 				con = DBConnection.createDatabaseConnection(true);
 				stmt = con.prepareStatement(
-						"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, export_relations, sync_date, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						"REPLACE INTO settings (import_office, export_office, factuur_type, import_types, user, werkbon_type, rounded_hours, export_types, sync_date, softwareToken) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				stmt.setString(1, set.getImportOffice());
 				stmt.setString(2, set.getExportOffice());
 				stmt.setString(3, set.getFactuurType());
 				stmt.setString(4, set.getImportObjects() + "");
-				if(set.getUser() == null){
+				if (set.getUser() == null) {
 					stmt.setString(5, set.getMaterialCode());
-				}else{
+				} else {
 					stmt.setString(5, set.getUser());
-				}				
+				}
 				stmt.setString(6, set.getExportWerkbontype());
-				stmt.setInt(7, set.getRoundedHours());	
-				stmt.setString(8, set.getExportRelations());
+				stmt.setInt(7, set.getRoundedHours());
+				stmt.setString(8, set.getExportObjects() + "");
 				stmt.setString(9, set.getSyncDate());
 				stmt.setString(10, token);
 				stmt.executeUpdate();
 				stmt.close();
+				
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -406,13 +415,20 @@ public class ObjectDAO {
 				String user = output.getString("user");
 				String exportWerkbonType = output.getString("werkbon_type");
 				int roundedHours = output.getInt("rounded_hours");
-				String exportRelations = output.getString("export_relations");
+				String exportTypes = output.getString("export_types");
+				ArrayList<String> allExportTypes = null;
+				if (exportTypes != null) {
+					exportTypes = exportTypes.replace("]", "");
+					exportTypes = exportTypes.replace("[", "");
+					String[] strValues1 = exportTypes.split(",\\s");
+					allExportTypes = new ArrayList<String>(Arrays.asList(strValues1));
+				}
 				String syncDate = output.getString("sync_date");
 				set = new Settings(importOffice, exportOffice, factuurType, allTypes, user, exportWerkbonType,
-						roundedHours, syncDate, user, exportRelations);
+						roundedHours, syncDate, user, allExportTypes);
 			}
+			output.close();
 			statement.close();
-			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -438,6 +454,7 @@ public class ObjectDAO {
 				logMap.put("details", details);
 				allLogs.add(logMap);
 			}
+			output.close();
 			statement.close();
 			
 		} catch (SQLException e) {
@@ -514,7 +531,7 @@ public class ObjectDAO {
 			b = true;
 		}
 		statement.close();
-		
+		output.close();
 		return b;
 	}
 	
@@ -547,7 +564,7 @@ public class ObjectDAO {
 			modified = output.getString("modified");
 		}
 		statement.close();
-		
+		output.close();
 		return modified;
 	}
 }

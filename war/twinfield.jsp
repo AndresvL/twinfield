@@ -255,19 +255,19 @@
 										</option>
 									</c:forEach>
 								</select><br>
-								<label>Relaties exporteren</label>
+								<label>Werkbon opties</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Selecteer ja, om nieuwe relaties op een werkbon te exporteren naar Twinfield"
+									title="Onbekende relaties op een werkbon zullen nieuw aangemaakt worden in Twinfield, als deze optie is geselecteerd"
 									height="13" width="13" />
-								<br>
-								<input type="radio" name="exportRelations" value="no"
-									class="exportRelation"
-									${"no" == exportRelations  ? 'checked' : ''} checked>
-								Nee<br>
-								<input type="radio" name="exportRelations" value="yes"
-									class="exportRelation"
-									${"yes" == exportRelations  ? 'checked' : ''}>
-								Ja<br> <br>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" class ="exportRelation" value="relations"
+											${"selected" == exportCheckboxes.relations  ? 'checked' : ''}
+											name="exportType">
+										 relatie
+									</label>
+								</div>
+								
 
 								<label>Medewerker</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"

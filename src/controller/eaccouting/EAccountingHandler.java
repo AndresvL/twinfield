@@ -777,6 +777,7 @@ public class EAccountingHandler {
 				logger.info("RESPONSE " + response);
 				if (response.optString("Id") != null) {
 					successAmount++;
+					
 					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder",
 							t.getSoftwareToken(), softwareName);
 				}

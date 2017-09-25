@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.ParseException;
@@ -190,7 +191,7 @@ public class WeFactHandler {
 						} else {
 							editCount++;
 						}
-					}else{
+					} else {
 						importCount++;
 					}
 					String description = object.getString("ProductName");
@@ -312,8 +313,8 @@ public class WeFactHandler {
 						}
 						String remark = debtorDetails.getString("Comment");
 						
-						Address postal = new Address(contact, phoneNr, email, street, "", postalCode, city,
-								remark, "postal", 2);
+						Address postal = new Address(contact, phoneNr, email, street, "", postalCode, city, remark,
+								"postal", 2);
 						address.add(postal);
 						// Invoice
 						String invoiceFirstName = debtorDetails.getString("InvoiceInitials");
@@ -340,8 +341,8 @@ public class WeFactHandler {
 							invoicecity = "<leeg>";
 						}
 						if (!invoicecity.equals("<leeg>")) {
-							Address invoice = new Address(invoiceContact, phoneNr, invoiceEmail, invoicestreet,
-									"", invoicepostalCode, invoicecity, remark, "invoice", 1);
+							Address invoice = new Address(invoiceContact, phoneNr, invoiceEmail, invoicestreet, "",
+									invoicepostalCode, invoicecity, remark, "invoice", 1);
 							address.add(invoice);
 						}
 						
@@ -447,16 +448,17 @@ public class WeFactHandler {
 									editCount++;
 								}
 								Double costPrice = object.getDouble("PriceExcl");
-//								Double tax = object.getDouble("TaxPercentage");
+								// Double tax =
+								// object.getDouble("TaxPercentage");
 								// Calculate salesPrice with tax and
 								// productPrice
-//								Double salePrice = costPrice * (tax / 100 + 1.00);
+								// Double salePrice = costPrice * (tax / 100 +
+								// 1.00);
 								int booking = 0;
 								if (costPrice != null && !costPrice.equals("")) {
 									booking = 1;
 								}
-								h = new HourType(productCode, productName, 0, booking, 0, costPrice, 1,
-										modified, null);
+								h = new HourType(productCode, productName, 0, booking, 0, costPrice, 1, modified, null);
 								hourtypes.add(h);
 							}
 						}
@@ -533,11 +535,17 @@ public class WeFactHandler {
 					String statusShow = jsonShow.getString("status");
 					// custom fields
 					JSONObject offerteDetails = jsonShow.getJSONObject("pricequote");
-					JSONObject customFields = offerteDetails.getJSONObject("CustomFields");
-					int werkbonApp = customFields.getInt("werkbonapp");
-					int werkbonAppAdded = customFields.getInt("werkbonappadded");
-					String typeOfWork = customFields.getString("typeofwork");
-					String paymentMethod = customFields.getString("paymentmethod");
+					JSONObject customFields = offerteDetails.optJSONObject("CustomFields");
+					int werkbonApp = 0;
+					int werkbonAppAdded = 0;
+					String typeOfWork = null;
+					String paymentMethod = null;
+					if (customFields != null) {
+						werkbonApp = customFields.getInt("werkbonapp");
+						werkbonAppAdded = customFields.getInt("werkbonappadded");
+						typeOfWork = customFields.getString("typeofwork");
+						paymentMethod = customFields.getString("paymentmethod");
+					}
 					if (typeOfWork == null) {
 						typeOfWork = "<leeg>";
 					}
@@ -613,7 +621,8 @@ public class WeFactHandler {
 								String materialDescription = priceQuoteLineObject.getString("Description");
 								double price = priceQuoteLineObject.getDouble("PriceExcl");
 								String quantity = priceQuoteLineObject.getString("Number");
-								Material m = new Material(code, null, unit, materialDescription, price, quantity, null, null);
+								Material m = new Material(code, null, unit, materialDescription, price, quantity, null,
+										null);
 								allMaterials.add(m);
 							}
 							
@@ -684,10 +693,12 @@ public class WeFactHandler {
 			} else {
 				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 				errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr() + "\n";
+				errorAmount++;
 			}
 		}
 		if (errorAmount > 0) {
-			errorMessage += errorAmount + " out of " + exportAmount + " workorders(factuur) have errors<br>";
+			errorMessage += errorAmount + " out of " + exportAmount
+					+ " workorders(factuur) have errors. Click for details<br>";
 		}
 		if (successAmount > 0) {
 			errorMessage += successAmount + " workorders(factuur) exported. Click for details<br>";
@@ -704,6 +715,7 @@ public class WeFactHandler {
 		JSONObject = factuurJSON(w, clientToken, roundedHours);
 		logger.info("factuur request " + JSONObject);
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, null, JSONObject + "");
+		logger.info("factuur response " + jsonList);
 		String status = jsonList.getString("status");
 		if (status.equals("success")) {
 			JSONObject invoice = jsonList.getJSONObject("invoice");
@@ -734,17 +746,20 @@ public class WeFactHandler {
 				}
 			}
 			for (int i = 0; i < array.length(); i++) {
-				String projectNr = "";
-				if (!w.getWorkorderNr().equals("")) {
-					projectNr = w.getWorkorderNr();
-				} else if (!w.getProjectNr().equals("")) {
-					projectNr = w.getProjectNr();
-				} else if (!w.getExternProjectNr().equals("")) {
-					projectNr = w.getExternProjectNr();
-				} else {
-					projectNr = "<leeg>";
-				}
 				Object obj = array.get(i);
+				for (WorkPeriod p : w.getWorkPeriods()) {
+					HourType h = null;
+					try {
+						h = ObjectDAO.getHourType(token, p.getHourType());
+						if (h == null) {
+							errorAmount++;
+							return "Hourtype " + p.getHourType() + " on workorder " + w.getWorkorderNr()
+									+ " not found in WeFact or this hourtype is not synchronized\n";
+						}
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
 				if (String.valueOf(obj).equals("Ongeldig debiteurkenmerk") && amount == 0
 						|| String.valueOf(obj).equals("Debiteur  niet gevonden")) {
 					// Create new relation in WeFact
@@ -775,13 +790,10 @@ public class WeFactHandler {
 					}
 					if (amount <= 1) {
 						amount++;
-						errorDetails += "Hourtype on workorder " + w.getWorkorderNr() + " does not exist in WeFact\n";
 						material = null;
-					}else{
+					} else {
 						w.setMaterials(allMaterials);
-					}					
-				} else {
-					errorDetails += "Hourtype on workorder " + w.getWorkorderNr() + " does not exist in WeFact\n";
+					}
 				}
 			}
 			if (relation != null || material != null) {
@@ -789,8 +801,7 @@ public class WeFactHandler {
 			} else {
 				// check errorDetails
 				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
-				// errorDetails += "Hourtype on workorder " + w.getWorkorderNr()
-				// + " does not exist in WeFact\n";
+				errorAmount++;
 			}
 		}
 		return errorDetails;
@@ -827,9 +838,9 @@ public class WeFactHandler {
 					JSONObject.put("CompanyName", r.getCompanyName());
 					JSONObject.put("Initials", a.getName());
 					String address = null;
-					if(a.getHouseNumber()!= null || !a.getHouseNumber().equals("")){
+					if (a.getHouseNumber() != null || !a.getHouseNumber().equals("")) {
 						address = a.getStreet() + " " + a.getHouseNumber();
-					}else{
+					} else {
 						address = a.getStreet();
 					}
 					JSONObject.put("Address", address);

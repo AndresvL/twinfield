@@ -14,15 +14,15 @@ public class SettingsServlet extends HttpServlet {
 	private String redirect = System.getenv("REDIRECT");
 	private String softwareName = null, factuurType = null, user = null, token = null;
 	private String importOffice = null, exportOffice = null, exportWerkbonType = null, syncDate = null,
-			materialCode = null, exportRelations = null;
+			materialCode = null;
 	private int roundedHours = 1;
+	private String[] exportTypes = null;
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		syncDate = req.getParameter("syncDate");
 		factuurType = req.getParameter("factuurType");
 		softwareName = req.getParameter("softwareName");
 		user = req.getParameter("users");
-		exportRelations = req.getParameter("exportRelations");
 		String[] importTypes = req.getParameterValues("importType");
 		token = req.getParameter("softwareToken");
 		
@@ -31,6 +31,7 @@ public class SettingsServlet extends HttpServlet {
 		case "Twinfield":
 			importOffice = req.getParameter("offices");
 			exportOffice = importOffice;
+			exportTypes = req.getParameterValues("exportType");
 			break;
 		case "WeFact":
 			exportWerkbonType = req.getParameter("exportWerkbon");
@@ -64,12 +65,20 @@ public class SettingsServlet extends HttpServlet {
 			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
 			importOffice = req.getParameter("typeofwork");
 			exportOffice = req.getParameter("paymentmethod");
+			exportTypes = req.getParameterValues("exportType");
+			req.getSession().setAttribute("errorMessage", "");
+			break;
+		case "SnelStart":
+			exportWerkbonType = req.getParameter("exportWerkbon");
+			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
+			exportTypes = req.getParameterValues("exportType");
 			req.getSession().setAttribute("errorMessage", "");
 			break;
 		}
 		
 		if (token != null) {
 			ArrayList<String> impTypes = new ArrayList<String>();
+			ArrayList<String> expTypes = new ArrayList<String>();
 			ArrayList<String> impTypesCheck = new ArrayList<String>();
 			Settings oldSettings = ObjectDAO.getSettings(token);
 			String message = "";
@@ -113,13 +122,19 @@ public class SettingsServlet extends HttpServlet {
 				message = "Settings saved<br />";
 			}
 			req.getSession().setAttribute("checkSaved", message);
-			
+			if (exportTypes != null) {
+				for (String type : exportTypes) {
+					expTypes.add(type);
+				}
+			}else{
+				expTypes.add("");
+			}
 			if (importTypes != null) {
 				for (String type : importTypes) {
 					impTypes.add(type);
 				}
 				Settings set = new Settings(importOffice, exportOffice, factuurType, impTypes, user, exportWerkbonType,
-						roundedHours, syncDate, materialCode, exportRelations);
+						roundedHours, syncDate, materialCode, expTypes);
 				ObjectDAO.saveSettings(set, token);
 			} else {
 				// employees, projects, materials, relations and/or hourtypes
@@ -129,7 +144,7 @@ public class SettingsServlet extends HttpServlet {
 					checkboxes = checkbox.getImportObjects();
 					if (checkboxes != null) {
 						Settings set = new Settings(importOffice, exportOffice, factuurType, checkboxes, user,
-								exportWerkbonType, roundedHours, syncDate, materialCode, exportRelations);
+								exportWerkbonType, roundedHours, syncDate, materialCode, expTypes);
 						ObjectDAO.saveSettings(set, token);
 					}
 				}
