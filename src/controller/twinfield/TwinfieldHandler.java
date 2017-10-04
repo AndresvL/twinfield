@@ -617,8 +617,8 @@ public class TwinfieldHandler {
 							if (code != null) {
 								String relationString = "<dimension status='delete'>" + "<office>" + office
 										+ "</office>" + "<type>DEB</type><code>" + code + "</code>" + "</dimension>";
-								String resultsExportRelation = (String) SoapHandler.createSOAPXML(session, cluster,
-										relationString, "workorderRelationDelete");
+								String resultsExportRelation =  SoapHandler.createSOAPXML(session, cluster,
+										relationString, "workorderRelationDelete") +"";
 								if (isInteger(resultsExportRelation)) {
 									System.out.println("RELATION VERWIJDERD");
 								} else {

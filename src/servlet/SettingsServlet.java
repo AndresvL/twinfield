@@ -118,6 +118,9 @@ public class SettingsServlet extends HttpServlet {
 				if (materialCode != null && !materialCode.equals(oldSettings.getMaterialCode())) {
 					message += "Article number saved<br />";
 				}
+				if (factuurType != null && !factuurType.equals(oldSettings.getFactuurType())) {
+					message += "FactuurType saved<br />";
+				}
 			} else {
 				message = "Settings saved<br />";
 			}

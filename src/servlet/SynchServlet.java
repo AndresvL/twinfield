@@ -404,20 +404,22 @@ public class SynchServlet extends HttpServlet {
 							break;
 						}
 					}
-					// Export section
-					String[] exportMessageArray = null;
-					// Type is factuur
-					if (set.getExportWerkbontype().equals("factuur")) {
-						exportMessageArray = wefact.setFactuur(clientToken, token, set.getFactuurType(),
-								set.getRoundedHours());
-						// Type is offerte
-					} else {
-						exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType(),
-								set.getRoundedHours());
-					}
-					errorMessage += exportMessageArray[0];
-					if (exportMessageArray[1] != null) {
-						errorDetails = exportMessageArray[1];
+					if (set.getFactuurType().equals("compleet")) {
+						// Export section
+						String[] exportMessageArray = null;
+						// Type is factuur
+						if (set.getExportWerkbontype().equals("factuur")) {
+							exportMessageArray = wefact.setFactuur(clientToken, token, set);
+							// Type is offerte
+						} else {
+							exportMessageArray = wefact.setOfferte(clientToken, token, set.getFactuurType(),
+									set.getRoundedHours());
+						}
+						
+						errorMessage += exportMessageArray[0];
+						if (exportMessageArray[1] != null) {
+							errorDetails = exportMessageArray[1];
+						}
 					}
 					if (checkUpdate.equals("true")) {
 						TokenDAO.saveModifiedDate(getDate(null), token);
@@ -427,6 +429,7 @@ public class SynchServlet extends HttpServlet {
 					} else {
 						ObjectDAO.saveLog("Niks te importeren", errorDetails, token);
 					}
+					
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -860,7 +863,7 @@ public class SynchServlet extends HttpServlet {
 			// Check if accessToken is still valid
 			try {
 				if (!snelstart.checkAccessToken(t.getAccessToken())) {
-					// Get accessToken with koppelingssleutel					
+					// Get accessToken with koppelingssleutel
 					String access = snelstart.getAccessToken(t.getAccessSecret());
 					t.setAccessToken(access);
 				}

@@ -31,6 +31,7 @@ import org.json.JSONObject;
 import DAO.ObjectDAO;
 import controller.WorkOrderHandler;
 import controller.twinfield.SoapHandler;
+import object.Settings;
 import object.workorder.Address;
 import object.workorder.HourType;
 import object.workorder.Material;
@@ -678,18 +679,18 @@ public class WeFactHandler {
 	}
 	
 	// Set new invoice
-	public String[] setFactuur(String clientToken, String token, String factuurType, int roundedHours)
+	public String[] setFactuur(String clientToken, String token, Settings set)
 			throws IOException, JSONException {
 		int exportAmount = 0;
 		
 		// Get WorkOrders
-		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", factuurType, false,
+		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", set.getFactuurType(), false,
 				softwareName);
 		for (WorkOrder w : allData) {
 			exportAmount++;
 			// Send invoice
 			if (w.getMaterials().size() > 0 || w.getWorkPeriods().size() > 0) {
-				errorDetails += sendFactuur(w, clientToken, roundedHours, token, "", "", 0);
+				errorDetails += sendFactuur(w, clientToken, set, token, "", "", 0);
 			} else {
 				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 				errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr() + "\n";
@@ -699,6 +700,8 @@ public class WeFactHandler {
 		if (errorAmount > 0) {
 			errorMessage += errorAmount + " out of " + exportAmount
 					+ " workorders(factuur) have errors. Click for details<br>";
+			set.setFactuurType("error");
+			ObjectDAO.saveSettings(set, token);
 		}
 		if (successAmount > 0) {
 			errorMessage += successAmount + " workorders(factuur) exported. Click for details<br>";
@@ -706,13 +709,13 @@ public class WeFactHandler {
 		return new String[] { errorMessage, errorDetails };
 	}
 	
-	private String sendFactuur(WorkOrder w, String clientToken, int roundedHours, String token, String errorDetails,
+	private String sendFactuur(WorkOrder w, String clientToken, Settings set, String token, String errorDetails,
 			String error, int amount) throws IOException, JSONException {
 		
 		// Boolean added = false;
 		JSONObject JSONObject = null;
 		// Get JSONObject
-		JSONObject = factuurJSON(w, clientToken, roundedHours);
+		JSONObject = factuurJSON(w, clientToken, set.getRoundedHours());
 		logger.info("factuur request " + JSONObject);
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, null, JSONObject + "");
 		logger.info("factuur response " + jsonList);
@@ -761,7 +764,7 @@ public class WeFactHandler {
 					}
 				}
 				if (String.valueOf(obj).equals("Ongeldig debiteurkenmerk") && amount == 0
-						|| String.valueOf(obj).equals("Debiteur  niet gevonden")) {
+						|| String.valueOf(obj).equals("Debiteur  niet gevonden") && amount == 0) {
 					// Create new relation in WeFact
 					relation = setRelation(w, clientToken);
 					if (relation != null) {
@@ -770,22 +773,34 @@ public class WeFactHandler {
 						obj = null;
 						amount++;
 					}
-				} else if (String.valueOf(obj).equals("Product 0 niet gevonden") && amount <= 1) {
+				}
+				if (String.valueOf(obj).equals("Product 0 niet gevonden") && amount <= 1) {
 					// Create new material in WeFact
 					ArrayList<Material> allMaterials = new ArrayList<Material>();
+					
 					for (Material m : w.getMaterials()) {
-						material = setMaterial(m, clientToken, obj);
-						if (material[0] != null) {
-							amount++;
-							errorDetails += "Material " + material[0] + " added in WeFact\n";
-							obj = null;
-							if (material[1].equals(m.getDescription())) {
-								m.setCode(material[0]);
-								m.setDescription(material[1]);
-								m.setPrice(m.getPrice());
-								m.setUnit(m.getUnit());
-								allMaterials.add(m);
+						Material dbMaterial = null;
+						try {
+							dbMaterial = ObjectDAO.getMaterials(token, m.getCode());
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+						if (dbMaterial == null) {
+							material = setMaterial(m, clientToken, obj);
+							if (material[0] != null) {
+								amount++;
+								errorDetails += "Material " + material[0] + " added in WeFact\n";
+								obj = null;
+								if (material[1].equals(m.getDescription())) {
+									m.setCode(material[0]);
+									m.setDescription(material[1]);
+									m.setPrice(m.getPrice());
+									m.setUnit(m.getUnit());
+									allMaterials.add(m);
+								}
 							}
+						} else {
+							allMaterials.add(dbMaterial);
 						}
 					}
 					if (amount <= 1) {
@@ -795,11 +810,14 @@ public class WeFactHandler {
 						w.setMaterials(allMaterials);
 					}
 				}
+				if (String.valueOf(obj).startsWith("Het product")) {
+					errorDetails += obj + " (werkbon " + w.getWorkorderNr() + ")";
+				}
 			}
 			if (relation != null || material != null) {
-				return sendFactuur(w, clientToken, roundedHours, token, errorDetails, error, amount);
+				return sendFactuur(w, clientToken, set, token, errorDetails, error, amount);
 			} else {
-				// check errorDetails
+				// check errorDetails			
 				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 				errorAmount++;
 			}
@@ -922,6 +940,7 @@ public class WeFactHandler {
 					JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
 					String status = jsonList.getString("status");
 					if (status.equals("success")) {
+						System.out.println("RELATION CREATED");
 						JSONObject debtorDetails = jsonList.getJSONObject("debtor");
 						debtorCode = debtorDetails.getString("DebtorCode");
 					} else {
@@ -950,6 +969,7 @@ public class WeFactHandler {
 			JSONObject.put("NumberSuffix", m.getUnit());
 			JSONObject.put("PriceExcl", m.getPrice());
 			JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
+			System.out.println("JSONRESPONE " + jsonList);
 			String status = jsonList.getString("status");
 			if (status.equals("success")) {
 				JSONObject materialDetails = jsonList.getJSONObject("product");

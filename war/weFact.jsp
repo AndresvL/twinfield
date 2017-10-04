@@ -46,8 +46,9 @@
 <body>
 	<!-- Settings Section -->
 	<div id="WBA-section">
-		<img src="./img/werkbonapp.png" height="60" width="170" id="WBA_logo"/>
-		<img src="./img/logo-wefact.png" height="80" width="150" id="boekhoud_logo"/>
+		<img src="./img/werkbonapp.png" height="60" width="170" id="WBA_logo" />
+		<img src="./img/logo-wefact.png" height="80" width="150"
+			id="boekhoud_logo" />
 	</div>
 	<div class="settings">
 
@@ -58,9 +59,10 @@
 				<div class="modal-content" id="loginContent">
 					<form action="OAuth.do">
 						<input type="hidden" value="${softwareToken}" name="token"
-							id="softwareToken" /> <input type="hidden" value="WeFact"
-							name="softwareName" id="softwareName" /> <input type="hidden"
-							value="${clientToken}" id="client" />
+							id="softwareToken" />
+						<input type="hidden" value="WeFact" name="softwareName"
+							id="softwareName" />
+						<input type="hidden" value="${clientToken}" id="client" />
 						<table>
 							<tr>
 								<th>
@@ -72,17 +74,19 @@
 							</tr>
 							<tr>
 								<td><label>Securitycode WeFact</label> <img
-									src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Login bij WeFact en navigeer naar Instellingen - API - beveiligingscode"
-									height="13" width="13" /></td>
+										src="./img/vraagteken.jpg" data-toggle="tooltip"
+										title="Login bij WeFact en navigeer naar Instellingen - API - beveiligingscode"
+										height="13" width="13" /></td>
 							</tr>
 							<tr>
 								<td><input type="text" class="form-control"
-									id="clientToken" placeholder="5a5a5fbbcecdd585aa62812119d0721e"
-									name="clientToken" required /></td>
+										id="clientToken"
+										placeholder="5a5a5fbbcecdd585aa62812119d0721e"
+										name="clientToken" required /></td>
 							</tr>
 						</table>
-						<br> <input type="submit" id="loginButton" value="Submit"
+						<br>
+						<input type="submit" id="loginButton" value="Submit"
 							class="btn btn-success btn-lg" />
 					</form>
 				</div>
@@ -199,8 +203,8 @@
 					</div>
 				</div>
 			</div>
-			<input type="hidden" value="${errorMessage}" id="error" /> <input
-				type="hidden" value="${saved}" id="saved" name="saved" />
+			<input type="hidden" value="${errorMessage}" id="error" />
+			<input type="hidden" value="${saved}" id="saved" name="saved" />
 			<form action="settings.do" id="saveWeFact">
 				<div class="panel panel-success">
 					<div class="panel-heading" id="import-panel">Import
@@ -210,41 +214,49 @@
 							<div class="form-group col-xs-12 floating-label controls">
 								<input type="hidden" value="${softwareName}" name="softwareName" />
 								<input type="hidden" value="${softwareToken}"
-									name="softwareToken" /> <label>Selecteer objecten om
-									te importeren</label> <img src="./img/vraagteken.jpg"
-									data-toggle="tooltip"
+									name="softwareToken" />
+								<label>Selecteer objecten om te importeren</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="Selecteer de objecten die je wilt importeren van WeFact naar WerkbonApp"
 									height="13" width="13" />
 								<div class="checkbox">
-									<label> <input type="checkbox" value="materials"
-										${"selected" == checkboxes.materials  ? 'checked' : ''}
-										name="importType"> Materialen
+									<label>
+										<input type="checkbox" value="materials"
+											${"selected" == checkboxes.materials  ? 'checked' : ''}
+											name="importType">
+										Materialen
 									</label>
 								</div>
 								<div class="checkbox">
-									<label> <input type="checkbox" value="relations"
-										${"selected" == checkboxes.relations  ? 'checked' : ''}
-										name="importType"> Relaties
+									<label>
+										<input type="checkbox" value="relations"
+											${"selected" == checkboxes.relations  ? 'checked' : ''}
+											name="importType">
+										Relaties
 									</label>
 								</div>
 								<div class="checkbox">
-									<label> <input type="checkbox" value="hourtypes"
-										${"selected" == checkboxes.hourtypes  ? 'checked' : ''}
-										name="importType"> Uursoorten
+									<label>
+										<input type="checkbox" value="hourtypes"
+											${"selected" == checkboxes.hourtypes  ? 'checked' : ''}
+											name="importType">
+										Uursoorten
 									</label>
 								</div>
 								<div class="checkbox">
-									<label> <input type="checkbox" value="offertes"
-										${"selected" == checkboxes.offertes  ? 'checked' : ''}
-										name="importType" id="offertes"> Offertes
+									<label>
+										<input type="checkbox" value="offertes"
+											${"selected" == checkboxes.offertes  ? 'checked' : ''}
+											name="importType" id="offertes">
+										Offertes
 									</label>
 								</div>
 
 								<div class="row">
 									<div class='col-sm-7'>
 										<div class="form-group">
-											<label>Synchroniseer datum</label> <img
-												src="./img/vraagteken.jpg" height="13" width="13"
+											<label>Synchroniseer datum</label>
+											<img src="./img/vraagteken.jpg" height="13" width="13"
 												data-toggle="tooltip"
 												title="Alle gegevens vanaf deze datum worden geschynchroniseerd" />
 
@@ -268,25 +280,38 @@
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
-								<label>Werkbonstatus</label> <img src="./img/vraagteken.jpg"
-									height="13" width="13" data-toggle="tooltip"
-									title="Werkbonnen met status compleet worden opgehaald" /> <input
-									class="form-control" type="text" disabled value="Compleet" />
-								<input class="form-control" type="hidden" name="factuurType"
-									value="Compleet" /> <br> <label>Werkbon type</label> <img
-									src="./img/vraagteken.jpg" data-toggle="tooltip"
+								<label>Werkbonstatus</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="De werkbonnen met status compleet worden opgehaald"
+									height="13" width="13" />
+								<select name="factuurType" class="form-control" id="uren"
+									required>
+									<option selected value="compleet"
+										${"compleet" == factuur ? 'selected="selected"' : ''}>Compleet</option>
+									<option value="error"
+										${"error" == factuur ? 'selected="selected"' : ''}>Error</option>
+									<option value="geen"
+										${"geen" == factuur ? 'selected="selected"' : ''}>Geen</option>
+								</select>
+								<br>
+								<label>Werkbon type</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="De werkbon wordt als factuur of offerte verstuurd naar WeFact"
-									height="13" width="13" /> <br> <input type="radio"
-									name="exportWerkbon" value="factuur"
+									height="13" width="13" />
+								<br>
+								<input type="radio" name="exportWerkbon" value="factuur"
 									${"selected" == exportWerkbonType.factuur  ? 'checked' : ''}
-									checked> Factuur<br> <input type="radio"
-									name="exportWerkbon" value="offerte"
+									checked>
+								Factuur<br>
+								<input type="radio" name="exportWerkbon" value="offerte"
 									${"selected" == exportWerkbonType.offerte  ? 'checked' : ''}>
-								Offerte<br> <br> <label>Afronding uren</label> <img
-									src="./img/vraagteken.jpg" data-toggle="tooltip"
+								Offerte<br> <br>
+								<label>Afronding uren</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="Selecteer het aantal minuten waarop de gewerkte uren moeten worden afgerond"
-									height="13" width="13" /> <br> <select
-									name="roundedHours" class="form-control" id="uren" required>
+									height="13" width="13" />
+								<br> <select name="roundedHours" class="form-control"
+									id="uren" required>
 									<option selected value="1"
 										${"1" == roundedHours ? 'selected="selected"' : ''}>Geen
 										afronding</option>
@@ -315,8 +340,8 @@
 	</div>
 	<!-- this form will be validated after syncbutton is pressed  -->
 	<form action="sync.do" id="sync">
-		<input type="hidden" value="${softwareToken}" name="token" /> <input
-			type="hidden" value="${softwareName}" name="softwareName" />
+		<input type="hidden" value="${softwareToken}" name="token" />
+		<input type="hidden" value="${softwareName}" name="softwareName" />
 	</form>
 	<div class="settings">
 		<div class="panel panel-success">
