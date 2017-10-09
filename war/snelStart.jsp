@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="author" content="">
-<title>SnelStart Connection</title>
+<title>SnelStart Online Connection</title>
 <!-- datepicker CSS -->
 <link
 	href="//cdn.rawgit.com/Eonasdan/bootstrap-datetimepicker/e8bddc60e73c1ec2475f827be36e1957af72e2ea/build/css/bootstrap-datetimepicker.css"
@@ -60,7 +60,7 @@
 					<form action="OAuth.do">
 						<input type="hidden" value="${softwareToken}" name="token"
 							id="softwareToken" />
-						<input type="hidden" value="SnelStart" name="softwareName"
+						<input type="hidden" value="SnelStart_Online" name="softwareName"
 							id="softwareName" />
 						<input type="hidden" value="${clientToken}" id="client" />
 						<table>
@@ -73,16 +73,16 @@
 								<td><label>${errorMessage}</label></td>
 							</tr>
 							<tr>
-								<td><label>Koppeling Key SnelStart</label> <img
+								<td><label>Koppeling Key SnelStart Online</label> <img
 										src="./img/vraagteken.jpg" data-toggle="tooltip"
-										title="Login bij SnelStart en navigeer naar Koppelingen - Maatwerk en genereer een sleutel"
+										title="Login bij SnelStart Online en navigeer naar Koppelingen - Maatwerk en genereer een sleutel"
 										height="13" width="13" /></td>
 							</tr>
 							<tr>
 								<td><input type="text" class="form-control"
 										id="clientToken"
 										placeholder="5a5a5fbbcecdd585aa62812119d0721e"
-										name="clientToken" required /></td>
+										name="clientToken" pattern=".{3,}" required title="De koppelingssleutel kan niet zo kort zijn" /></td>
 							</tr>
 						</table>
 						<br>
@@ -98,55 +98,19 @@
 					<div class="modal-header">
 						<span class="close">&times;</span>
 						<h2>
-							Welcome <small>at the SnelStart integration</small>
+							Welcome <small>at the SnelStart Online integration</small>
 						</h2>
 					</div>
 					<div class="modal-body">
-						<h4>Important</h4>
-						<h5>Pay attention!</h5>
-						<ul>
-							<li>After purchasing the integration, it is wise to put the
-								status of <mark>all existing workorders</mark> in WorkOrderApp
-								on <mark>handled</mark>.
-							</li>
-							<li>The <mark>import settings</mark> may only be editted in
-								SnelStart.
-							</li>
-							<li>Click on an <mark>error message</mark> in the log to see
-								more details.
-							</li>
-						</ul>
-						<br>
-
-						<h4>Information</h4>
-						<ul>
-							<li>On this page it is possible to set the settings for <mark>importing</mark>
-								and <mark>exporting</mark> data between WorkOrderApp and
-								SnelStart.
-							</li>
-							<li>An <mark>automatic synchronisation</mark> will take
-								place every 15 minutes.
-							</li>
-							<li>It is possible to <mark>synchronize manually</mark>, by
-								pressing the sync button at the bottom of this page.
-							</li>
-						</ul>
-						<br>
-
-						<h4>Possibilities</h4>
-						<ul>
-							<li><mark>Employees, products, customers and products
-									with unit hour</mark> can be imported from SnelStart.</li>
-						</ul>
-						<br>
+						
 						<button type="button" id="show" class="btn btn-info">Show</button>
 						<h4>Data Mapping</h4>
 						<div id="mappingTable" style="display: none;">
 							<table class="table table-hover">
 								<thead>
 									<tr>
-										<th>WorkOrderApp</th>
-										<th>SnelStart</th>
+										<th>WerkbonApp</th>
+										<th>SnelStart Online</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -154,19 +118,19 @@
 										<th colspan="2">Import</th>
 									</tr>
 									<tr>
-										<td>Materials</td>
+										<td>Materialen</td>
 										<td>Artikelen</td>
 									</tr>
 									<tr>
-										<td>Relations</td>
+										<td>Relaties</td>
 										<td>Relaties</td>
 									</tr>
 									<tr>
 										<th colspan="2">Export</th>
 									</tr>
 									<tr>
-										<td>WorkOrder</td>
-										<td>Invoice</td>
+										<td>Werkbonnen met status naar SnelStart</td>
+										<td>Concepten(orders)</td>
 									</tr>
 								</tbody>
 							</table>
@@ -191,7 +155,7 @@
 									name="softwareToken" />
 								<label>Select objects for import</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Select the objects you want to import from SnelStart into WorkOrderApp"
+									title="Select the objects you want to import from SnelStart Online into WorkOrderApp"
 									height="13" width="13" />
 								<div class="checkbox">
 									<label>
@@ -236,19 +200,24 @@
 					<div class="panel-body">
 						<div class="row control-group">
 							<div class="form-group col-xs-12 floating-label controls">
-								<label>Workorderstatus</label>
-								<img src="./img/vraagteken.jpg" height="13" width="13"
-									data-toggle="tooltip"
-									title="WorkOrders with status complete will be exported" />
-								<input class="form-control" type="text" disabled
-									value="Complete" />
-								<input class="form-control" type="hidden" name="factuurType"
-									value="Compleet" />
+								<label>Werkbonstatus</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="De werkbonnen met status compleet worden opgehaald"
+									height="13" width="13" />
+								<select name="factuurType" class="form-control" id="uren"
+									required>
+									<option selected value="compleet"
+										${"compleet" == factuur ? 'selected="selected"' : ''}>Compleet</option>
+									<option value="error"
+										${"error" == factuur ? 'selected="selected"' : ''}>Error</option>
+									<option value="geen"
+										${"geen" == factuur ? 'selected="selected"' : ''}>Geen</option>
+								</select>
 								<br>
 								
 								<label>Workorder options</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
-									title="Select the objects you want to create in SnelStart"
+									title="Select the objects you want to create in SnelStart Online"
 									height="13" width="13" />
 								<div class="checkbox">
 									<label>
@@ -264,14 +233,6 @@
 											${"selected" == exportCheckboxes.relations  ? 'checked' : ''}
 											name="exportType">
 										New relations
-									</label>
-								</div>
-								<div class="checkbox">
-									<label>
-										<input type="checkbox"  value="hourtypes"
-											${"selected" == exportCheckboxes.hourtypes  ? 'checked' : ''}
-											name="exportType">
-										New hourtypes
 									</label>
 								</div>
 								<br>
@@ -301,6 +262,15 @@
 										${"30" == roundedHours ? 'selected="selected"' : ''}>30
 										minutes</option>
 								</select>
+								<br>
+								<label>Universal hourtype</label>
+								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
+									title="This articlenumber will be used to book unknown hourtpes from WorkorderApp"
+									height="13" width="13" />
+								<br>
+								<input type="number" class="form-control" name="materialCode"
+									value="${materialCode}" placeholder="1000" required>
+								<br>
 							</div>
 						</div>
 					</div>

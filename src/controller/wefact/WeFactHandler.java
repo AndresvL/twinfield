@@ -156,7 +156,6 @@ public class WeFactHandler {
 		controller = "product";
 		action = "list";
 		int importCount = 0;
-		int editCount = 0;
 		ArrayList<Material> materials = new ArrayList<Material>();
 		Boolean hasContent = ObjectDAO.hasContent(softwareToken, "materials");
 		JSONObject JSONObject = new JSONObject();
@@ -164,6 +163,7 @@ public class WeFactHandler {
 			JSONObject.put("api_key", clientToken);
 			JSONObject.put("controller", controller);
 			JSONObject.put("action", action);
+			JSONObject.put("limit", 3600);
 			JSONObject modifiedFrom = new JSONObject();
 			if (date != null && hasContent) {
 				modifiedFrom.put("from", date);
@@ -174,6 +174,7 @@ public class WeFactHandler {
 		}
 		JSONObject jsonList = getJsonResponse(clientToken, controller, action, array, JSONObject + "");
 		logger.info("Material response " + jsonList);
+		
 		String status = jsonList.getString("status");
 		if (status.equals("success")) {
 			int totalResults = jsonList.getInt("totalresults");
@@ -184,17 +185,11 @@ public class WeFactHandler {
 					JSONObject object = products.getJSONObject(i);
 					String modified = object.getString("Modified");
 					String productCode = object.getString("ProductCode");
-					String dbModified = ObjectDAO.getModifiedDate(softwareToken, null, productCode, "materials");
+					// String dbModified =
+					// ObjectDAO.getModifiedDate(softwareToken, null,
+					// productCode, "materials");
 					// Check if data is modified
-					if (hasContent) {
-						if (dbModified == null || array == null) {
-							importCount++;
-						} else {
-							editCount++;
-						}
-					} else {
-						importCount++;
-					}
+					importCount++;
 					String description = object.getString("ProductName");
 					// if(description.equals("")){
 					// if(!object.getString("ProductKeyPhrase").equals("")){
@@ -220,7 +215,6 @@ public class WeFactHandler {
 			if (successAmount > 0) {
 				ObjectDAO.saveMaterials(materials, softwareToken);
 				errorMessage += importCount + " materials imported<br>";
-				errorMessage += "and " + editCount + " materials edited<br>";
 				checkUpdate = true;
 			} else {
 				errorMessage += "Something went wrong with Materials<br>";
@@ -440,14 +434,15 @@ public class WeFactHandler {
 								String modified = object.getString("Modified");
 								String productCode = object.getString("ProductCode");
 								String productName = object.getString("ProductName");
-								String dbModified = ObjectDAO.getModifiedDate(softwareToken, null, productCode,
-										"hourtypes");
-								// Check if data is modified
-								if (dbModified == null || date == null) {
-									importCount++;
-								} else {
-									editCount++;
-								}
+//								String dbModified = ObjectDAO.getModifiedDate(softwareToken, null, productCode,
+//										"hourtypes");
+//								// Check if data is modified
+//								if (dbModified == null || date == null) {
+//									importCount++;
+//								} else {
+//									editCount++;
+//								}
+								importCount++;
 								Double costPrice = object.getDouble("PriceExcl");
 								// Double tax =
 								// object.getDouble("TaxPercentage");
@@ -542,10 +537,10 @@ public class WeFactHandler {
 					String typeOfWork = null;
 					String paymentMethod = null;
 					if (customFields != null) {
-						werkbonApp = customFields.getInt("werkbonapp");
-						werkbonAppAdded = customFields.getInt("werkbonappadded");
-						typeOfWork = customFields.getString("typeofwork");
-						paymentMethod = customFields.getString("paymentmethod");
+						werkbonApp = customFields.optInt("werkbonapp");
+						werkbonAppAdded = customFields.optInt("werkbonappadded");
+						typeOfWork = customFields.optString("typeofwork");
+						paymentMethod = customFields.optString("paymentmethod");
 					}
 					if (typeOfWork == null) {
 						typeOfWork = "<leeg>";
@@ -627,20 +622,6 @@ public class WeFactHandler {
 								allMaterials.add(m);
 							}
 							
-							// public WorkOrder(String projectNr, String
-							// workDate, String
-							// customerEmailInvoice, String customerEmail,
-							// String customerDebtorNr, String status, String
-							// paymentMethod,
-							// ArrayList<Material> m, String creationDate,
-							// String id, String workorderNr,
-							// ArrayList<WorkPeriod> work,
-							// ArrayList<Relation> relation, String workTime,
-							// String workEndDate, String workEndTime, String
-							// externProjectNr, String typeOfWork, String
-							// workDescription,
-							// String modified, String pdfUrl, String
-							// workStatus) {
 							WorkOrder w = new WorkOrder(null, workDate, email, email, debtorCode, offerteStatus + "",
 									paymentMethod, allMaterials, workDate, null, id, null, allRelations, null, null,
 									null, offerteNr, typeOfWork, description, modified, null, null);
@@ -657,7 +638,6 @@ public class WeFactHandler {
 			}
 		}
 		if (!offertes.isEmpty()) {
-			// ObjectDAO.saveOffertes(offertes, softwareToken);
 			JSONArray responseArray = (JSONArray) WorkOrderHandler.addData(softwareToken, offertes, "PostWorkorders",
 					softwareName, clientToken);
 			for (int i = 0; i < responseArray.length(); i++) {
@@ -679,22 +659,23 @@ public class WeFactHandler {
 	}
 	
 	// Set new invoice
-	public String[] setFactuur(String clientToken, String token, Settings set)
-			throws IOException, JSONException {
+	public String[] setFactuur(String clientToken, String token, Settings set) throws IOException, JSONException {
 		int exportAmount = 0;
 		
 		// Get WorkOrders
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", set.getFactuurType(), false,
 				softwareName);
-		for (WorkOrder w : allData) {
-			exportAmount++;
+		for (WorkOrder w : allData) {			
 			// Send invoice
-			if (w.getMaterials().size() > 0 || w.getWorkPeriods().size() > 0) {
-				errorDetails += sendFactuur(w, clientToken, set, token, "", "", 0);
-			} else {
-				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
-				errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr() + "\n";
-				errorAmount++;
+			if (!w.getWorkStatus().equals("") && w.getWorkStatus() != null) {
+				exportAmount++;
+				if (w.getMaterials().size() > 0 || w.getWorkPeriods().size() > 0) {
+					errorDetails += sendFactuur(w, clientToken, set, token, "", "", 0);
+				} else {
+					errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
+					errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr() + "\n";
+					errorAmount++;
+				}
 			}
 		}
 		if (errorAmount > 0) {
@@ -817,12 +798,13 @@ public class WeFactHandler {
 			if (relation != null || material != null) {
 				return sendFactuur(w, clientToken, set, token, errorDetails, error, amount);
 			} else {
-				// check errorDetails			
+				// check errorDetails
 				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 				errorAmount++;
 			}
 		}
 		return errorDetails;
+		
 	}
 	
 	public JSONObject factuurJSON(WorkOrder w, String clientToken, int roundedHours) {
@@ -866,12 +848,8 @@ public class WeFactHandler {
 					JSONObject.put("City", a.getCity());
 					JSONObject.put("EmailAddress", a.getEmail());
 					JSONObject.put("Description", w.getWorkDescription());
-					// CHANGE
-					String workStatus = w.getWorkStatus();
-					if (workStatus.equals("") || workStatus == null) {
-						workStatus = "0";
-					}
-					JSONObject.put("Status", workStatus);
+					
+					JSONObject.put("Status", w.getWorkStatus());
 					
 					JSONObject JSONObjectCustom = new JSONObject();
 					JSONObjectCustom.put("werkbontype", w.getTypeOfWork());

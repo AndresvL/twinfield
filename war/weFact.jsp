@@ -113,9 +113,6 @@
 							</li>
 							<li>Bij een <abbr>foutmelding</abbr> kan je op het
 								bericht(log) klikken om meer details te zien.
-							<li>Als een <abbr>werkbon(factuur) geëxporteerd</abbr> is,
-								kan je op het bericht(log) klikken om meer details te zien.
-							</li>
 							<li>(Nieuwe) Relaties en materialen op een werkbon worden
 								geëxporteerd naar WeFact.</li>
 						</ul>
@@ -258,7 +255,7 @@
 											<label>Synchroniseer datum</label>
 											<img src="./img/vraagteken.jpg" height="13" width="13"
 												data-toggle="tooltip"
-												title="Alle gegevens vanaf deze datum worden geschynchroniseerd" />
+												title="Alle gegevens vanaf deze datum worden gesynchroniseerd" />
 
 											<input type='text' class="form-control" id='datetimepicker1'
 												name="syncDate" value="${savedDate}" />

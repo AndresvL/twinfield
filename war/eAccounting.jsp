@@ -244,7 +244,7 @@
 											<label>Synchroniseer datum</label>
 											<img src="./img/vraagteken.jpg" height="13" width="13"
 												data-toggle="tooltip"
-												title="Alle gegevens vanaf deze datum worden geschynchroniseerd" />
+												title="Alle gegevens vanaf deze datum worden gesynchroniseerd" />
 
 											<input type='text' class="form-control" id='datetimepicker1'
 												name="syncDate" value="${savedDate}" />

@@ -11,7 +11,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.util.Base64;
 import org.apache.http.client.ClientProtocolException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -71,13 +70,16 @@ public class OAuthSnelStart extends Authenticate {
 					try {
 						JSONObject = new JSONObject();
 						JSONObject.put("sta_code", "0");
-						JSONObject.put("sta_name", "Niet naar SnelStart");
+						JSONObject.put("sta_name", "Niet naar SnelStart Online");
 						JSONArray.put(JSONObject);
 						JSONObject = new JSONObject();
 						JSONObject.put("sta_code", "1");
-						JSONObject.put("sta_name", "Naar SnelStart");
+						JSONObject.put("sta_name", "Naar SnelStart Online");
 						JSONArray.put(JSONObject);
 						WorkOrderHandler.addData(softwareToken, JSONArray, "workstatusses", softwareName, null);
+						//Set universal material for unknown hourtypes from WBA
+						SnelStartHandler.setUniversalMaterial(tokenObject, "1000");
+						req.getSession().setAttribute("materialCode", "1000");
 					} catch (JSONException e) {
 						e.printStackTrace();
 					}
@@ -151,6 +153,8 @@ public class OAuthSnelStart extends Authenticate {
 				req.getSession().setAttribute("exportWerkbonType", exportWerkbonType);
 				req.getSession().setAttribute("roundedHours", set.getRoundedHours());
 				req.getSession().setAttribute("factuur", set.getFactuurType());
+				req.getSession().setAttribute("materialCode", set.getMaterialCode());
+				req.getSession().setAttribute("errorMessage", "");
 			} else {
 				Map<String, String> typeofworkSelected = new HashMap<String, String>();
 				for (String s : typeofwork) {

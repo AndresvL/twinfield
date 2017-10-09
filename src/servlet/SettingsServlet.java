@@ -68,7 +68,8 @@ public class SettingsServlet extends HttpServlet {
 			exportTypes = req.getParameterValues("exportType");
 			req.getSession().setAttribute("errorMessage", "");
 			break;
-		case "SnelStart":
+		case "SnelStart_Online":
+			materialCode = req.getParameter("materialCode");
 			exportWerkbonType = req.getParameter("exportWerkbon");
 			roundedHours = Integer.parseInt(req.getParameter("roundedHours"));
 			exportTypes = req.getParameterValues("exportType");
@@ -119,7 +120,7 @@ public class SettingsServlet extends HttpServlet {
 					message += "Article number saved<br />";
 				}
 				if (factuurType != null && !factuurType.equals(oldSettings.getFactuurType())) {
-					message += "FactuurType saved<br />";
+					message += "WerkbonStatus saved<br />";
 				}
 			} else {
 				message = "Settings saved<br />";
@@ -136,7 +137,7 @@ public class SettingsServlet extends HttpServlet {
 				for (String type : importTypes) {
 					impTypes.add(type);
 				}
-				Settings set = new Settings(importOffice, exportOffice, factuurType, impTypes, user, exportWerkbonType,
+				Settings set = new Settings(importOffice, exportOffice, factuurType, impTypes,user, exportWerkbonType,
 						roundedHours, syncDate, materialCode, expTypes);
 				ObjectDAO.saveSettings(set, token);
 			} else {

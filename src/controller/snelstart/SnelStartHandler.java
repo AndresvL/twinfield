@@ -37,26 +37,29 @@ import object.workorder.WorkOrder;
 import object.workorder.WorkPeriod;
 
 public class SnelStartHandler {
-	final String softwareName = "SnelStart";
+	final String softwareName = "SnelStart_Online";
 	
-	private static String oauthHost = System.getenv("SNELSTART_OAUTH_HOST");
-	private static String apiHost = System.getenv("SNELSTART_API_HOST");
-	private static String secret = System.getenv("SNELSTART_PRIMARY_KEY");
+	private static String oauthHost = System.getenv("SNELSTART_ONLINE_OAUTH_HOST");
+	private static String apiHost = System.getenv("SNELSTART_ONLINE_API_HOST");
+	private static String secret = System.getenv("SNELSTART_ONLINE_PRIMARY_KEY");
 	private final static Logger logger = Logger.getLogger(SnelStartHandler.class.getName());
-	private int newRelation = 0;
+	private int newRelation = 0, newMaterial = 0;
 	
-	public String getAccessToken(String base64Key) throws IOException {
+	public String getAccessToken(String base64Key) {
 		String token = null;
 		JSONObject json = null;
 		try {
 			byte[] decodedBytes = Base64.getDecoder().decode(base64Key);
 			String userPass[] = new String(decodedBytes, "UTF-8").split(":");
-			String username = userPass[0];
-			String password = userPass[1];
-			json = sendOAuthRequest(username, password);
-			token = json.optString("access_token");
-		} catch (JSONException e) {
-			e.printStackTrace();
+			if (userPass.length > 1) {
+				String username = userPass[0];
+				String password = userPass[1];
+				
+				json = sendOAuthRequest(username, password);
+				token = json.optString("access_token");
+			}
+		} catch (Exception e) {
+			token = null;
 		}
 		return token;
 	}
@@ -116,7 +119,7 @@ public class SnelStartHandler {
 		return json;
 	}
 	
-	public Object sendGetRequest(String accessToken, String path, boolean checkToken)
+	public static Object sendGetRequest(String accessToken, String path, boolean checkToken)
 			throws IOException, JSONException {
 		String jsonString;
 		JSONArray array = null;
@@ -132,7 +135,7 @@ public class SnelStartHandler {
 		conn.setRequestProperty("charset", "utf-8");
 		conn.setUseCaches(true);
 		System.out.println("Authorization: Bearer " + accessToken);
-		System.out.println("Ocp-Apim-Subscription-Key " + secret);
+		System.out.println("Ocp-Apim-Subscription-Key: " + secret);
 		if (conn.getResponseCode() != 200 && checkToken) {
 			return false;
 		} else if (conn.getResponseCode() == 200 && checkToken) {
@@ -140,13 +143,13 @@ public class SnelStartHandler {
 		}
 		BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()), StandardCharsets.UTF_8));
 		while ((jsonString = br.readLine()) != null) {
-			System.out.println("JSONSTRING " + jsonString);
 			array = new JSONArray(jsonString);
 		}
 		return array;
 	}
 	
-	public Object sendPostRequest(String accessToken, String path, String data) throws IOException, JSONException {
+	public static Object sendPostRequest(String accessToken, String path, String data)
+			throws IOException, JSONException {
 		String jsonString;
 		JSONObject array = null;
 		// Data to bytes
@@ -175,11 +178,31 @@ public class SnelStartHandler {
 		// return null;
 		// }
 		// }
+		BufferedReader br = null;
+		Boolean success = false;
+		if (conn.getResponseCode() > 201) {
+			br = new BufferedReader(new InputStreamReader((conn.getErrorStream()), StandardCharsets.UTF_8));
+		} else {
+			br = new BufferedReader(new InputStreamReader((conn.getInputStream()), StandardCharsets.UTF_8));
+			success = true;
+		}
 		
-		BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()), StandardCharsets.UTF_8));
 		while ((jsonString = br.readLine()) != null) {
+			array = new JSONObject();
 			System.out.println("JSONSTRING " + jsonString);
-			array = new JSONObject(jsonString);
+			if (jsonString.startsWith("Het ingelogde account")) {
+				array.put("error", jsonString);
+			} else if (success) {
+				array = new JSONObject(jsonString);
+			} else {
+				JSONArray ar = new JSONArray(jsonString);
+				String errorString = "";
+				for (int i = 0; i < ar.length(); i++) {
+					errorString += ar.getJSONObject(i).getString("message") + "\n";
+					System.out.println("errorString POSTREQUEST " + errorString);
+				}
+				array.put("error", errorString);
+			}
 		}
 		return array;
 	}
@@ -199,13 +222,13 @@ public class SnelStartHandler {
 			e.printStackTrace();
 		}
 		// Date to String
-		Format formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+		Format formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
 		String s = formatter.format(date);
 		return s;
 	}
 	
 	public String convertDate(String string) {
-		DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		Date date = null;
 		try {
 			// String to date
@@ -219,7 +242,7 @@ public class SnelStartHandler {
 			e.printStackTrace();
 		}
 		// Date to String
-		Format formatter = new SimpleDateFormat("yyyy-MM-dd");
+		Format formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
 		String s = formatter.format(date);
 		return s;
 	}
@@ -237,22 +260,29 @@ public class SnelStartHandler {
 	}
 	
 	// Producten
-	public String[] getMaterials(Token t, String date) throws Exception {
+	public String[] getMaterials(Token t, String date, int skip, int successAmount, ArrayList<Material> mat)
+			throws Exception {
 		boolean checkUpdate = false;
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObj = new JSONObject();
 		String path = "/v1/artikelen";
 		String errorMessage = "";
 		ArrayList<Material> materials = new ArrayList<Material>();
-		// Boolean hasContent = ObjectDAO.hasContent(t.getSoftwareToken(),
-		// "materials");
-		// if (date != null && hasContent) {
-		// // yyyy-MM-dd hh:mm:ss
-		// parameters += "&changedFromDate=" + getDateMinHour(date);
-		// }
+		Boolean hasContent = ObjectDAO.hasContent(t.getSoftwareToken(), "materials");
+		if (date != null && hasContent) {
+			// yyyy-MM-dd hh:mm:ss
+			path += "?$filter=" + URLEncoder.encode("ModifiedOn gt datetime", "utf-8") + "'" + getDateMinHour(date)
+					+ "'&$skip=" + skip + "&$top=500";
+		} else {
+			path += "?$skip=" + skip + "&$top=500";
+		}
+		System.out.println("PATH " + path);
 		jsonArray = (JSONArray) sendGetRequest(t.getAccessToken(), path, false);
 		logger.info("Materials response " + jsonArray);
 		if (jsonArray != null) {
+			if (mat == null) {
+				mat = new ArrayList<Material>();
+			}
 			for (int i = 0; i < jsonArray.length(); i++) {
 				jsonObj = jsonArray.getJSONObject(i);
 				if (!jsonObj.getBoolean("isNonActief")) {
@@ -263,47 +293,77 @@ public class SnelStartHandler {
 					Double salePrice = jsonObj.getDouble("verkoopprijs");
 					Material m = new Material(productCode, null, "", description, salePrice, null, modified, id);
 					materials.add(m);
+					mat.add(m);
 				}
 			}
 		}
 		// Materials log message
 		if (!materials.isEmpty()) {
-			int successAmount = (int) WorkOrderHandler.addData(t.getSoftwareToken(), materials, "materials",
-					softwareName, null);
+			int success = (int) WorkOrderHandler.addData(t.getSoftwareToken(), materials, "materials", softwareName,
+					null);
+			if (materials.size() == 500) {
+				if (success > 0) {
+					successAmount += success;
+					// ObjectDAO.saveMaterials(materials, t.getSoftwareToken());
+				}
+				return getMaterials(t, date, skip += 500, successAmount, mat);
+				
+			} else {
+				if (success > 0) {
+					successAmount += success;
+					System.out.println("MATERIALS SIZE" + mat.size());
+					ObjectDAO.saveMaterials(mat, t.getSoftwareToken());
+					errorMessage += successAmount + " materials imported<br>";
+					checkUpdate = true;
+				} else {
+					errorMessage += "Something went wrong with materials<br>";
+				}
+			}
+			
+		} else {
 			if (successAmount > 0) {
-				ObjectDAO.saveMaterials(materials, t.getSoftwareToken());
+				System.out.println("MATERIALS SIZE" + mat.size());
+				ObjectDAO.saveMaterials(mat, t.getSoftwareToken());
 				errorMessage += successAmount + " materials imported<br>";
 				checkUpdate = true;
 			} else {
-				errorMessage += "Something went wrong with materials<br>";
+				errorMessage += "No materials for import<br>";
 			}
-		} else {
-			errorMessage += "No materials for import<br>";
+			
 		}
 		return new String[] { errorMessage, checkUpdate + "" };
 	}
 	
 	// Debiteuren
-	public String[] getRelations(Token t, String date) throws Exception {
+	public String[] getRelations(Token t, String date, int skip, int successAmount, ArrayList<Relation> rel)
+			throws Exception {
 		boolean checkUpdate = false;
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObj = new JSONObject();
 		String path = "/v1/relaties";
 		String errorMessage = "";
 		ArrayList<Relation> relations = new ArrayList<Relation>();
-		// Boolean hasContent = ObjectDAO.hasContent(t.getSoftwareToken(),
-		// "relations");
-		// if (date != null && hasContent) {
-		// parameters += "changedFromDate=" + getDateMinHour(date);
-		// }
+		Boolean hasContent = ObjectDAO.hasContent(t.getSoftwareToken(), "relations");
+		if (date != null && hasContent) {
+			// yyyy-MM-dd hh:mm:ss
+			path += "?$filter=" + URLEncoder.encode("ModifiedOn gt datetime", "utf-8") + "'" + getDateMinHour(date)
+					+ "'&$skip=" + skip + "&$top=500";
+			
+		} else {
+			path += "?$skip=" + skip + "&$top=500";
+		}
+		System.out.println("PATH " + path);
 		jsonArray = (JSONArray) sendGetRequest(t.getAccessToken(), path, false);
 		logger.info("Relation response " + jsonArray);
 		if (jsonArray != null) {
+			if (rel == null) {
+				rel = new ArrayList<Relation>();
+			}
 			for (int i = 0; i < jsonArray.length(); i++) {
 				jsonObj = jsonArray.getJSONObject(i);
-				JSONArray relatieSoorten = jsonObj.getJSONArray("relatiesoort");
-				String relatieSoort = (String) relatieSoorten.get(0);
-				if (relatieSoort.equals("Klant")) {
+				JSONArray tempArray = jsonObj.getJSONArray("relatiesoort");
+				String tempJson = (String) tempArray.get(0);
+				if (tempJson.equals("Klant") && !jsonObj.getBoolean("nonactief")) {
 					String id = jsonObj.getString("id");
 					String companyName = jsonObj.optString("naam", "<empty>");
 					String debtorNumber = jsonObj.getInt("relatiecode") + "";
@@ -342,21 +402,41 @@ public class SnelStartHandler {
 					Relation r = new Relation(companyName, debtorNumber, invoiceContact, invoiceEmail, addresses,
 							modified, id);
 					relations.add(r);
+					rel.add(r);
 				}
+				
 			}
 		}
 		if (!relations.isEmpty()) {
-			int successAmount = (int) WorkOrderHandler.addData(t.getSoftwareToken(), relations, "relations",
-					softwareName, null);
+			int success = (int) WorkOrderHandler.addData(t.getSoftwareToken(), relations, "relations", softwareName,
+					null);
+			
+			if (relations.size() == 500) {
+				if (success > 0) {
+					successAmount += success;
+					// ObjectDAO.saveRelations(relations, t.getSoftwareToken());
+				} else {
+					errorMessage += "Something went wrong with relations<br>";
+				}
+				return getRelations(t, date, skip += 500, successAmount, rel);
+			} else {
+				if (success > 0) {
+					successAmount += success;
+					ObjectDAO.saveRelations(rel, t.getSoftwareToken());
+					errorMessage += successAmount + " relations imported<br>";
+					checkUpdate = true;
+				} else {
+					errorMessage += "Something went wrong with relations<br>";
+				}
+			}
+		} else {
 			if (successAmount > 0) {
-				ObjectDAO.saveRelations(relations, t.getSoftwareToken());
+				ObjectDAO.saveRelations(rel, t.getSoftwareToken());
 				errorMessage += successAmount + " relations imported<br>";
 				checkUpdate = true;
 			} else {
-				errorMessage += "Something went wrong with relations<br>";
+				errorMessage += "No relations for import<br>";
 			}
-		} else {
-			errorMessage += "No relations for import<br>";
 		}
 		return new String[] { errorMessage, checkUpdate + "" };
 	}
@@ -373,59 +453,112 @@ public class SnelStartHandler {
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(t.getSoftwareToken(), "GetWorkorders",
 				set.getFactuurType(), false, softwareName);
 		for (WorkOrder w : allData) {
-			exportAmount++;
-			JSONObject = invoiceJSON(w, t, set.getRoundedHours(), set.getExportObjects());
-			String error = (String) JSONObject.opt("Error");
-			if (error != null) {
-				errorDetails += error;
-				errorAmount++;
-			} else {
-				logger.info("REQUEST " + JSONObject);
-				JSONObject response = null;
-				String path = "/v1/verkooporders";
-				response = (JSONObject) sendPostRequest(t.getAccessToken(), path, JSONObject + "");
-				logger.info("RESPONSE " + response);
-				JSONArray array = response.optJSONArray("$diagnoses");
-				if (array != null) {
-					JSONObject json = array.getJSONObject(0);
+			if (!w.getWorkStatus().equals("") && !w.getWorkStatus().equals("0")) {
+				exportAmount++;
+				JSONObject = invoiceJSON(w, t, set);
+				String error = (String) JSONObject.opt("Error");
+				if (error != null) {
+					errorDetails += error;
 					errorAmount++;
-					errorDetails += json.optString("$message");
-					
 				} else {
-					successAmount++;
-					WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder",
-							t.getSoftwareToken(), softwareName);
+					logger.info("REQUEST " + JSONObject);
+					JSONObject response = null;
+					String path = "/v1/verkooporders";
+					response = (JSONObject) sendPostRequest(t.getAccessToken(), path, JSONObject + "");
+					logger.info("RESPONSE " + response);
+					String responseError = (String) response.opt("error");
+					if (responseError != null) {
+						errorMessage += responseError + "<br>";
+						errorAmount++;
+					} else {
+						JSONArray array = response.optJSONArray("$diagnoses");
+						if (array != null) {
+							JSONObject json = array.getJSONObject(0);
+							errorAmount++;
+							errorDetails += json.optString("$message");
+							
+						} else {
+							successAmount++;
+							WorkOrderHandler.setWorkorderStatus(w.getId(), w.getWorkorderNr(), true, "GetWorkorder",
+									t.getSoftwareToken(), softwareName);
+						}
+					}
+					
 				}
 			}
 		}
 		if (successAmount > 0) {
 			if (newRelation > 0) {
 				errorMessage += successAmount + " workorder(s) exported. Click for more details<br>";
-				errorDetails += newRelation + " new relation(s) exported";
-			} else {
+				errorDetails += newRelation + " new relation(s) created in SnelStart\n";
+				
+			}else if(newMaterial > 0){
+				errorMessage += successAmount + " workorder(s) exported. Click for more details<br>";
+				errorDetails += newMaterial + " new material(s) created in SnelStart\n";
+			}else {			
 				errorMessage += successAmount + " workorder(s) exported. <br>";
 			}
 		}
 		if (errorAmount > 0) {
 			errorMessage += errorAmount + " out of " + exportAmount
 					+ " workorders(factuur) have errors. Click for details<br>";
+			set.setFactuurType("error");
+			ObjectDAO.saveSettings(set, t.getSoftwareToken());
 		}
 		return new String[] { errorMessage, errorDetails };
 	}
 	
-	public JSONObject invoiceJSON(WorkOrder w, Token t, int roundedHours, ArrayList<String> exportObjects)
-			throws JSONException, IOException {
+	public JSONObject invoiceJSON(WorkOrder w, Token t, Settings set) throws JSONException, IOException {
 		String error = "";
-		
 		JSONObject salesOrder = new JSONObject();
 		try {
 			if (w.getMaterials().size() == 0 && w.getWorkPeriods().size() == 0) {
-				error += "No materials or workperiods found on workorder " + w.getWorkorderNr() + "\n";
+				error += "No materials/workperiods found on workorder " + w.getWorkorderNr() + "\n";
 				return new JSONObject().put("Error", error);
 			}
 			JSONArray JSONArrayMaterials = new JSONArray();
 			JSONObject materials = null;
+			for (WorkPeriod p : w.getWorkPeriods()) {
+				Material dbUniversalMaterial = ObjectDAO.getMaterials(t.getSoftwareToken(), set.getMaterialCode());
+				String materialId = null;
+				if (dbUniversalMaterial == null) {
+					return new JSONObject().put("Error",
+							"Universal material " + set.getMaterialCode() + " not found\n");
+				} else {
+					materialId = dbUniversalMaterial.getId();
+				}
+				HourType hourtype = WorkOrderHandler.getHourTypes(t.getSoftwareToken(), p.getHourType(), softwareName);
+				if (hourtype != null) {
+					materials = new JSONObject();
+					JSONObject artikel = new JSONObject();
+					artikel.put("id", materialId);
+					materials.put("artikel", artikel);
+					materials.put("omschrijving", hourtype.getName());
+					double price = 0;
+					DecimalFormat df = new DecimalFormat("#.##");
+					String formatted = df.format(hourtype.getSalePrice());
+					price = Double.parseDouble(formatted.toString().replaceAll(",", "."));
+					materials.put("stuksprijs", price);
+					double number = p.getDuration();
+					double hours = set.getRoundedHours();
+					double urenInteger = (number % hours);
+					if (urenInteger < (hours / 2)) {
+						number = number - urenInteger;
+					} else {
+						number = number - urenInteger + hours;
+					}
+					double quantity = (number / 60);
+					formatted = df.format(quantity);
+					quantity = Double.parseDouble(formatted.toString().replaceAll(",", "."));
+					materials.put("aantal", quantity);
+					JSONArrayMaterials.put(materials);
+				} else {
+					return new JSONObject().put("Error",
+							"Hourtype on workorder " + w.getWorkorderNr() + " does not exist in WorkOrderApp\n");
+				}
+			}
 			for (Material m : w.getMaterials()) {
+				String materialId = null;
 				Material dbMaterial = ObjectDAO.getMaterials(t.getSoftwareToken(), m.getCode());
 				if (Double.parseDouble(m.getQuantity()) == 0) {
 					error += "The quantity of material " + m.getCode() + " on workorder " + w.getWorkorderNr()
@@ -433,32 +566,45 @@ public class SnelStartHandler {
 					return new JSONObject().put("Error", error);
 				}
 				if (dbMaterial == null) {
-					error += "Material " + m.getCode() + " on workorder " + w.getWorkorderNr()
-							+ " not found in SnelStart or this material is not synchronized\n";
-					return new JSONObject().put("Error", error);
+					if (set.getExportObjects() != null && set.getExportObjects().contains("materials")) {
+						if (!isInteger(m.getCode())) {
+							error += "Materialscodes on workorder " + w.getWorkorderNr() + " can not contain text\n";
+							return new JSONObject().put("Error", error);
+						} else {
+							JSONObject object = setMaterial(t, m);
+							materialId = object.optString("id");
+							newMaterial++;
+						}
+					} else {
+						error += "Material " + m.getCode() + " on workorder " + w.getWorkorderNr()
+								+ " not found in SnelStart or this material is not synchronized\n";
+						return new JSONObject().put("Error", error);
+					}
+					
 				} else {
-					materials = new JSONObject();
-					JSONObject artikel = new JSONObject();
-					artikel.put("id", dbMaterial.getId());
-					materials.put("artikel", artikel);
-					materials.put("omschrijving", m.getDescription());
-					double price = 0;
-					DecimalFormat df = new DecimalFormat("#.##");
-					String formatted = df.format(m.getPrice());
-					price = Double.parseDouble(formatted.toString().replaceAll(",", "."));
-					materials.put("stuksprijs", price);
-					materials.put("aantal", Double.parseDouble(m.getQuantity()));
+					materialId = dbMaterial.getId();
 				}
+				materials = new JSONObject();
+				JSONObject artikel = new JSONObject();
+				artikel.put("id", materialId);
+				materials.put("artikel", artikel);
+				materials.put("omschrijving", m.getDescription());
+				double price = 0;
+				DecimalFormat df = new DecimalFormat("#.##");
+				String formatted = df.format(m.getPrice());
+				price = Double.parseDouble(formatted.toString().replaceAll(",", "."));
+				materials.put("stuksprijs", price);
+				materials.put("aantal", Double.parseDouble(m.getQuantity()));
+				JSONArrayMaterials.put(materials);
 			}
-			JSONArrayMaterials.put(materials);
 			salesOrder.put("regels", JSONArrayMaterials);
 			salesOrder.put("verkooporderBtwIngaveModel", "Inclusief");
 			Relation dbRelation = ObjectDAO.getRelation(t.getSoftwareToken(), w.getCustomerDebtorNr(), "invoice");
 			String id = null;
 			if (dbRelation == null) {
-				if (exportObjects != null && exportObjects.contains("relations")) {
-//					JSONObject object = setRelation(t, w);
-					// debtorNr = object.getInt("id") + "";
+				if (set.getExportObjects() != null && set.getExportObjects().contains("relations")) {
+					JSONObject object = setRelation(t, w);
+					id = object.optString("id");
 					newRelation++;
 				} else {
 					error += "Relation " + w.getCustomerDebtorNr() + " on workorder " + w.getWorkorderNr()
@@ -493,7 +639,9 @@ public class SnelStartHandler {
 				}
 			}
 			
-		} catch (JSONException | SQLException e) {
+		} catch (JSONException |
+				
+				SQLException e) {
 			e.printStackTrace();
 		}
 		return salesOrder;
@@ -502,35 +650,38 @@ public class SnelStartHandler {
 	public JSONObject setRelation(Token t, WorkOrder w) throws IOException {
 		JSONObject setRelationResponse = null;
 		// Get BTW id default is 21%
-		String path = "/accounts/v2/contacts";
+		String path = "/v1/relaties";
 		JSONObject JSONObject = new JSONObject();
 		try {
 			for (Relation r : w.getRelations()) {
 				Address a = r.getAddressess().get(0);
 				if (a.getType().equals("invoice")) {
-					JSONObject.put("contact[name]", a.getName());
-					// JSONObject.put("contact[id]", w.getCustomerDebtorNr());
-					JSONObject.put("contact[company]", r.getCompanyName());
-					JSONObject.put("contact[contact_type_id]", 1);
-					JSONObject.put("contact[email]", r.getEmailWorkorder());
-					JSONObject.put("contact[telephone]", a.getPhoneNumber());
-					JSONObject.put("contact[notes]", a.getRemark());
-					JSONObject.put("contact[tax_number]", 123456789);
-					JSONObject.put("contact[main_address][street_one]", a.getStreet());
-					JSONObject.put("contact[main_address][country_id]", "PT");
-					JSONObject.put("contact[main_address][postcode]", a.getPostalCode());
-					JSONObject.put("contact[main_address][town]", a.getCity());
+					JSONArray relatieSoort = new JSONArray();
+					relatieSoort.put("Klant");
+					JSONObject.put("relatiesoort", relatieSoort);
+					JSONObject.put("naam", r.getCompanyName());
+					JSONObject factuurAdres = new JSONObject();
+					factuurAdres.put("contactpersoon", a.getName());
+					factuurAdres.put("straat", a.getStreet());
+					factuurAdres.put("postcode", a.getPostalCode());
+					factuurAdres.put("plaats", a.getCity());
+					factuurAdres.put("contactpersoon", a.getName());
+					JSONObject.put("vestigingsAdres", factuurAdres);
+					JSONObject.put("telefoon", a.getPhoneNumber());
 				}
 				if (a.getType().equals("postal")) {
-					JSONObject.put("contact[delivery_address][street_one]", a.getStreet());
-					JSONObject.put("contact[delivery_address][country_id]", "PT");
-					JSONObject.put("contact[delivery_address][postcode]", a.getPostalCode());
-					JSONObject.put("contact[delivery_address][town]", a.getCity());
+					JSONObject afleverAdres = new JSONObject();
+					afleverAdres.put("contactpersoon", a.getName());
+					afleverAdres.put("straat", a.getStreet());
+					afleverAdres.put("postcode", a.getPostalCode());
+					afleverAdres.put("plaats", a.getCity());
+					afleverAdres.put("contactpersoon", a.getName());
+					JSONObject.put("correspondentieAdres", afleverAdres);
 				}
 			}
-			logger.info("setRelationRequest " + JSONObject);
+			logger.info("exportRelationRequest " + JSONObject);
 			setRelationResponse = (JSONObject) sendPostRequest(t.getAccessToken(), path, JSONObject + "");
-			logger.info("setRelationResponse " + setRelationResponse);
+			logger.info("exportRelationResponse " + setRelationResponse);
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -538,4 +689,83 @@ public class SnelStartHandler {
 		return setRelationResponse;
 	}
 	
+	public JSONObject setMaterial(Token t, Material m) throws IOException {
+		JSONObject setMaterialResponse = null;
+		String path = "/v1/artikelen";
+		try {
+			String omzetId = null;
+			String path2 = "/v1/artikelomzetgroepen";
+			JSONArray artikelOmzetGroep = (JSONArray) sendGetRequest(t.getAccessToken(), path2, false);
+			for (int i = 0; i < artikelOmzetGroep.length(); i++) {
+				JSONObject artikelGroep = artikelOmzetGroep.getJSONObject(i);
+				if (artikelGroep.getInt("nummer") == 1) {
+					omzetId = artikelGroep.getString("id");
+					break;
+				}
+			}
+			JSONObject materiaal = new JSONObject();
+			materiaal.put("artikelcode", m.getCode());
+			materiaal.put("omschrijving", m.getDescription());
+			materiaal.put("verkoopprijs", m.getPrice());
+			JSONObject artikelGroep = new JSONObject();
+			artikelGroep.put("id", omzetId);
+			materiaal.put("artikelOmzetgroep", artikelGroep);
+			logger.info("exportMaterialRequest " + materiaal);
+			setMaterialResponse = (JSONObject) sendPostRequest(t.getAccessToken(), path, materiaal + "");
+			logger.info("exportMaterialResponse " + setMaterialResponse);
+		} catch (
+		
+		JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return setMaterialResponse;
+	}
+	
+	public static JSONObject setUniversalMaterial(Token t, String materialCode) throws IOException {
+		JSONObject setMaterialResponse = null;
+		String path = "/v1/artikelen";
+		try {
+			String omzetId = null;
+			String path2 = "/v1/artikelomzetgroepen";
+			JSONArray artikelOmzetGroep = (JSONArray) sendGetRequest(t.getAccessToken(), path2, false);
+			for (int i = 0; i < artikelOmzetGroep.length(); i++) {
+				JSONObject artikelGroep = artikelOmzetGroep.getJSONObject(i);
+				if (artikelGroep.getInt("nummer") == 1) {
+					omzetId = artikelGroep.getString("id");
+					break;
+				}
+			}
+			JSONObject materiaal = new JSONObject();
+			if (isInteger(materialCode)) {
+				materiaal.put("artikelcode", materialCode);
+				materiaal.put("omschrijving", "Uursoorten");
+				materiaal.put("verkoopprijs", 0);
+				JSONObject artikelGroep = new JSONObject();
+				artikelGroep.put("id", omzetId);
+				materiaal.put("artikelOmzetgroep", artikelGroep);
+				
+				setMaterialResponse = (JSONObject) sendPostRequest(t.getAccessToken(), path, materiaal + "");
+				
+			}
+		} catch (
+		
+		JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return setMaterialResponse;
+	}
+	
+	public static boolean isInteger(String s) {
+		try {
+			Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return false;
+		} catch (NullPointerException e) {
+			return false;
+		}
+		// only got here if we didn't return false
+		return true;
+	}
 }

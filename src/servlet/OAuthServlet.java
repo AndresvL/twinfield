@@ -39,6 +39,7 @@ public class OAuthServlet extends HttpServlet {
 			req.getSession().setAttribute("checkboxes", null);
 			req.getSession().setAttribute("exportCheckboxes", null);
 			req.getSession().setAttribute("logs", null);
+			req.getSession().setAttribute("error", null);
 			
 			switch (softwareName) {
 			case "Twinfield":
@@ -84,7 +85,7 @@ public class OAuthServlet extends HttpServlet {
 				OAuthSageOne oauth6 = new OAuthSageOne();
 				oauth6.authenticate(softwareToken, req, resp);
 				break;
-			case "SnelStart":
+			case "SnelStart_Online":
 				// typeofwork
 				req.getSession().setAttribute("types", null);
 				// paymentmethod
@@ -131,7 +132,7 @@ public class OAuthServlet extends HttpServlet {
 				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");
 				rd = req.getRequestDispatcher("sageOne.jsp");
 				break;
-			case "SnelStart":
+			case "SnelStart_Online":
 				req.getSession().setAttribute("softwareToken", softwareToken);
 				req.getSession().setAttribute("logs", null);
 				req.getSession().setAttribute("errorMessage", "Error " + code + ": Token is invalid");

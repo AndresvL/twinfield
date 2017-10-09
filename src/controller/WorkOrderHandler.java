@@ -61,7 +61,6 @@ public class WorkOrderHandler {
 			link = "https://www.werkbonapp.nl/openapi/" + version + "/employees/?token=" + token + "&software_token="
 					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
 			link = link.trim();
-			System.out.println("CHECKWBATOKEN " + link);
 		}
 		int code = 0;
 		String output = null;
@@ -132,6 +131,59 @@ public class WorkOrderHandler {
 	}
 	
 	/**
+	 * This method returns all hourtypes from the WOA API. \
+	 * Returns an hourtype object
+	 * 
+	 * @param token
+	 *            softwareToken of the current user
+	 * @param hourtype
+	 *            the hourtype code
+	 * @param softwareName
+	 *            the name of the third-party application
+	 
+	 * @return an hourtype object
+	 */
+	public static HourType getHourTypes(String token, String hourtype, String softwareName) {
+		String link = "https://www.werkbonapp.nl/openapi/" + version + "/hourtypes/?token=" + token + "&software_token="
+				+ softwareToken;
+		if (softwareToken == null) {
+			link = "https://www.werkbonapp.nl/openapi/" + version + "/hourtypes/?token=" + token + "&software_token="
+					+ System.getenv("SOFTWARETOKEN_" + softwareName.toUpperCase());
+		}
+		HourType h = null;
+		try {
+			URL url = new URL(link);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Content-Type", "application/json");
+			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+			String output = null;
+			JSONObject json = null;
+			while ((output = br.readLine()) != null) {
+				json = new JSONObject(output);
+			}
+			br.close();
+			JSONArray jsonArray = json.getJSONArray("response");
+			
+			for (int i = 0; i < jsonArray.length(); i++) {
+				JSONObject object = jsonArray.getJSONObject(i);
+				if (object.getString("code").equals(hourtype)) {
+					String name = object.getString("name");
+					double salePrice = object.getDouble("sale_price");
+					double costPrice = object.getDouble("cost_price");
+					int costBooking = object.getInt("cost_booking");
+					int saleBooking = object.getInt("sale_booking");
+					h = new HourType(hourtype, name, costBooking, saleBooking, costPrice, salePrice, 1, null, null);
+				}
+			}
+		} catch (IOException | JSONException e) {
+			e.printStackTrace();
+		}
+		return h;
+	}
+	
+	/**
 	 * This method returns all types of work or payment methods from the WOA
 	 * API. Returns a standaard arraylist of types of work and payment methods
 	 * if the API call returns an empty array
@@ -180,7 +232,7 @@ public class WorkOrderHandler {
 					}
 				}
 				if (jsonArray.length() == 0 || !activeBoolean) {
-					switch(language){
+					switch (language) {
 					case "NL":
 						types.add("Installatie");
 						types.add("Garantie");
@@ -194,7 +246,7 @@ public class WorkOrderHandler {
 						types.add("Verkoop");
 						types.add("Verhuur");
 						break;
-					case "PT" :
+					case "PT":
 						types.add("Instalação");
 						types.add("Garantia");
 						types.add("Entrega");
@@ -212,7 +264,7 @@ public class WorkOrderHandler {
 				break;
 			case "paymentmethods":
 				if (jsonArray.length() == 0) {
-					switch(language){
+					switch (language) {
 					case "NL":
 						types.add("op rekening");
 						types.add("niet van toepassing");
@@ -228,7 +280,7 @@ public class WorkOrderHandler {
 						types.add("De acordo com proposta");
 						break;
 					}
-				
+					
 				} else {
 					for (int i = 0; i < jsonArray.length(); i++) {
 						JSONObject object = jsonArray.getJSONObject(i);
@@ -399,7 +451,10 @@ public class WorkOrderHandler {
 								materialName = material.getString("MaterialName");
 								materialPrice = material.getDouble("MaterialPrice");
 								// Get material from db
-								Material sub = ObjectDAO.getMaterials(token, materialCode);
+								Material sub = null;
+								if(softwareName == "Twinfield"){
+									sub = ObjectDAO.getMaterials(token, materialCode);
+								}
 								Material m = null;
 								if (sub != null) {
 									// Check if material has subCode

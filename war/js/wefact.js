@@ -61,9 +61,9 @@ $(document).ready(function() {
 		});
 		$("#syncbutton").click(
 				function(event) {
-
-				event.preventDefault();
+					event.preventDefault();
 				swal({
+//					  title: 'Synchronisered' + $("#uren").val() + "test",
 					  title: 'Synchroniseren',
 					  text: 'Op de achtergrond zal de synchronisatie plaatsvinden. Kom over een paar minuten terug',
 					  imageUrl: 'WBA.png',
@@ -74,6 +74,8 @@ $(document).ready(function() {
 					  function () {
 						  $( "#sync" ).submit();
 					  })
-					
+				
 				});
+				
+		
 		

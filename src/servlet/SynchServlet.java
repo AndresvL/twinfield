@@ -116,7 +116,7 @@ public class SynchServlet extends HttpServlet {
 				case "SageOne":
 					sageoneCount++;
 					break;
-				case "SnelStart":
+				case "SnelStart_Online":
 					snelstartCount++;
 					break;
 				}
@@ -127,7 +127,7 @@ public class SynchServlet extends HttpServlet {
 			System.out.println(moloniCount + " Moloni users");
 			System.out.println(drivefxCount + " DriveFx users");
 			System.out.println(sageoneCount + " SageOne users");
-			System.out.println(snelstartCount + " SnelStart users");
+			System.out.println(snelstartCount + " SnelStart_Online users");
 		}
 	}
 	
@@ -212,7 +212,7 @@ public class SynchServlet extends HttpServlet {
 			System.out.println("DATE " + date);
 			DBConnection.createDatabaseConnection(false);
 			break;
-		case "SnelStart":
+		case "SnelStart_Online":
 			new SnelStartThread(t, date).start();
 			System.out.println("DATE " + date);
 			DBConnection.createDatabaseConnection(false);
@@ -858,7 +858,7 @@ public class SynchServlet extends HttpServlet {
 		}
 		
 		public void run() {
-			System.out.println("SnelStart Thread Running");
+			System.out.println("SnelStart_Online Thread Running");
 			SnelStartHandler snelstart = new SnelStartHandler();
 			// Check if accessToken is still valid
 			try {
@@ -894,7 +894,7 @@ public class SynchServlet extends HttpServlet {
 						case "materials":
 							// Get all Materials from SageOne
 							// Return an array with response message for log
-							messageArray = snelstart.getMaterials(t, date);
+							messageArray = snelstart.getMaterials(t, date, 0, 0, null);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
 								checkUpdate = "true";
@@ -903,21 +903,12 @@ public class SynchServlet extends HttpServlet {
 						case "relations":
 							// Get all Hourtypes from SageOne
 							// Return an array with response message for log
-							messageArray = snelstart.getRelations(t, date);
+							messageArray = snelstart.getRelations(t, date, 0, 0, null);
 							errorMessage += messageArray[0];
 							if (messageArray[1].equals("true")) {
 								checkUpdate = "true";
 							}
 							break;
-						// case "quotes":
-						// // Get all Hourtypes from SageOne
-						// // Return an array with response message for log
-						// messageArray = sageone.getOrders(token, date, set);
-						// errorMessage += messageArray[0];
-						// if (messageArray[1].equals("true")) {
-						// checkUpdate = "true";
-						// }
-						// break;
 						}
 					}
 					// Export section
@@ -944,7 +935,7 @@ public class SynchServlet extends HttpServlet {
 			Exception e) {
 				e.printStackTrace();
 			}
-			System.out.println("SnelStart Thread Finished");
+			System.out.println("SnelStart_Online Thread Finished");
 		}
 	};
 }
