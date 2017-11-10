@@ -1,4 +1,6 @@
-/controller/
 /object/
 /servlet/
+/.DS_Store
 /DAO/
+/DBUtil/
+/controller/

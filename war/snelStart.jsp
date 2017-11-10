@@ -204,7 +204,7 @@
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="De werkbonnen met status compleet worden opgehaald"
 									height="13" width="13" />
-								<select name="factuurType" class="form-control" id="uren"
+								<select name="factuurType" class="form-control" id="status"
 									required>
 									<option selected value="compleet"
 										${"compleet" == factuur ? 'selected="selected"' : ''}>Compleet</option>

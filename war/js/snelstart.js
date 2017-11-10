@@ -60,21 +60,52 @@ $(document).ready(function() {
 		});
 		$("#syncbutton").click(
 				function(event) {
+					event.preventDefault();
+					if($("#status").val() === "error"){
+						swal({
+							  title: 'Let op',
+							  text: 'Werkbonstatus staat op Error. Hierdoor zullen geen werkbonnen gesynchroniseerd worden',
+							  imageUrl: 'WBA.png',
+							  imageWidth: 250,
+							  imageHeight: 220,
+							  showConfirmButton: true,
+							  showCancelButton: false,
+							  cancelButtonText: 'Verander status'
+							}).then(
+							  function () {
+								  $( "#sync" ).submit();
+							  }, function (dismiss) {
+						  // dismiss can be 'cancel', 'overlay',
+						  // 'close', and 'timer'
+						  if (dismiss === 'cancel') {
+						    $('#status').val("compleet");
+						    $( "#saveSnelStart" ).submit();
+						  }else {
+							  
+						  }						  
+						})
+					}
 					
-				event.preventDefault();
+					else{
 				swal({
-					  title: 'Synchronizing...',
-					  text: 'Synchronisation takes place in the background. Please come back in a moment',
+					  title: 'Synchroniseren',
+					  text: 'Op de achtergrond zal de synchronisatie plaatsvinden. Kom over een paar minuten terug',
 					  imageUrl: 'WBA.png',
 					  imageWidth: 250,
 					  imageHeight: 220,
-					  showConfirmButton: true					  
+					  showConfirmButton: true
 					}).then(
 					  function () {
 						  $( "#sync" ).submit();
-					  })
-					
-		});
+					  }, function (dismiss) {
+						  // dismiss can be 'cancel', 'overlay',
+						  // 'close', and 'timer'
+						  if (dismiss === 'overlay') {
+						  }
+					})
+					}
+				});
+				
 		$(".exportRelation").on('change', function() {
 			if ($("input[name='exportRelations']:checked").val() == "yes") {
 				$('#relations').attr('checked', true);

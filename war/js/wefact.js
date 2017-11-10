@@ -62,8 +62,33 @@ $(document).ready(function() {
 		$("#syncbutton").click(
 				function(event) {
 					event.preventDefault();
+					if($("#status").val() === "error"){
+						swal({
+							  title: 'Let op',
+							  text: 'Werkbonstatus staat op Error. Hierdoor zullen geen werkbonnen gesynchroniseerd worden',
+							  imageUrl: 'WBA.png',
+							  imageWidth: 250,
+							  imageHeight: 220,
+							  showConfirmButton: true,
+							  showCancelButton: true,
+							  cancelButtonText: 'Verander status'
+							}).then(
+							  function () {
+								  $( "#sync" ).submit();
+							  }, function (dismiss) {
+						  // dismiss can be 'cancel', 'overlay',
+						  // 'close', and 'timer'
+						  if (dismiss === 'cancel') {
+						    $('#status').val("compleet");
+						    $( "#saveWeFact" ).submit();
+						  }else {
+							  
+						  }						  
+						})
+					}
+					
+					else{
 				swal({
-//					  title: 'Synchronisered' + $("#uren").val() + "test",
 					  title: 'Synchroniseren',
 					  text: 'Op de achtergrond zal de synchronisatie plaatsvinden. Kom over een paar minuten terug',
 					  imageUrl: 'WBA.png',
@@ -73,8 +98,14 @@ $(document).ready(function() {
 					}).then(
 					  function () {
 						  $( "#sync" ).submit();
-					  })
-				
+					  }, function (dismiss) {
+						  // dismiss can be 'cancel', 'overlay',
+						  // 'close', and 'timer'
+						  if (dismiss === 'overlay') {
+						   
+						  }
+					})
+					}
 				});
 				
 		

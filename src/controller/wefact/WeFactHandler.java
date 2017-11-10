@@ -434,14 +434,16 @@ public class WeFactHandler {
 								String modified = object.getString("Modified");
 								String productCode = object.getString("ProductCode");
 								String productName = object.getString("ProductName");
-//								String dbModified = ObjectDAO.getModifiedDate(softwareToken, null, productCode,
-//										"hourtypes");
-//								// Check if data is modified
-//								if (dbModified == null || date == null) {
-//									importCount++;
-//								} else {
-//									editCount++;
-//								}
+								// String dbModified =
+								// ObjectDAO.getModifiedDate(softwareToken,
+								// null, productCode,
+								// "hourtypes");
+								// // Check if data is modified
+								// if (dbModified == null || date == null) {
+								// importCount++;
+								// } else {
+								// editCount++;
+								// }
 								importCount++;
 								Double costPrice = object.getDouble("PriceExcl");
 								// Double tax =
@@ -665,14 +667,46 @@ public class WeFactHandler {
 		// Get WorkOrders
 		ArrayList<WorkOrder> allData = WorkOrderHandler.getData(token, "GetWorkorders", set.getFactuurType(), false,
 				softwareName);
-		for (WorkOrder w : allData) {			
+		Boolean b = true;
+		for (WorkOrder w : allData) {
 			// Send invoice
-			if (!w.getWorkStatus().equals("") && w.getWorkStatus() != null) {
+			if (w.getWorkStatus().equals("0") || w.getWorkStatus().equals("2")) {
 				exportAmount++;
 				if (w.getMaterials().size() > 0 || w.getWorkPeriods().size() > 0) {
-					errorDetails += sendFactuur(w, clientToken, set, token, "", "", 0);
+					
+					for (Material m : w.getMaterials()) {
+						if (m.getQuantity().equals("0") || m.getQuantity().equals("0.00")) {
+							errorAmount++;
+							errorDetails += "Quantity of material " + m.getCode() + " " + m.getDescription()
+									+ " on workorder " + w.getWorkorderNr() + " cannot be 0\n";
+							b = false;
+						}
+					}
+					for (WorkPeriod p : w.getWorkPeriods()) {
+						HourType h = null;
+						try {
+							h = ObjectDAO.getHourType(token, p.getHourType());
+							if (h == null) {
+								errorAmount++;
+								errorDetails += "Hourtype " + p.getHourType() + " on workorder " + w.getWorkorderNr()
+										+ " not found in WeFact or this hourtype is not synchronized\n";
+								b = false;
+							} else if (p.getDuration() == 0) {
+								errorAmount++;
+								errorDetails += "Hourtype " + p.getHourType() + " on workorder " + w.getWorkorderNr()
+										+ " cannot have a duration of 0\n";
+								b = false;
+							}
+							
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+					}
+					if (b == true) {
+						errorDetails += sendFactuur(w, clientToken, set, token, errorDetails, "", 0);
+					}
+					
 				} else {
-					errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 					errorDetails += "No materials/workperiods found on workorder " + w.getWorkorderNr() + "\n";
 					errorAmount++;
 				}
@@ -685,7 +719,7 @@ public class WeFactHandler {
 			ObjectDAO.saveSettings(set, token);
 		}
 		if (successAmount > 0) {
-			errorMessage += successAmount + " workorders(factuur) exported. Click for details<br>";
+			errorMessage += successAmount + " workorders(factuur) exported.<br>";
 		}
 		return new String[] { errorMessage, errorDetails };
 	}
@@ -724,26 +758,11 @@ public class WeFactHandler {
 			for (int i = 0; i < array.length(); i++) {
 				Object obj = array.get(i);
 				if (String.valueOf(obj).startsWith("Factuur")) {
-					errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 					errorDetails += String.valueOf(obj);
+					errorAmount++;
 					return errorDetails;
 				}
-			}
-			for (int i = 0; i < array.length(); i++) {
-				Object obj = array.get(i);
-				for (WorkPeriod p : w.getWorkPeriods()) {
-					HourType h = null;
-					try {
-						h = ObjectDAO.getHourType(token, p.getHourType());
-						if (h == null) {
-							errorAmount++;
-							return "Hourtype " + p.getHourType() + " on workorder " + w.getWorkorderNr()
-									+ " not found in WeFact or this hourtype is not synchronized\n";
-						}
-					} catch (SQLException e) {
-						e.printStackTrace();
-					}
-				}
+				
 				if (String.valueOf(obj).equals("Ongeldig debiteurkenmerk") && amount == 0
 						|| String.valueOf(obj).equals("Debiteur  niet gevonden") && amount == 0) {
 					// Create new relation in WeFact
@@ -755,7 +774,7 @@ public class WeFactHandler {
 						amount++;
 					}
 				}
-				if (String.valueOf(obj).equals("Product 0 niet gevonden") && amount <= 1) {
+				if (String.valueOf(obj).equals("Product 0 niet gevonden")) {
 					// Create new material in WeFact
 					ArrayList<Material> allMaterials = new ArrayList<Material>();
 					
@@ -790,16 +809,16 @@ public class WeFactHandler {
 					} else {
 						w.setMaterials(allMaterials);
 					}
-				}
-				if (String.valueOf(obj).startsWith("Het product")) {
-					errorDetails += obj + " (werkbon " + w.getWorkorderNr() + ")";
+				} else {
+					if (obj != null) {
+						errorDetails += obj + " (werkbon " + w.getWorkorderNr() + ")";
+					}
 				}
 			}
 			if (relation != null || material != null) {
 				return sendFactuur(w, clientToken, set, token, errorDetails, error, amount);
 			} else {
 				// check errorDetails
-				errorMessage = "Something went wrong with sending an invoice. Click for more details<br>";
 				errorAmount++;
 			}
 		}
@@ -836,7 +855,19 @@ public class WeFactHandler {
 					JSONObject.put("Date", workDate);
 					JSONObject.put("ReferenceNumber", reference);
 					JSONObject.put("CompanyName", r.getCompanyName());
-					JSONObject.put("Initials", a.getName());
+					if (!a.getName().equals("")) {
+						String[] voorAchternaam = a.getName().split("\\s+");
+						if (voorAchternaam.length > 0) {
+							JSONObject.put("Initials", voorAchternaam[0]);
+							
+							String surName = "";
+							for (int i = 1; i < voorAchternaam.length; i++) {
+								surName += voorAchternaam[i] + " ";
+							}
+							JSONObject.put("SurName", surName);
+						}
+					}
+					
 					String address = null;
 					if (a.getHouseNumber() != null || !a.getHouseNumber().equals("")) {
 						address = a.getStreet() + " " + a.getHouseNumber();
@@ -859,7 +890,7 @@ public class WeFactHandler {
 					for (Material m : w.getMaterials()) {
 						JSONObjectMaterial = new JSONObject();
 						if (m.getCode().equals("") || m.getCode() == null) {
-							JSONObjectMaterial.put("ProductCode", "-");
+							JSONObjectMaterial.put("ProductCode", "");
 						} else {
 							JSONObjectMaterial.put("ProductCode", m.getCode());
 						}

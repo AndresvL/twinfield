@@ -263,11 +263,6 @@
 										</div>
 									</div>
 								</div>
-
-								<br>
-								<button type="button" id="help" class="btn btn-info btn-lg">Help</button>
-								<input type="submit" class="btn btn-success btn-lg" value="Save"
-									name="category" id="savebutton" />
 							</div>
 						</div>
 					</div>
@@ -281,7 +276,7 @@
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="De werkbonnen met status compleet worden opgehaald"
 									height="13" width="13" />
-								<select name="factuurType" class="form-control" id="uren"
+								<select name="factuurType" class="form-control" id="status"
 									required>
 									<option selected value="compleet"
 										${"compleet" == factuur ? 'selected="selected"' : ''}>Compleet</option>
@@ -289,8 +284,7 @@
 										${"error" == factuur ? 'selected="selected"' : ''}>Error</option>
 									<option value="geen"
 										${"geen" == factuur ? 'selected="selected"' : ''}>Geen</option>
-								</select>
-								<br>
+								</select> <br>
 								<label>Werkbon type</label>
 								<img src="./img/vraagteken.jpg" data-toggle="tooltip"
 									title="De werkbon wordt als factuur of offerte verstuurd naar WeFact"
@@ -326,7 +320,10 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="form-group col-xs-12">
+						<div class="form-group col-xs-12">		
+						<button type="button" id="help" class="btn btn-success btn-lg">Help</button>					
+							<input type="submit" class="btn btn-success btn-lg" value="Save"
+								name="category" id="savebutton" />
 							<input type="submit" class="btn btn-success btn-lg" value="Sync"
 								id="syncbutton" />
 						</div>

@@ -80,26 +80,6 @@ public class OAuthWeFact extends Authenticate {
 						JSONObject.put("sta_code", "2");
 						JSONObject.put("sta_name", "Verzonden");
 						JSONArray.put(JSONObject);
-						
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "3");
-						JSONObject.put("sta_name", "Deels betaald");
-						JSONArray.put(JSONObject);
-						
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "4");
-						JSONObject.put("sta_name", "Betaald");
-						JSONArray.put(JSONObject);
-						
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "8");
-						JSONObject.put("sta_name", "Creditfactuur");
-						JSONArray.put(JSONObject);
-						
-						JSONObject = new JSONObject();
-						JSONObject.put("sta_code", "9");
-						JSONObject.put("sta_name", "Vervallen");
-						JSONArray.put(JSONObject);
 				
 						System.out.println(JSONArray);
 						WorkOrderHandler.addData(softwareToken, JSONArray, "workstatusses", softwareName, clientToken);
